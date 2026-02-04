@@ -1,0 +1,139 @@
+.issue-details-page {
+  max-width: 900px;
+  margin: 2rem auto;
+  padding: 0 1rem;
+}
+
+.back-link {
+  display: inline-block;
+  margin-bottom: 1rem;
+  color: #2563eb;
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.issue-details-card {
+  background: #fff;
+  border-radius: 14px;
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.06);
+  overflow: hidden;
+}
+
+.issue-image-wrapper {
+  position: relative;
+  background: #f1f5f9;
+  height: 260px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.issue-image-wrapper img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.image-placeholder {
+  font-size: 3rem;
+  opacity: 0.4;
+}
+
+.status-badge {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+}
+
+.issue-content {
+  padding: 1.5rem;
+}
+
+.issue-tags {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+}
+
+.tag {
+  background: #eef2ff;
+  color: #1e3a8a;
+  padding: 0.3rem 0.7rem;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+.tag.secondary {
+  background: #f1f5f9;
+  color: #334155;
+}
+
+.issue-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.issue-header h1 {
+  font-size: 1.5rem;
+  margin: 0;
+}
+
+.vote-btn {
+  background: #2563eb;
+  color: white;
+  border: none;
+  padding: 0.5rem 0.9rem;
+  border-radius: 999px;
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+
+.issue-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin: 0.75rem 0 1.25rem;
+  font-size: 0.85rem;
+  color: #64748b;
+}
+
+.issue-description h3 {
+  margin-bottom: 0.4rem;
+}
+
+.issue-description p {
+  color: #334155;
+  line-height: 1.6;
+}
+
+.issue-details-actions {
+  margin: 1rem 0 1.25rem;
+}
+
+.issue-delete-error {
+  color: #b91c1c;
+  font-size: 0.875rem;
+  margin-bottom: 0.5rem;
+}
+
+.issue-delete-btn {
+  padding: 0.5rem 1rem;
+  font-size: 0.875rem;
+  color: #fff;
+  background: #b91c1c;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.issue-delete-btn:hover:not(:disabled) {
+  background: #991b1b;
+}
+
+.issue-delete-btn:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}

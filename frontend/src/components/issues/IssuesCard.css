@@ -1,0 +1,133 @@
+.issue-card {
+  background: #ffffff;
+  border-radius: 12px;
+  border: 1px solid #e5eaf1;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);
+}
+
+.issue-card-image {
+  position: relative;
+  background: #f4f7fb;
+  height: 140px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.issue-icon {
+  font-size: 32px;
+}
+
+.issue-card-content {
+  padding: 16px;
+}
+
+.issue-tags {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.category-tag {
+  background: #eef4ff;
+  color: #2563eb;
+  font-size: 12px;
+  padding: 3px 8px;
+  border-radius: 6px;
+  font-weight: 500;
+}
+
+.severity-tag {
+  font-size: 12px;
+  padding: 3px 8px;
+  border-radius: 6px;
+  font-weight: 500;
+}
+
+.severity-tag.low {
+  background: #ecfdf5;
+  color: #059669;
+}
+
+.severity-tag.medium {
+  background: #fffbeb;
+  color: #d97706;
+}
+
+.severity-tag.high {
+  background: #fef2f2;
+  color: #dc2626;
+}
+
+.issue-title {
+  font-size: 16px;
+  font-weight: 600;
+  margin: 6px 0;
+  color: #111827;
+}
+
+.issue-location {
+  font-size: 13px;
+  color: #6b7280;
+  margin-bottom: 6px;
+}
+
+.issue-description {
+  font-size: 14px;
+  color: #4b5563;
+  margin-bottom: 12px;
+}
+
+.issue-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-top: 1px solid #e5eaf1;
+  padding-top: 10px;
+  font-size: 13px;
+  color: #6b7280;
+}
+
+.issue-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.details-link {
+  color: #2563eb;
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.details-link:hover {
+  text-decoration: underline;
+}
+
+.issue-card-delete {
+  padding: 4px 10px;
+  font-size: 12px;
+  color: #b91c1c;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.issue-card-delete:hover:not(:disabled) {
+  background: #fee2e2;
+}
+
+.issue-card-delete:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.admin-status {
+  margin-top: 8px;
+  font-size: 12px;
+  color: #6b7280;
+}
