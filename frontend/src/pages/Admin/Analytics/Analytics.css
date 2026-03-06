@@ -1,0 +1,106 @@
+﻿.admin-title {
+  font-family: var(--font-heading);
+  font-size: clamp(1.7rem, 2vw, 2.2rem);
+  margin-bottom: var(--space-lg);
+}
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: var(--space-md);
+  margin-bottom: var(--space-lg);
+}
+
+.stat-card {
+  padding: var(--space-md);
+}
+
+.stat-header {
+  display: flex;
+  justify-content: space-between;
+  color: var(--text-secondary);
+  margin-bottom: var(--space-sm);
+}
+
+.icon {
+  opacity: 0.7;
+}
+
+.orange { color: var(--color-warning); }
+.blue { color: var(--color-primary-light); }
+.green { color: var(--color-success); }
+
+.admin-panels {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-md);
+}
+
+.panel {
+  padding: var(--space-md);
+}
+
+.panel h3 {
+  margin-bottom: var(--space-md);
+}
+
+.chart {
+  display: flex;
+  align-items: flex-end;
+  gap: var(--space-md);
+  height: 180px;
+}
+
+.bar-wrapper {
+  flex: 1;
+  display: grid;
+  gap: var(--space-sm);
+  justify-items: center;
+  color: var(--text-secondary);
+  font-size: var(--font-size-sm);
+}
+
+.bar {
+  width: 100%;
+  border-radius: var(--radius-sm);
+  height: 16%;
+}
+
+.bar.pending { background: color-mix(in srgb, var(--color-warning) 70%, transparent); }
+.bar.progress { background: color-mix(in srgb, var(--color-primary) 70%, transparent); }
+.bar.resolved { background: color-mix(in srgb, var(--color-success) 70%, transparent); }
+
+.issues-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.issues-table th,
+.issues-table td {
+  padding: 10px 8px;
+  border-bottom: 1px solid var(--border-color);
+  text-align: left;
+  font-size: var(--font-size-sm);
+}
+
+.issues-table th {
+  color: var(--text-secondary);
+}
+
+.issues-table select {
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  background: var(--bg-surface);
+  color: var(--text-primary);
+  padding: 6px 8px;
+}
+
+@media (max-width: 1000px) {
+  .stats-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .admin-panels {
+    grid-template-columns: 1fr;
+  }
+}

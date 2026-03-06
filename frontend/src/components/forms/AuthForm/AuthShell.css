@@ -1,0 +1,27 @@
+.auth-back-home {
+  display: inline-flex;
+  align-items: center;
+  margin-bottom: 14px;
+  color: #475569;
+}
+
+.auth-back-home::before {
+  content: "←";
+  margin-right: 6px;
+}
+
+.auth-shell-title {
+  margin: 0;
+}
+
+.auth-shell-subtitle {
+  margin: 8px 0 0;
+}
+
+.auth-shell-error {
+  margin-top: 16px;
+}
+
+.auth-shell-footer {
+  margin-top: 18px;
+}

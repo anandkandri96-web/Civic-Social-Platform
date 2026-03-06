@@ -1,0 +1,36 @@
+﻿.page {
+  min-height: calc(100vh - 64px);
+  padding: var(--space-xl) 0;
+}
+
+.container {
+  width: min(1200px, 100% - 2 * var(--space-lg));
+  margin: 0 auto;
+}
+
+.section {
+  margin-bottom: var(--space-xl);
+}
+
+.card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+}
+
+.grid {
+  display: grid;
+  gap: var(--space-lg);
+}
+
+.flex {
+  display: flex;
+  gap: var(--space-md);
+}
+
+.center {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}

@@ -1,0 +1,77 @@
+﻿.admin-dashboard {
+  padding-top: 0;
+}
+
+.admin-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--space-xl);
+}
+
+.admin-header h1 {
+  font-family: var(--font-heading);
+  font-size: clamp(1.7rem, 2vw, 2.2rem);
+  margin-bottom: 4px;
+}
+
+.admin-header p,
+.admin-note {
+  color: var(--text-secondary);
+}
+
+.admin-empty {
+  padding: 40px var(--space-md);
+}
+
+.empty-card {
+  border: 1px dashed var(--border-color);
+  border-radius: var(--radius-lg);
+  padding: 40px var(--space-lg);
+  text-align: center;
+}
+
+.empty-card h3 {
+  margin-bottom: var(--space-xs);
+}
+
+.empty-card p {
+  color: var(--text-secondary);
+}
+
+.admin-issues-list {
+  display: grid;
+  gap: var(--space-lg);
+}
+
+.admin-issue-row {
+  padding: var(--space-md);
+}
+
+.admin-issue-controls {
+  display: flex;
+  align-items: center;
+  margin-bottom: var(--space-sm);
+}
+
+.admin-issue-controls label {
+  font-size: var(--font-size-sm);
+  color: var(--text-secondary);
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-sm);
+}
+
+.admin-issue-controls select {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  padding: 8px 10px;
+  font-size: var(--font-size-sm);
+  color: var(--text-primary);
+}
+
+.admin-issue-controls select:focus {
+  outline: none;
+  border-color: var(--color-primary);
+}

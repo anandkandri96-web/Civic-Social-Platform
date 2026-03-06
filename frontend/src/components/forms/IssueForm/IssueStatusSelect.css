@@ -1,0 +1,13 @@
+.issue-status-select {
+  min-width: 130px;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  background: #fff;
+  color: #334155;
+  padding: 7px 10px;
+}
+
+.issue-status-select:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}

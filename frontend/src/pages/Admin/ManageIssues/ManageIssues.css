@@ -1,0 +1,14 @@
+﻿.manage-issues-card {
+  padding: var(--space-xl);
+}
+
+.manage-issues-card h1 {
+  font-family: var(--font-heading);
+  font-size: clamp(1.6rem, 2vw, 2rem);
+  margin-bottom: var(--space-sm);
+}
+
+.manage-issues-card p {
+  color: var(--text-secondary);
+  line-height: 1.6;
+}
