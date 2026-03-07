@@ -17,6 +17,15 @@ const departmentSchema = new mongoose.Schema(
       type: [String],
       default: [],
     },
+    coverageArea: {
+      type: {
+        type: String,
+        enum: ["Polygon"],
+      },
+      coordinates: {
+        type: [[[Number]]],
+      },
+    },
     isActive: {
       type: Boolean,
       default: true,
@@ -27,5 +36,6 @@ const departmentSchema = new mongoose.Schema(
 );
 
 departmentSchema.index({ name: 1 }, { unique: true });
+departmentSchema.index({ coverageArea: "2dsphere" });
 
 module.exports = mongoose.model("Department", departmentSchema);

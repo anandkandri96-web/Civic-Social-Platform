@@ -6,6 +6,7 @@ const { ROLES, ROLE_ALIASES } = require("../config/roles");
 const ALLOWED_REGISTER_FIELDS = ["name", "email", "password", "role"];
 const PUBLIC_ROLES = new Set([ROLES.CITIZEN, ROLES.VOLUNTEER]);
 const EMAIL_RE = /^\S+@\S+\.\S+$/;
+const APPROVAL_ROLES = new Set([ROLES.VOLUNTEER, ROLES.OFFICER, ROLES.WORKER]);
 
 const normalizeRole = (role) => {
   const raw = String(role || "").toLowerCase();
@@ -59,6 +60,7 @@ exports.register = async (req, res) => {
       email,
       password,
       role: requestedRole,
+      isApproved: requestedRole === ROLES.CITIZEN,
     });
 
     const token = generateToken(user);
@@ -103,6 +105,9 @@ exports.login = async (req, res) => {
     if (!user.isActive) {
       return res.status(403).json({ message: "Account is disabled" });
     }
+    if (APPROVAL_ROLES.has(normalizeRole(user.role)) && !user.isApproved) {
+      return res.status(403).json({ message: "Account pending admin approval" });
+    }
 
     const token = generateToken(user);
     res.json({
@@ -112,6 +117,8 @@ exports.login = async (req, res) => {
         name: user.name,
         email: user.email,
         role: normalizeRole(user.role),
+        isApproved: user.isApproved,
+        department: user.department || null,
       },
     });
   } catch (err) {
@@ -127,6 +134,62 @@ exports.getMe = async (req, res) => {
       name: req.user.name,
       email: req.user.email,
       role: req.user.role,
+      isApproved: req.user.isApproved,
+      department: req.user.department || null,
     },
   });
+};
+
+exports.updateMe = async (req, res) => {
+  try {
+    const { name, email, password } = req.body;
+    const updates = {};
+
+    if (name !== undefined) {
+      const safeName = String(name).trim();
+      if (safeName.length < 2 || safeName.length > 60) {
+        return res.status(400).json({ message: "Name must be 2-60 characters" });
+      }
+      updates.name = safeName;
+    }
+
+    if (email !== undefined) {
+      const safeEmail = String(email).trim().toLowerCase();
+      if (!EMAIL_RE.test(safeEmail)) {
+        return res.status(400).json({ message: "Invalid email format" });
+      }
+      const existing = await User.findOne({ email: safeEmail, _id: { $ne: req.user._id } });
+      if (existing) return res.status(400).json({ message: "Email already in use" });
+      updates.email = safeEmail;
+    }
+
+    if (password !== undefined) {
+      const safePassword = String(password);
+      if (safePassword.length < 6 || safePassword.length > 128) {
+        return res.status(400).json({ message: "Password must be 6-128 characters" });
+      }
+      updates.password = safePassword;
+    }
+
+    const user = await User.findById(req.user._id).select("+password");
+    if (!user) return res.status(404).json({ message: "User not found" });
+
+    Object.assign(user, updates);
+    await user.save();
+
+    return res.json({
+      message: "Profile updated",
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        role: normalizeRole(user.role),
+        isApproved: user.isApproved,
+        department: user.department || null,
+      },
+    });
+  } catch (err) {
+    console.error("Update profile error:", err);
+    return res.status(500).json({ message: "Failed to update profile" });
+  }
 };

@@ -35,6 +35,19 @@ const userSchema = new mongoose.Schema(
       trim: true,
     },
 
+    isApproved: {
+      type: Boolean,
+      default: true,
+      index: true,
+    },
+
+    department: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Department",
+      default: null,
+      index: true,
+    },
+
     isActive: {
       type: Boolean,
       default: true,

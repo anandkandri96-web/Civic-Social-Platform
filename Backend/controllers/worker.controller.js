@@ -2,6 +2,7 @@ const Task = require("../models/task");
 const Issue = require("../models/issue");
 const { apiResponse } = require("../utils/apiResponse");
 const { ISSUE_STATUS } = require("../utils/constants");
+const { createNotification } = require("../services/notification.service");
 
 exports.getMyTasks = async (req, res) => {
   try {
@@ -20,11 +21,23 @@ exports.acceptTask = async (req, res) => {
   try {
     const task = await Task.findOne({ _id: req.params.taskId, worker: req.user._id });
     if (!task) return apiResponse(res, 404, "Task not found");
+    if (task.status !== "assigned") {
+      return apiResponse(res, 400, "Only assigned tasks can be accepted");
+    }
 
     task.status = "accepted";
     await task.save();
 
     await Issue.findByIdAndUpdate(task.issue, { status: ISSUE_STATUS.WORK_IN_PROGRESS });
+    const issue = await Issue.findById(task.issue).select("title reportedBy");
+    if (issue) {
+      await createNotification({
+        userId: issue.reportedBy,
+        title: "Work started on your issue",
+        message: `A field worker accepted and started work on: ${issue.title}`,
+        issueId: issue._id,
+      });
+    }
 
     return apiResponse(res, 200, "Task accepted", task);
   } catch (error) {
@@ -39,6 +52,9 @@ exports.updateTaskProgress = async (req, res) => {
 
     const task = await Task.findOne({ _id: req.params.taskId, worker: req.user._id });
     if (!task) return apiResponse(res, 404, "Task not found");
+    if (!["accepted", "in_progress", "complication_reported"].includes(task.status)) {
+      return apiResponse(res, 400, "Task is not in a progressable state");
+    }
 
     if (Array.isArray(progressImages)) {
       task.progressImages = progressImages.filter(Boolean);
@@ -63,6 +79,19 @@ exports.updateTaskProgress = async (req, res) => {
     if (task.status === "completed") {
       task.completedAt = new Date();
       await Issue.findByIdAndUpdate(task.issue, { status: ISSUE_STATUS.RESOLVED, resolvedAt: new Date() });
+      const issue = await Issue.findById(task.issue).select("title reportedBy");
+      if (issue) {
+        await createNotification({
+          userId: issue.reportedBy,
+          title: "Issue work completed",
+          message: `Field work is completed for: ${issue.title}. Please verify resolution.`,
+          issueId: issue._id,
+        });
+      }
+    }
+
+    if (task.status === "complication_reported") {
+      await Issue.findByIdAndUpdate(task.issue, { status: ISSUE_STATUS.UNDER_REVIEW });
     }
 
     await task.save();

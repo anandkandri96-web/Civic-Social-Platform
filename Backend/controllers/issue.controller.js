@@ -1,12 +1,16 @@
 const Issue = require("../models/issue");
 const Vote = require("../models/vote");
+const User = require("../models/user");
 const { apiResponse } = require("../utils/apiResponse");
 const { ISSUE_CATEGORIES, ISSUE_STATUS, ROLES } = require("../utils/constants");
 const { getOrCreateDepartmentByCategory, normalizeCategory } = require("../services/routing.service");
 const { recomputeIssuePriority } = require("../services/priority.service");
+const { createNotificationsBulk, createNotification } = require("../services/notification.service");
 
 const TITLE_MAX = 120;
 const DESC_MAX = 2000;
+const VALID_STATUSES = new Set(Object.values(ISSUE_STATUS));
+const CITIZEN_EDITABLE_STATUSES = new Set([ISSUE_STATUS.REPORTED, ISSUE_STATUS.UNDER_REVIEW]);
 
 function buildPublicFileUrl(req, relativePath) {
   const proto = req.headers["x-forwarded-proto"] || req.protocol;
@@ -93,7 +97,7 @@ exports.createIssue = async (req, res) => {
       return apiResponse(res, 409, "Similar issue already reported nearby");
     }
 
-    const department = await getOrCreateDepartmentByCategory(normalizedCategory);
+    const department = await getOrCreateDepartmentByCategory(normalizedCategory, location);
 
     const issue = await Issue.create({
       title: safeTitle,
@@ -111,10 +115,114 @@ exports.createIssue = async (req, res) => {
     await recomputeIssuePriority(issue);
     await issue.save();
 
+    // Notify admins/officers about new issue intake.
+    const reviewers = await User.find({ role: { $in: [ROLES.ADMIN, ROLES.OFFICER] }, isActive: true })
+      .select("_id")
+      .lean();
+    await createNotificationsBulk(
+      reviewers.map((u) => ({
+        userId: u._id,
+        title: "New civic issue reported",
+        message: `${issue.title} reported in ${issue.locationText}`,
+        issueId: issue._id,
+      }))
+    );
+
     return apiResponse(res, 201, "Issue created successfully", issue);
   } catch (error) {
     console.error("CreateIssue Error:", error);
     return apiResponse(res, 500, "Failed to create issue");
+  }
+};
+
+exports.updateIssue = async (req, res) => {
+  try {
+    const issue = await Issue.findById(req.params.id);
+    if (!issue) return apiResponse(res, 404, "Issue not found");
+
+    if (String(issue.reportedBy) !== String(req.user._id)) {
+      return apiResponse(res, 403, "You can only update your own issues");
+    }
+
+    if (!CITIZEN_EDITABLE_STATUSES.has(issue.status)) {
+      return apiResponse(res, 400, "Issue can only be edited before assignment");
+    }
+
+    const { title, description, category, severity, lat, lng, locationText, images } = req.body;
+
+    if (title !== undefined) {
+      const safeTitle = String(title).trim();
+      if (safeTitle.length < 3 || safeTitle.length > TITLE_MAX) {
+        return apiResponse(res, 400, `Title must be 3-${TITLE_MAX} characters`);
+      }
+      issue.title = safeTitle;
+    }
+
+    if (description !== undefined) {
+      const safeDesc = String(description).trim();
+      if (safeDesc.length < 10 || safeDesc.length > DESC_MAX) {
+        return apiResponse(res, 400, `Description must be 10-${DESC_MAX} characters`);
+      }
+      issue.description = safeDesc;
+    }
+
+    if (severity !== undefined) {
+      const severityNum = Number(severity);
+      if (![1, 2, 3, 4, 5].includes(severityNum)) {
+        return apiResponse(res, 400, "Severity must be between 1 and 5");
+      }
+      issue.severity = severityNum;
+    }
+
+    let categoryChanged = false;
+    if (category !== undefined) {
+      const normalizedCategory = normalizeCategory(category);
+      if (!ISSUE_CATEGORIES.includes(normalizedCategory)) {
+        return apiResponse(res, 400, "Invalid category");
+      }
+      issue.category = normalizedCategory;
+      categoryChanged = true;
+    }
+
+    let locationChanged = false;
+    if (lat !== undefined || lng !== undefined) {
+      if (lat === undefined || lng === undefined) {
+        return apiResponse(res, 400, "Both lat and lng are required when updating coordinates");
+      }
+      const coords = parseCoords(lat, lng);
+      if (!coords) return apiResponse(res, 400, "Invalid coordinates");
+      issue.location = { type: "Point", coordinates: [coords.longitude, coords.latitude] };
+      locationChanged = true;
+    }
+
+    if (locationText !== undefined) {
+      const safeLocationText = String(locationText).trim();
+      if (!safeLocationText) return apiResponse(res, 400, "Location text is required");
+      issue.locationText = safeLocationText.slice(0, 200);
+    }
+
+    if (images !== undefined) {
+      if (!Array.isArray(images)) return apiResponse(res, 400, "Images must be an array");
+      issue.images = images.filter((img) => typeof img === "string" && img.length > 0);
+    }
+
+    if (req.file?.filename) {
+      const rel = `/uploads/issues/${req.file.filename}`;
+      issue.images = [buildPublicFileUrl(req, rel), ...(issue.images || [])];
+    }
+
+    if (categoryChanged || locationChanged) {
+      const department = await getOrCreateDepartmentByCategory(issue.category, issue.location);
+      issue.assignedDepartment = department._id;
+    }
+
+    await recomputeIssuePriority(issue);
+    await issue.save();
+
+    return apiResponse(res, 200, "Issue updated", issue);
+  } catch (error) {
+    console.error("UpdateIssue Error:", error);
+    return apiResponse(res, 500, "Failed to update issue");
   }
 };
 
@@ -242,6 +350,9 @@ exports.updateStatus = async (req, res) => {
     if (!nextStatus) {
       return apiResponse(res, 400, "Status is required");
     }
+    if (!VALID_STATUSES.has(nextStatus)) {
+      return apiResponse(res, 400, "Invalid status");
+    }
 
     const issue = await Issue.findById(req.params.id);
     if (!issue) return apiResponse(res, 404, "Issue not found");
@@ -280,6 +391,24 @@ exports.verifyIssueResolution = async (req, res) => {
     issue.status = ISSUE_STATUS.CITIZEN_VERIFIED;
     issue.verifiedByCitizen = true;
     await issue.save();
+
+    if (issue.volunteer) {
+      await createNotification({
+        userId: issue.volunteer,
+        title: "Issue verified",
+        message: "A citizen verified your community fix.",
+        issueId: issue._id,
+      });
+    }
+
+    if (issue.assignedWorker) {
+      await createNotification({
+        userId: issue.assignedWorker,
+        title: "Issue verified",
+        message: "A citizen verified the government resolution.",
+        issueId: issue._id,
+      });
+    }
 
     return apiResponse(res, 200, "Issue verified by citizen", issue);
   } catch (error) {

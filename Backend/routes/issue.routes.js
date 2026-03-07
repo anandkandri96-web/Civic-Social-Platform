@@ -3,6 +3,7 @@ const { protect, checkRole, optionalAuth } = require("../middlewares/auth.middle
 const { uploadIssueImage } = require("../middlewares/upload.middleware");
 const {
   createIssue,
+  updateIssue,
   getIssues,
   getNearbyIssues,
   getIssue,
@@ -18,6 +19,7 @@ router.get("/nearby", optionalAuth, getNearbyIssues);
 router.get("/:id", optionalAuth, getIssue);
 
 router.post("/", protect, uploadIssueImage, createIssue);
+router.patch("/:id", protect, uploadIssueImage, updateIssue);
 router.patch("/:id/status", protect, checkRole(["admin"]), updateStatus);
 router.patch("/:id/verify", protect, verifyIssueResolution);
 router.patch("/:id/close", protect, checkRole(["admin", "officer"]), closeIssue);

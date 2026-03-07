@@ -2,6 +2,7 @@ const jwt = require("jsonwebtoken");
 const User = require("../models/user");
 const { apiResponse } = require("../utils/apiResponse");
 const { ROLE_ALIASES } = require("../config/roles");
+const APPROVAL_ROLES = new Set(["volunteer", "officer", "worker"]);
 
 const normalizeRole = (role) => {
   const raw = String(role || "").toLowerCase();
@@ -19,7 +20,7 @@ exports.protect = async (req, res, next) => {
     const token = authHeader.split(" ")[1];
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
-    const user = await User.findById(decoded.id).select("_id name email role isActive");
+    const user = await User.findById(decoded.id).select("_id name email role isActive isApproved department");
 
     if (!user) {
       return apiResponse(res, 401, "User not found");
@@ -27,6 +28,9 @@ exports.protect = async (req, res, next) => {
 
     if (!user.isActive) {
       return apiResponse(res, 403, "User account is deactivated");
+    }
+    if (APPROVAL_ROLES.has(normalizeRole(user.role)) && !user.isApproved) {
+      return apiResponse(res, 403, "User account is pending approval");
     }
 
     user.role = normalizeRole(user.role);
@@ -44,9 +48,9 @@ exports.optionalAuth = async (req, res, next) => {
 
     const token = authHeader.split(" ")[1];
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    const user = await User.findById(decoded.id).select("_id name email role isActive");
+    const user = await User.findById(decoded.id).select("_id name email role isActive isApproved department");
 
-    if (user && user.isActive) {
+    if (user && user.isActive && (!APPROVAL_ROLES.has(normalizeRole(user.role)) || user.isApproved)) {
       user.role = normalizeRole(user.role);
       req.user = user;
     }

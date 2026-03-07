@@ -2,6 +2,7 @@ const Issue = require("../models/issue");
 const { apiResponse } = require("../utils/apiResponse");
 const { ISSUE_STATUS } = require("../utils/constants");
 const { canTransition } = require("../utils/statusFlow");
+const { createNotification } = require("../services/notification.service");
 
 exports.getAvailableIssues = async (_req, res) => {
   try {
@@ -42,6 +43,13 @@ exports.claimIssue = async (req, res) => {
     issue.status = ISSUE_STATUS.VOLUNTEER_CLAIMED;
     await issue.save();
 
+    await createNotification({
+      userId: issue.reportedBy,
+      title: "Volunteer claimed your issue",
+      message: "A volunteer has claimed your reported issue for community resolution.",
+      issueId: issue._id,
+    });
+
     return apiResponse(res, 200, "Issue claimed successfully", issue);
   } catch (error) {
     console.error("Volunteer claim error:", error);
@@ -62,6 +70,8 @@ exports.updateCommunityProgress = async (req, res) => {
     if (issue.status === ISSUE_STATUS.VOLUNTEER_CLAIMED) {
       issue.status = ISSUE_STATUS.COMMUNITY_FIX_IN_PROGRESS;
       await issue.save();
+    } else if (issue.status !== ISSUE_STATUS.COMMUNITY_FIX_IN_PROGRESS) {
+      return apiResponse(res, 400, "Issue is not in volunteer progress flow");
     }
 
     return apiResponse(res, 200, "Community progress updated", issue);
@@ -87,10 +97,20 @@ exports.submitCommunityResolution = async (req, res) => {
     }
 
     const safeProof = Array.isArray(proof) ? proof.filter(Boolean) : [];
+    if (!safeProof.length) {
+      return apiResponse(res, 400, "At least one proof item is required");
+    }
     issue.communityProof = safeProof;
     issue.status = ISSUE_STATUS.RESOLVED_BY_COMMUNITY;
     issue.resolvedAt = new Date();
     await issue.save();
+
+    await createNotification({
+      userId: issue.reportedBy,
+      title: "Issue resolved by community",
+      message: "A volunteer marked your issue as resolved. Please verify the resolution.",
+      issueId: issue._id,
+    });
 
     return apiResponse(res, 200, "Issue marked resolved by community", issue);
   } catch (error) {

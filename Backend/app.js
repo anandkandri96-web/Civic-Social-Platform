@@ -13,6 +13,7 @@ const officerRoutes = require("./routes/officer.routes");
 const workerRoutes = require("./routes/worker.routes");
 const adminRoutes = require("./routes/admin.routes");
 const analyticsRoutes = require("./routes/analytics.routes");
+const notificationRoutes = require("./routes/notification.routes");
 const errorHandler = require("./middlewares/error.middleware");
 
 const app = express();
@@ -72,6 +73,7 @@ app.use("/api/officer", officerRoutes);
 app.use("/api/worker", workerRoutes);
 app.use("/api/admin", adminRoutes);
 app.use("/api/analytics", analyticsRoutes);
+app.use("/api/notifications", notificationRoutes);
 
 app.use((req, res) => {
   res.status(404).json({ message: "Route not found" });

@@ -1,6 +1,8 @@
 const Issue = require("../models/issue");
 const User = require("../models/user");
+const Department = require("../models/department");
 const { apiResponse } = require("../utils/apiResponse");
+const { ROLES } = require("../utils/constants");
 
 exports.getStats = async (_req, res) => {
   try {
@@ -71,5 +73,273 @@ exports.getAllIssues = async (req, res) => {
   } catch (error) {
     console.error("Admin Issues Error:", error);
     return apiResponse(res, 500, "Failed to fetch issues");
+  }
+};
+
+exports.getUsers = async (req, res) => {
+  try {
+    const { page = 1, limit = 20, role, isActive, isApproved, departmentId } = req.query;
+    const pageNum = Math.max(1, Number(page) || 1);
+    const limitNum = Math.min(100, Math.max(1, Number(limit) || 20));
+    const skip = (pageNum - 1) * limitNum;
+
+    const filter = {};
+    if (role) filter.role = String(role).toLowerCase();
+    if (isActive !== undefined) filter.isActive = String(isActive).toLowerCase() === "true";
+    if (isApproved !== undefined) filter.isApproved = String(isApproved).toLowerCase() === "true";
+    if (departmentId) filter.department = departmentId;
+
+    const [users, total] = await Promise.all([
+      User.find(filter)
+        .select("_id name email role isActive isApproved department createdAt")
+        .populate("department", "_id name")
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(limitNum),
+      User.countDocuments(filter),
+    ]);
+
+    return apiResponse(res, 200, "Users retrieved", {
+      data: users,
+      pagination: {
+        total,
+        page: pageNum,
+        pages: Math.ceil(total / limitNum),
+      },
+    });
+  } catch (error) {
+    console.error("Get users error:", error);
+    return apiResponse(res, 500, "Failed to fetch users");
+  }
+};
+
+exports.createUser = async (req, res) => {
+  try {
+    const { name, email, password, role, departmentId, isApproved } = req.body;
+    const allowedRoles = [ROLES.CITIZEN, ROLES.VOLUNTEER, ROLES.OFFICER, ROLES.WORKER, ROLES.ADMIN];
+    const nextRole = String(role || "").toLowerCase();
+
+    if (!name || !email || !password || !nextRole) {
+      return apiResponse(res, 400, "name, email, password and role are required");
+    }
+
+    if (!allowedRoles.includes(nextRole)) {
+      return apiResponse(res, 400, "Invalid role");
+    }
+
+    let department = null;
+    if (departmentId) {
+      department = await Department.findById(departmentId);
+      if (!department) return apiResponse(res, 404, "Department not found");
+    }
+    if ([ROLES.OFFICER, ROLES.WORKER].includes(nextRole) && !department) {
+      return apiResponse(res, 400, "departmentId is required for officer/worker");
+    }
+
+    const exists = await User.findOne({ email: String(email).toLowerCase() });
+    if (exists) {
+      return apiResponse(res, 400, "Email already exists");
+    }
+
+    const user = await User.create({
+      name: String(name).trim(),
+      email: String(email).trim().toLowerCase(),
+      password: String(password),
+      role: nextRole,
+      isActive: true,
+      isApproved: typeof isApproved === "boolean" ? isApproved : nextRole === ROLES.CITIZEN,
+      department: department ? department._id : null,
+    });
+
+    return apiResponse(res, 201, "User created", {
+      _id: user._id,
+      name: user.name,
+      email: user.email,
+      role: user.role,
+      isActive: user.isActive,
+      isApproved: user.isApproved,
+      department: user.department,
+    });
+  } catch (error) {
+    console.error("Create user error:", error);
+    return apiResponse(res, 500, "Failed to create user");
+  }
+};
+
+exports.updateUserRole = async (req, res) => {
+  try {
+    const { role } = req.body;
+    const nextRole = String(role || "").toLowerCase();
+    const allowedRoles = [ROLES.CITIZEN, ROLES.VOLUNTEER, ROLES.OFFICER, ROLES.WORKER, ROLES.ADMIN];
+    if (!allowedRoles.includes(nextRole)) {
+      return apiResponse(res, 400, "Invalid role");
+    }
+
+    const user = await User.findById(req.params.id);
+    if (!user) return apiResponse(res, 404, "User not found");
+
+    user.role = nextRole;
+    if ([ROLES.OFFICER, ROLES.WORKER].includes(nextRole) && !user.department) {
+      return apiResponse(res, 400, "Assign department before setting officer/worker role");
+    }
+    await user.save();
+
+    return apiResponse(res, 200, "User role updated", {
+      _id: user._id,
+      name: user.name,
+      email: user.email,
+      role: user.role,
+      isActive: user.isActive,
+      isApproved: user.isApproved,
+      department: user.department,
+    });
+  } catch (error) {
+    console.error("Update user role error:", error);
+    return apiResponse(res, 500, "Failed to update user role");
+  }
+};
+
+exports.updateUserStatus = async (req, res) => {
+  try {
+    const { isActive } = req.body;
+    if (typeof isActive !== "boolean") {
+      return apiResponse(res, 400, "isActive must be boolean");
+    }
+
+    const user = await User.findById(req.params.id);
+    if (!user) return apiResponse(res, 404, "User not found");
+
+    user.isActive = isActive;
+    await user.save();
+
+    return apiResponse(res, 200, "User status updated", {
+      _id: user._id,
+      name: user.name,
+      email: user.email,
+      role: user.role,
+      isActive: user.isActive,
+      isApproved: user.isApproved,
+      department: user.department,
+    });
+  } catch (error) {
+    console.error("Update user status error:", error);
+    return apiResponse(res, 500, "Failed to update user status");
+  }
+};
+
+exports.approveUser = async (req, res) => {
+  try {
+    const { isApproved } = req.body;
+    if (typeof isApproved !== "boolean") {
+      return apiResponse(res, 400, "isApproved must be boolean");
+    }
+
+    const user = await User.findById(req.params.id);
+    if (!user) return apiResponse(res, 404, "User not found");
+
+    user.isApproved = isApproved;
+    if (isApproved && [ROLES.OFFICER, ROLES.WORKER].includes(user.role) && !user.department) {
+      return apiResponse(res, 400, "Officer/worker must have a department before approval");
+    }
+    await user.save();
+
+    return apiResponse(res, 200, "User approval updated", {
+      _id: user._id,
+      name: user.name,
+      email: user.email,
+      role: user.role,
+      isActive: user.isActive,
+      isApproved: user.isApproved,
+      department: user.department,
+    });
+  } catch (error) {
+    console.error("Approve user error:", error);
+    return apiResponse(res, 500, "Failed to update user approval");
+  }
+};
+
+exports.assignUserDepartment = async (req, res) => {
+  try {
+    const { departmentId } = req.body;
+    if (!departmentId) return apiResponse(res, 400, "departmentId is required");
+
+    const [user, department] = await Promise.all([
+      User.findById(req.params.id),
+      Department.findById(departmentId),
+    ]);
+
+    if (!user) return apiResponse(res, 404, "User not found");
+    if (!department) return apiResponse(res, 404, "Department not found");
+
+    user.department = department._id;
+    await user.save();
+
+    return apiResponse(res, 200, "User department assigned", {
+      _id: user._id,
+      name: user.name,
+      email: user.email,
+      role: user.role,
+      isActive: user.isActive,
+      isApproved: user.isApproved,
+      department: user.department,
+    });
+  } catch (error) {
+    console.error("Assign user department error:", error);
+    return apiResponse(res, 500, "Failed to assign user department");
+  }
+};
+
+exports.deleteUser = async (req, res) => {
+  try {
+    const user = await User.findById(req.params.id);
+    if (!user) return apiResponse(res, 404, "User not found");
+
+    if (String(user._id) === String(req.user._id)) {
+      return apiResponse(res, 400, "Admin cannot delete own account");
+    }
+
+    await User.findByIdAndDelete(req.params.id);
+    return apiResponse(res, 200, "User deleted");
+  } catch (error) {
+    console.error("Delete user error:", error);
+    return apiResponse(res, 500, "Failed to delete user");
+  }
+};
+
+exports.getDepartments = async (_req, res) => {
+  try {
+    const departments = await Department.find({}).sort({ name: 1 });
+    return apiResponse(res, 200, "Departments retrieved", departments);
+  } catch (error) {
+    console.error("Get departments error:", error);
+    return apiResponse(res, 500, "Failed to fetch departments");
+  }
+};
+
+exports.createDepartment = async (req, res) => {
+  try {
+    const { name, description = "", categories = [], coverageArea } = req.body;
+    if (!name || !String(name).trim()) {
+      return apiResponse(res, 400, "Department name is required");
+    }
+
+    const existing = await Department.findOne({ name: String(name).trim() });
+    if (existing) return apiResponse(res, 400, "Department already exists");
+
+    const data = {
+      name: String(name).trim(),
+      description: String(description).trim(),
+      categories: Array.isArray(categories) ? categories.map((c) => String(c).toLowerCase()) : [],
+    };
+    if (coverageArea && coverageArea.type === "Polygon" && Array.isArray(coverageArea.coordinates)) {
+      data.coverageArea = coverageArea;
+    }
+
+    const department = await Department.create(data);
+
+    return apiResponse(res, 201, "Department created", department);
+  } catch (error) {
+    console.error("Create department error:", error);
+    return apiResponse(res, 500, "Failed to create department");
   }
 };

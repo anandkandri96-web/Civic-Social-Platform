@@ -21,7 +21,7 @@ const connectDB = async () => {
       `✅ MongoDB Connected | Host: ${conn.connection.host} | DB: ${conn.connection.name}`
     );
 
-    // Connection events (important for cron + sockets)
+    // Connection events (important for cron jobs)
     mongoose.connection.on("connected", () => {
       console.log("🟢 MongoDB connection established");
     });

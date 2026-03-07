@@ -143,10 +143,25 @@ const issueSchema = new mongoose.Schema(
       default: false,
       index: true,
     },
+    escalationLevel: {
+      type: Number,
+      default: 0,
+      index: true,
+    },
 
     escalatedAt: {
       type: Date,
       default: null,
+    },
+    escalationHistory: {
+      type: [
+        {
+          level: { type: Number, required: true },
+          at: { type: Date, required: true },
+          note: { type: String, default: "" },
+        },
+      ],
+      default: [],
     },
   },
   { timestamps: true }
