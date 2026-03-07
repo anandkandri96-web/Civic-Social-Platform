@@ -379,6 +379,9 @@ function HomeHeader({
               <a href="#map" className="header__nav-link">
                 Map
               </a>
+              <Link to="/workflow" className="header__nav-link">
+                Workflow
+              </Link>
               <Link to="/login" className="btn btn-ghost">
                 Log In
               </Link>
@@ -392,6 +395,9 @@ function HomeHeader({
             <>
               <Link to="/issues" className="header__nav-link">
                 Browse Issues
+              </Link>
+              <Link to="/workflow" className="header__nav-link">
+                Workflow
               </Link>
               <Link to={dashboardPath} className="header__nav-link">
                 Dashboard
@@ -409,6 +415,9 @@ function HomeHeader({
             <>
               <Link to="/issues" className="header__nav-link">
                 Browse Issues
+              </Link>
+              <Link to="/workflow" className="header__nav-link">
+                Workflow
               </Link>
               <Link to={dashboardPath} className="header__nav-link">
                 Dashboard
@@ -927,7 +936,7 @@ function Footer() {
 
 const Home = () => {
   const { user, logout } = useAuth();
-  const { isAdmin } = useRole();
+  const { isAdmin, dashboardPath } = useRole();
 
   const [theme, setTheme] = useState(() => {
     if (typeof window === "undefined") return "dark";
@@ -971,8 +980,6 @@ const Home = () => {
   }, []);
 
   const isLoggedIn = Boolean(user);
-  const dashboardPath = isAdmin ? "/admin" : "/dashboard";
-
   const handleVoteUpdate = (issueId, result) => {
     setIssues((prev) =>
       prev

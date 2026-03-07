@@ -1,33 +1,41 @@
 import { useAuth } from './useAuth';
 import { ROLES } from '../utils/constants';
+import { hasRole, normalizeRole } from '../utils/roleCheck';
 
 export const useRole = () => {
   const { user, loading } = useAuth();
 
-  const role = user?.role || null;
-  const roleLower = role?.toLowerCase();
+  const role = normalizeRole(user?.role || null);
+  const isAdmin = role === 'admin' || user?.role === ROLES.ADMIN;
+  const isVolunteer = hasRole(role, ROLES.VOLUNTEER);
+  const isCitizen = hasRole(role, [ROLES.CITIZEN, ROLES.USER]);
+  const isOfficer = hasRole(role, ROLES.OFFICER);
+  const isFieldWorker = hasRole(role, ROLES.FIELD_WORKER);
 
-  const isAdmin = roleLower === 'admin' || role === ROLES.ADMIN;
-  const isVolunteer = roleLower === 'volunteer' || role === ROLES.VOLUNTEER || isAdmin;
-  const isUser = roleLower === 'user' || role === ROLES.USER;
+  const dashboardPath = isAdmin
+    ? '/admin'
+    : isOfficer
+      ? '/dashboard/officer'
+      : isFieldWorker
+        ? '/dashboard/field-worker'
+        : isVolunteer
+          ? '/dashboard/volunteer'
+          : '/dashboard';
 
   const hasPermission = (requiredRole) => {
     if (loading || !role) return false;
-    if (isAdmin) return true;
-
-    const roles = Array.isArray(requiredRole)
-      ? requiredRole
-      : [requiredRole];
-
-    return roles.includes(role);
+    return hasRole(role, requiredRole);
   };
 
   return {
     role,
     loading,
-    isUser,
+    isCitizen,
     isVolunteer,
+    isOfficer,
+    isFieldWorker,
     isAdmin,
+    dashboardPath,
     hasPermission,
   };
 };

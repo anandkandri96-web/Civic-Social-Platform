@@ -21,10 +21,19 @@ import Loader from '../components/common/Loader/Loader';
 
 const Analytics = lazy(() => import('../pages/Admin/Analytics/Analytics'));
 const ManageIssues = lazy(() => import('../pages/Admin/ManageIssues/ManageIssues'));
+const CivicWorkflow = lazy(() => import('../pages/CivicWorkflow/CivicWorkflow'));
+const VolunteerDashboard = lazy(() => import('../pages/Dashboard/VolunteerDashboard'));
+const OfficerDashboard = lazy(() => import('../pages/Dashboard/OfficerDashboard'));
+const FieldWorkerDashboard = lazy(() => import('../pages/Dashboard/FieldWorkerDashboard'));
 
 const DashboardEntry = () => {
-  const { isAdmin } = useRole();
-  return isAdmin ? <Navigate to="/admin" replace /> : <UserDashboard />;
+  const { isAdmin, isOfficer, isFieldWorker, isVolunteer } = useRole();
+
+  if (isAdmin) return <Navigate to="/admin" replace />;
+  if (isOfficer) return <Navigate to="/dashboard/officer" replace />;
+  if (isFieldWorker) return <Navigate to="/dashboard/field-worker" replace />;
+  if (isVolunteer) return <Navigate to="/dashboard/volunteer" replace />;
+  return <UserDashboard />;
 };
 
 const AppRoutes = () => (
@@ -38,12 +47,37 @@ const AppRoutes = () => (
       <Route element={<MainLayout />}>
         <Route path="/issues" element={<IssuesList />} />
         <Route path="/issues/:id" element={<IssueDetails />} />
+        <Route path="/workflow" element={<CivicWorkflow />} />
       </Route>
 
       {/* AUTHENTICATED */}
       <Route element={<ProtectedRoute />}>
         <Route element={<MainLayout />}>
           <Route path="/dashboard" element={<DashboardEntry />} />
+          <Route
+            path="/dashboard/volunteer"
+            element={(
+              <ProtectedRoute requiredRole="volunteer">
+                <VolunteerDashboard />
+              </ProtectedRoute>
+            )}
+          />
+          <Route
+            path="/dashboard/officer"
+            element={(
+              <ProtectedRoute requiredRole="department_officer">
+                <OfficerDashboard />
+              </ProtectedRoute>
+            )}
+          />
+          <Route
+            path="/dashboard/field-worker"
+            element={(
+              <ProtectedRoute requiredRole="field_worker">
+                <FieldWorkerDashboard />
+              </ProtectedRoute>
+            )}
+          />
           <Route path="/issues/create" element={<CreateIssue />} />
         </Route>
       </Route>

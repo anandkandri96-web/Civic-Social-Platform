@@ -26,7 +26,9 @@ const handleLogout = () => {
   try {
     localStorage.removeItem("token");
     localStorage.removeItem("user");
-  } catch {}
+  } catch (error) {
+    console.warn("Local storage cleanup failed during logout:", error);
+  }
 
   if (typeof window !== "undefined") {
     window.location.replace("/");

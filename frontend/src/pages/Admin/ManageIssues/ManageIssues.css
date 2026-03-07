@@ -1,14 +1,40 @@
-﻿.manage-issues-card {
-  padding: var(--space-xl);
+.manage-empty {
+  padding: 40px var(--space-md);
 }
 
-.manage-issues-card h1 {
-  font-family: var(--font-heading);
-  font-size: clamp(1.6rem, 2vw, 2rem);
+.manage-issues-list {
+  display: grid;
+  gap: var(--space-lg);
+}
+
+.manage-issue-row {
+  padding: var(--space-md);
+}
+
+.manage-issue-controls {
+  display: flex;
+  align-items: center;
   margin-bottom: var(--space-sm);
 }
 
-.manage-issues-card p {
+.manage-issue-controls label {
+  font-size: var(--font-size-sm);
   color: var(--text-secondary);
-  line-height: 1.6;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-sm);
+}
+
+.manage-issue-controls select {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  padding: 8px 10px;
+  font-size: var(--font-size-sm);
+  color: var(--text-primary);
+}
+
+.manage-issue-controls select:focus {
+  outline: none;
+  border-color: var(--color-primary);
 }

@@ -1,0 +1,112 @@
+.civic-workflow {
+  background: var(--bg-main);
+}
+
+.civic-workflow__hero {
+  padding: 24px;
+  margin-bottom: 24px;
+}
+
+.civic-workflow__hero h1 {
+  margin-bottom: 8px;
+  font-family: var(--font-heading);
+  font-size: clamp(1.6rem, 3vw, 2.2rem);
+}
+
+.civic-workflow__hero p {
+  color: var(--text-secondary);
+}
+
+.civic-workflow__section {
+  margin-bottom: 24px;
+}
+
+.civic-workflow__section h2 {
+  margin-bottom: 14px;
+  font-family: var(--font-heading);
+  font-size: 1.2rem;
+}
+
+.civic-workflow__role-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.civic-workflow__role-card {
+  padding: 16px;
+}
+
+.civic-workflow__role-card h3 {
+  margin-bottom: 8px;
+}
+
+.civic-workflow__role-card p {
+  color: var(--text-secondary);
+  margin-bottom: 10px;
+  font-size: 0.92rem;
+}
+
+.civic-workflow__role-card ul {
+  padding-left: 18px;
+  color: var(--text-secondary);
+  display: grid;
+  gap: 6px;
+  font-size: 0.88rem;
+}
+
+.civic-workflow__paths-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.civic-workflow__path-card {
+  padding: 16px;
+}
+
+.civic-workflow__path-card h3 {
+  margin-bottom: 10px;
+}
+
+.civic-workflow__path-card ol {
+  padding-left: 18px;
+  color: var(--text-secondary);
+  display: grid;
+  gap: 8px;
+  font-size: 0.9rem;
+}
+
+.civic-workflow__feature-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.civic-workflow__feature-card {
+  padding: 16px;
+}
+
+.civic-workflow__feature-card h3 {
+  margin-bottom: 6px;
+}
+
+.civic-workflow__feature-card p {
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+}
+
+@media (max-width: 1024px) {
+  .civic-workflow__role-grid,
+  .civic-workflow__feature-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 768px) {
+  .civic-workflow__role-grid,
+  .civic-workflow__paths-grid,
+  .civic-workflow__feature-grid {
+    grid-template-columns: 1fr;
+  }
+}

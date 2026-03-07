@@ -1,4 +1,4 @@
-﻿import { useMemo, useState } from 'react';
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import StatusBadge from './StatusBadge/StatusBadge';
 import VoteButton from './VoteButton';
@@ -41,11 +41,8 @@ const IssueCard = ({ issue, onVote, onDeleted }) => {
 
   if (!issue) return null;
 
-  const reporterId = useMemo(() => {
-    const rep = issue?.reportedBy;
-    return rep && typeof rep === 'object' ? rep._id : rep;
-  }, [issue?.reportedBy]);
-
+  const rep = issue.reportedBy;
+  const reporterId = rep && typeof rep === 'object' ? rep._id : rep;
   const isReporter = !!user?.id && String(reporterId) === String(user.id);
   const canDelete = isAdmin || isReporter;
 

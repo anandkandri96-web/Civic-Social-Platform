@@ -1,20 +1,22 @@
-﻿import { useEffect, useState } from 'react';
-import { getIssues, updateIssueStatus } from '../../../api/issues.api';
-import IssueCard from '../../../components/ui/IssueCard';
+import { useEffect, useMemo, useState } from 'react';
+import { Link } from 'react-router-dom';
+import { getIssues } from '../../../api/issues.api';
 import Loader from '../../../components/common/Loader/Loader';
+import PageHeader from '../../../components/ui/PageHeader/PageHeader';
 import './AdminDashboard.css';
 
 const AdminDashboard = () => {
   const [issues, setIssues] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const [updatingId, setUpdatingId] = useState(null);
 
   useEffect(() => {
     let mounted = true;
-    const fetch = async () => {
+
+    const fetchIssues = async () => {
       setLoading(true);
       setError('');
+
       try {
         const data = await getIssues();
         if (mounted) setIssues(Array.isArray(data) ? data : []);
@@ -24,82 +26,115 @@ const AdminDashboard = () => {
         if (mounted) setLoading(false);
       }
     };
-    fetch();
+
+    fetchIssues();
     return () => {
       mounted = false;
     };
   }, []);
 
-  const handleStatusChange = async (issueId, status) => {
-    setUpdatingId(issueId);
-    try {
-      const updated = await updateIssueStatus(issueId, status);
-      setIssues((prev) => prev.map((i) => (i._id === issueId ? { ...i, status: updated.status } : i)));
-    } catch (err) {
-      alert(err?.response?.data?.message || err?.message || 'Failed to update status');
-    } finally {
-      setUpdatingId(null);
-    }
+  const stats = useMemo(() => {
+    const total = issues.length;
+    const pending = issues.filter((i) => i.status === 'pending').length;
+    const assigned = issues.filter((i) => i.status === 'assigned').length;
+    const resolved = issues.filter((i) => i.status === 'resolved').length;
+    return { total, pending, assigned, resolved };
+  }, [issues]);
+
+  const recentIssues = useMemo(
+    () =>
+      [...issues]
+        .sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0))
+        .slice(0, 5),
+    [issues]
+  );
+
+  const getBarHeight = (value) => {
+    const max = Math.max(stats.pending, stats.assigned, stats.resolved, 1);
+    const ratio = value / max;
+    return `${Math.max(16, Math.round(ratio * 100))}%`;
   };
+
+  if (loading) {
+    return <Loader fullScreen />;
+  }
 
   return (
     <section className="admin-dashboard page">
       <div className="container">
-        <div className="admin-header">
-          <div>
-            <h1>Admin Dashboard</h1>
-            <p>Review and manage community-reported issues.</p>
-          </div>
-        </div>
+        <PageHeader
+          title="Admin Dashboard"
+          subtitle="System health and issue trends at a glance."
+          action={
+            <div className="admin-dashboard-actions">
+              <Link className="admin-dashboard-link" to="/admin/analytics">
+                View Analytics
+              </Link>
+              <Link className="admin-dashboard-link admin-dashboard-link--primary" to="/admin/manage-issues">
+                Open Admin Panel
+              </Link>
+            </div>
+          }
+        />
 
         {error && <div className="issues-error">{error}</div>}
 
-        {loading ? (
-          <Loader fullScreen />
-        ) : issues.length === 0 ? (
-          <div className="admin-empty card">
-            <div className="empty-card">
-              <h3>No issues yet</h3>
-              <p>Once citizens report issues, they will appear here for review.</p>
-              <p className="admin-note">Admins can manage issues only.</p>
-            </div>
-          </div>
-        ) : (
-          <div className="admin-issues-list">
-            {issues.map((issue) => (
-              <div key={issue._id} className="admin-issue-row card">
-                <div className="admin-issue-controls">
-                  <label>
-                    Status
-                    <select
-                      value={issue.status || 'pending'}
-                      onChange={(e) => handleStatusChange(issue._id, e.target.value)}
-                      disabled={updatingId === issue._id}
-                    >
-                      <option value="pending">pending</option>
-                      <option value="assigned">assigned</option>
-                      <option value="resolved">resolved</option>
-                    </select>
-                  </label>
-                </div>
+        <div className="admin-stats-grid">
+          <article className="admin-stat-card card">
+            <span>Total Issues</span>
+            <h2>{stats.total}</h2>
+          </article>
+          <article className="admin-stat-card card">
+            <span>Pending</span>
+            <h2 className="status-warning">{stats.pending}</h2>
+          </article>
+          <article className="admin-stat-card card">
+            <span>Assigned</span>
+            <h2 className="status-primary">{stats.assigned}</h2>
+          </article>
+          <article className="admin-stat-card card">
+            <span>Resolved</span>
+            <h2 className="status-success">{stats.resolved}</h2>
+          </article>
+        </div>
 
-                <IssueCard
-                  issue={issue}
-                  onVote={(result) => {
-                    setIssues((prev) =>
-                      prev.map((i) =>
-                        i._id === issue._id ? { ...i, voteCount: result.voteCount, userVoted: result.voted } : i
-                      )
-                    );
-                  }}
-                  onDeleted={(deletedId) => {
-                    setIssues((prev) => prev.filter((i) => i._id !== deletedId));
-                  }}
-                />
+        <div className="admin-dashboard-panels">
+          <section className="card admin-panel">
+            <h3>Issue Status Distribution</h3>
+            <div className="admin-chart">
+              <div className="admin-bar-wrapper">
+                <div className="admin-bar pending" style={{ height: getBarHeight(stats.pending) }} />
+                <span>Pending</span>
               </div>
-            ))}
-          </div>
-        )}
+              <div className="admin-bar-wrapper">
+                <div className="admin-bar assigned" style={{ height: getBarHeight(stats.assigned) }} />
+                <span>Assigned</span>
+              </div>
+              <div className="admin-bar-wrapper">
+                <div className="admin-bar resolved" style={{ height: getBarHeight(stats.resolved) }} />
+                <span>Resolved</span>
+              </div>
+            </div>
+          </section>
+
+          <section className="card admin-panel">
+            <h3>Recent Reports</h3>
+            {recentIssues.length === 0 ? (
+              <p className="admin-note">No issue activity yet.</p>
+            ) : (
+              <ul className="admin-recent-list">
+                {recentIssues.map((issue) => (
+                  <li key={issue._id}>
+                    <span className="admin-recent-title">{issue.title}</span>
+                    <span className="admin-recent-meta">
+                      {issue.category || 'Other'} · {issue.status || 'pending'}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </section>
+        </div>
       </div>
     </section>
   );

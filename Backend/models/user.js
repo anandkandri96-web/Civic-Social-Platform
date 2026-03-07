@@ -1,22 +1,6 @@
-// backend/models/User.js
-
 const mongoose = require("mongoose");
 const bcrypt = require("bcryptjs");
-
-// const pointSchema = new mongoose.Schema( ❌ user location not used yet
-//   {
-//     type: {
-//       type: String,
-//       enum: ["Point"],
-//       required: true,
-//     },
-//     coordinates: {
-//       type: [Number], // [lng, lat]
-//       required: true,
-//     },
-//   },
-//   { _id: false }
-// );
+const { ROLES } = require("../config/roles");
 
 const userSchema = new mongoose.Schema(
   {
@@ -42,19 +26,14 @@ const userSchema = new mongoose.Schema(
       minlength: 6,
       select: false,
     },
-role: {
-  type: String,
-  enum: ["user", "admin", "volunteer"],
-  default: "user",
-  lowercase: true,   // ⭐ IMPORTANT (auto-normalizes)
-  trim: true,
-},
 
-
-    // location: { ❌ not used yet
-    //   type: pointSchema,
-    //   required: false,
-    // },
+    role: {
+      type: String,
+      enum: Object.values(ROLES),
+      default: ROLES.CITIZEN,
+      lowercase: true,
+      trim: true,
+    },
 
     isActive: {
       type: Boolean,
@@ -65,28 +44,14 @@ role: {
   { timestamps: true }
 );
 
-// userSchema.index({ location: "2dsphere" }, { sparse: true }); ❌ not needed yet
-
-/**
- * Password hashing (REQUIRED)
- */
 userSchema.pre("save", async function (next) {
   if (!this.isModified("password")) return next();
   this.password = await bcrypt.hash(this.password, 12);
   next();
 });
 
-/**
- * Password comparison (REQUIRED)
- */
 userSchema.methods.comparePassword = async function (candidatePassword) {
   return bcrypt.compare(candidatePassword, this.password);
 };
-
-// userSchema.methods.toJSON = function () { ❌ optional
-//   const obj = this.toObject();
-//   delete obj.password;
-//   return obj;
-// };
 
 module.exports = mongoose.model("User", userSchema);

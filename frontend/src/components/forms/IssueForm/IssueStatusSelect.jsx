@@ -1,3 +1,4 @@
+import PropTypes from 'prop-types';
 import './IssueStatusSelect.css';
 
 const STATUS_OPTIONS = ['pending', 'assigned', 'resolved'];
@@ -17,6 +18,13 @@ const IssueStatusSelect = ({ value, onChange, disabled = false, className = '' }
       ))}
     </select>
   );
+};
+
+IssueStatusSelect.propTypes = {
+  value: PropTypes.oneOf(STATUS_OPTIONS),
+  onChange: PropTypes.func,
+  disabled: PropTypes.bool,
+  className: PropTypes.string,
 };
 
 export default IssueStatusSelect;

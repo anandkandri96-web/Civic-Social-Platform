@@ -1,12 +1,8 @@
-// // backend/routes/analytics.routes.js
+const router = require("express").Router();
+const { getTrends, getHeatmap } = require("../controllers/analytics.controller");
+const { protect, checkRole } = require("../middlewares/auth.middleware");
 
-// const express = require('express');
-// const { getTrends } = require('../controllers/analytics.controller');
-// const { protect, checkRole } = require('../middlewares/auth.middleware'); // updated import
+router.get("/trends", protect, checkRole(["admin", "officer"]), getTrends);
+router.get("/heatmap", protect, checkRole(["admin", "officer"]), getHeatmap);
 
-// const router = express.Router();
-
-// // Admin-only analytics
-// router.get('/trends', protect, checkRole(['admin']), getTrends);
-
-// module.exports = router;
+module.exports = router;

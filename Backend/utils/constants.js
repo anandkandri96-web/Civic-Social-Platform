@@ -1,6 +1,63 @@
-// module.exports = {
-//   CATEGORIES: ['roads', 'electricity', 'garbage', 'drainage', 'other'],
-//   SEVERITY_LEVELS: { LOW: 1, MEDIUM: 3, HIGH: 5 },
-//   ESCALATION_THRESHOLD: 50,
-//   RADIUS_KM: 2
-// };
+const { ROLES } = require("../config/roles");
+
+const ISSUE_STATUS = Object.freeze({
+  REPORTED: "reported",
+  UNDER_REVIEW: "under_review",
+  ASSIGNED_TO_DEPARTMENT: "assigned_to_department",
+  WORK_IN_PROGRESS: "work_in_progress",
+  RESOLVED: "resolved",
+  CITIZEN_VERIFIED: "citizen_verified",
+  CLOSED: "closed",
+  VOLUNTEER_CLAIMED: "volunteer_claimed",
+  COMMUNITY_FIX_IN_PROGRESS: "community_fix_in_progress",
+  RESOLVED_BY_COMMUNITY: "resolved_by_community",
+  REJECTED: "rejected",
+});
+
+const ISSUE_CATEGORIES = Object.freeze([
+  "roads",
+  "electricity",
+  "garbage",
+  "drainage",
+  "water",
+  "other",
+]);
+
+const CATEGORY_DEPARTMENT_MAP = Object.freeze({
+  roads: "Road Maintenance",
+  electricity: "Electricity Services",
+  garbage: "Waste Management",
+  drainage: "Drainage Management",
+  water: "Water Supply",
+  other: "General Services",
+});
+
+const STATUS_TRANSITIONS = Object.freeze({
+  [ISSUE_STATUS.REPORTED]: [
+    ISSUE_STATUS.UNDER_REVIEW,
+    ISSUE_STATUS.VOLUNTEER_CLAIMED,
+    ISSUE_STATUS.REJECTED,
+  ],
+  [ISSUE_STATUS.UNDER_REVIEW]: [
+    ISSUE_STATUS.ASSIGNED_TO_DEPARTMENT,
+    ISSUE_STATUS.VOLUNTEER_CLAIMED,
+    ISSUE_STATUS.REJECTED,
+  ],
+  [ISSUE_STATUS.ASSIGNED_TO_DEPARTMENT]: [ISSUE_STATUS.WORK_IN_PROGRESS],
+  [ISSUE_STATUS.WORK_IN_PROGRESS]: [ISSUE_STATUS.RESOLVED],
+  [ISSUE_STATUS.VOLUNTEER_CLAIMED]: [ISSUE_STATUS.COMMUNITY_FIX_IN_PROGRESS],
+  [ISSUE_STATUS.COMMUNITY_FIX_IN_PROGRESS]: [ISSUE_STATUS.RESOLVED_BY_COMMUNITY],
+  [ISSUE_STATUS.RESOLVED]: [ISSUE_STATUS.CITIZEN_VERIFIED],
+  [ISSUE_STATUS.RESOLVED_BY_COMMUNITY]: [ISSUE_STATUS.CITIZEN_VERIFIED],
+  [ISSUE_STATUS.CITIZEN_VERIFIED]: [ISSUE_STATUS.CLOSED],
+  [ISSUE_STATUS.REJECTED]: [],
+  [ISSUE_STATUS.CLOSED]: [],
+});
+
+module.exports = {
+  ROLES,
+  ISSUE_STATUS,
+  ISSUE_CATEGORIES,
+  CATEGORY_DEPARTMENT_MAP,
+  STATUS_TRANSITIONS,
+};

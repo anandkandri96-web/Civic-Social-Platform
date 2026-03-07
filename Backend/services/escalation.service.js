@@ -1,46 +1,37 @@
-// // backend/services/escalation.service.js
+const Issue = require("../models/issue");
+const { ISSUE_STATUS } = require("../utils/constants");
 
-// const Issue = require('../models/Issue');
-// const Notification = require('../models/Notification');
-// const User = require('../models/User');
-// const { io } = require('../config/socket');
+const ESCALATION_HOURS = Number(process.env.ESCALATION_HOURS || 72);
+const ESCALATION_MIN_PRIORITY = Number(process.env.ESCALATION_MIN_PRIORITY || 30);
 
-// // Escalation rules
-// const ESCALATION_DAYS = 7;
-// const PRIORITY_THRESHOLD = 50;
+async function runEscalationSweep() {
+  const thresholdDate = new Date(Date.now() - ESCALATION_HOURS * 60 * 60 * 1000);
 
-// exports.checkEscalation = async () => {
-//   try {
-//     const issues = await Issue.find({
-//       status: 'pending',
-//       escalated: false,
-//       priority: { $gt: PRIORITY_THRESHOLD }
-//     });
+  const result = await Issue.updateMany(
+    {
+      escalated: false,
+      priorityScore: { $gte: ESCALATION_MIN_PRIORITY },
+      createdAt: { $lte: thresholdDate },
+      status: {
+        $in: [
+          ISSUE_STATUS.REPORTED,
+          ISSUE_STATUS.UNDER_REVIEW,
+          ISSUE_STATUS.ASSIGNED_TO_DEPARTMENT,
+          ISSUE_STATUS.WORK_IN_PROGRESS,
+          ISSUE_STATUS.VOLUNTEER_CLAIMED,
+          ISSUE_STATUS.COMMUNITY_FIX_IN_PROGRESS,
+        ],
+      },
+    },
+    {
+      $set: {
+        escalated: true,
+        escalatedAt: new Date(),
+      },
+    }
+  );
 
-//     if (!issues.length) return;
+  return result.modifiedCount || 0;
+}
 
-//     // Get all admins
-//     const admins = await User.find({ role: 'admin' }).select('_id');
-
-//     for (const issue of issues) {
-//       const daysOpen =
-//         (Date.now() - issue.createdAt.getTime()) / (1000 * 60 * 60 * 24);
-
-//       if (daysOpen < ESCALATION_DAYS) continue;
-
-//       issue.escalated = true;
-//       await issue.save();
-
-//       for (const admin of admins) {
-//         const notification = await Notification.create({
-//           user: admin._id,
-//           message: `🚨 Issue Escalated: ${issue.title}`
-//         });
-
-//         io.to(admin._id.toString()).emit('notification:new', notification);
-//       }
-//     }
-//   } catch (error) {
-//     console.error('Escalation Service Error:', error);
-//   }
-// };
+module.exports = { runEscalationSweep };

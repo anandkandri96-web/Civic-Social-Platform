@@ -1,6 +1,5 @@
-// backend/models/Issue.js
-
 const mongoose = require("mongoose");
+const { ISSUE_CATEGORIES, ISSUE_STATUS } = require("../utils/constants");
 
 const issueSchema = new mongoose.Schema(
   {
@@ -8,20 +7,23 @@ const issueSchema = new mongoose.Schema(
       type: String,
       required: true,
       trim: true,
-      maxlength: 120, // ✅ safe UI + DB limit
+      maxlength: 120,
     },
 
     description: {
       type: String,
       required: true,
       trim: true,
+      maxlength: 2000,
     },
 
     category: {
       type: String,
-      enum: ["ROADS", "ELECTRICITY", "GARBAGE", "DRAINAGE", "OTHER"],
+      enum: ISSUE_CATEGORIES,
       required: true,
       index: true,
+      lowercase: true,
+      trim: true,
     },
 
     severity: {
@@ -32,27 +34,20 @@ const issueSchema = new mongoose.Schema(
       index: true,
     },
 
-    /**
-     * Images
-     * - Base64 strings OR URLs (future Cloudinary)
-     */
     images: {
       type: [String],
-      default: [], // ✅ prevents undefined issues
+      default: [],
     },
 
-    /**
-     * GeoJSON Location (REQUIRED for $near)
-     */
     location: {
       type: {
         type: String,
         enum: ["Point"],
         default: "Point",
-        required: true, // ✅ IMPORTANT for geo queries
+        required: true,
       },
       coordinates: {
-        type: [Number], // [lng, lat]
+        type: [Number],
         required: true,
         validate: {
           validator: function (val) {
@@ -62,9 +57,7 @@ const issueSchema = new mongoose.Schema(
         },
       },
     },
-    /**
-     * Human-readable location text (optional)
-     */
+
     locationText: {
       type: String,
       trim: true,
@@ -72,21 +65,31 @@ const issueSchema = new mongoose.Schema(
       default: "",
     },
 
-    /**
-     * Status (used by updateStatus controller)
-     */
     status: {
       type: String,
-      enum: ["pending", "assigned", "resolved"],
-      default: "pending",
+      enum: [
+        ISSUE_STATUS.REPORTED,
+        ISSUE_STATUS.UNDER_REVIEW,
+        ISSUE_STATUS.ASSIGNED_TO_DEPARTMENT,
+        ISSUE_STATUS.WORK_IN_PROGRESS,
+        ISSUE_STATUS.RESOLVED,
+        ISSUE_STATUS.CITIZEN_VERIFIED,
+        ISSUE_STATUS.CLOSED,
+        ISSUE_STATUS.VOLUNTEER_CLAIMED,
+        ISSUE_STATUS.COMMUNITY_FIX_IN_PROGRESS,
+        ISSUE_STATUS.RESOLVED_BY_COMMUNITY,
+        ISSUE_STATUS.REJECTED,
+        "assigned", // legacy
+      ],
+      default: ISSUE_STATUS.REPORTED,
       index: true,
     },
 
-    // priorityScore: { ❌ not used yet
-    //   type: Number,
-    //   default: 0,
-    //   index: true,
-    // },
+    priorityScore: {
+      type: Number,
+      default: 0,
+      index: true,
+    },
 
     voteCount: {
       type: Number,
@@ -94,17 +97,35 @@ const issueSchema = new mongoose.Schema(
       index: true,
     },
 
-    // assignedDepartment: { ❌ department logic not implemented
-    //   type: mongoose.Schema.Types.ObjectId,
-    //   ref: "Department",
-    //   index: true,
-    // },
-
     reportedBy: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
       required: true,
-      index: true,
+    },
+
+    assignedDepartment: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Department",
+    },
+
+    assignedWorker: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+    },
+
+    volunteer: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+    },
+
+    communityProof: {
+      type: [String],
+      default: [],
+    },
+
+    verifiedByCitizen: {
+      type: Boolean,
+      default: false,
     },
 
     resolvedAt: {
@@ -112,34 +133,27 @@ const issueSchema = new mongoose.Schema(
       default: null,
     },
 
-    // escalation: { ❌ escalation logic not implemented
-    //   isEscalated: {
-    //     type: Boolean,
-    //     default: false,
-    //   },
-    //   escalatedAt: {
-    //     type: Date,
-    //   },
-    //   level: {
-    //     type: Number,
-    //     default: 0,
-    //   },
-    // },
+    closedAt: {
+      type: Date,
+      default: null,
+    },
+
+    escalated: {
+      type: Boolean,
+      default: false,
+      index: true,
+    },
+
+    escalatedAt: {
+      type: Date,
+      default: null,
+    },
   },
   { timestamps: true }
 );
 
-/**
- * INDEXES (CRITICAL — DO NOT REMOVE)
- */
-
-// ✅ REQUIRED for $near / geo search
 issueSchema.index({ location: "2dsphere" });
-
-// ✅ Common filters
 issueSchema.index({ category: 1, status: 1 });
-
-// ✅ Search support
 issueSchema.index({ title: "text", description: "text" });
 
 module.exports = mongoose.model("Issue", issueSchema);

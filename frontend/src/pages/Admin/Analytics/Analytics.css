@@ -35,6 +35,9 @@
   grid-template-columns: 1fr 1fr;
   gap: var(--space-md);
 }
+.admin-panels--secondary {
+  margin-top: var(--space-md);
+}
 
 .panel {
   padding: var(--space-md);
@@ -70,29 +73,23 @@
 .bar.progress { background: color-mix(in srgb, var(--color-primary) 70%, transparent); }
 .bar.resolved { background: color-mix(in srgb, var(--color-success) 70%, transparent); }
 
-.issues-table {
-  width: 100%;
-  border-collapse: collapse;
+.metric-list {
+  list-style: none;
+  display: grid;
+  gap: var(--space-sm);
 }
 
-.issues-table th,
-.issues-table td {
-  padding: 10px 8px;
+.metric-list li {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-sm);
   border-bottom: 1px solid var(--border-color);
-  text-align: left;
+  padding-bottom: var(--space-sm);
   font-size: var(--font-size-sm);
 }
 
-.issues-table th {
+.metric-list span {
   color: var(--text-secondary);
-}
-
-.issues-table select {
-  border: 1px solid var(--border-color);
-  border-radius: var(--radius-sm);
-  background: var(--bg-surface);
-  color: var(--text-primary);
-  padding: 6px 8px;
 }
 
 @media (max-width: 1000px) {

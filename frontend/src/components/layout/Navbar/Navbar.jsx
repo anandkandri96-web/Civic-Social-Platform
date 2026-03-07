@@ -1,12 +1,37 @@
-﻿import { Link } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { useAuth } from '../../../hooks/useAuth';
+import { normalizeRole } from '../../../utils/roleCheck';
 import './Navbar.css';
 
 const Navbar = () => {
   const { user, logout, isAuthenticated } = useAuth();
-  const isAdmin = user?.role?.toLowerCase() === 'admin';
-  const dashboardPath = isAdmin ? '/admin' : '/dashboard';
-  const dashboardLabel = isAdmin ? 'Admin Dashboard' : 'My Dashboard';
+  const role = normalizeRole(user?.role);
+  const isAdmin = role === 'admin';
+  const isOfficer = role === 'department_officer';
+  const isFieldWorker = role === 'field_worker';
+  const isVolunteer = role === 'volunteer';
+
+  const dashboardPath = isAdmin
+    ? '/admin'
+    : isOfficer
+      ? '/dashboard/officer'
+      : isFieldWorker
+        ? '/dashboard/field-worker'
+        : isVolunteer
+          ? '/dashboard/volunteer'
+          : '/dashboard';
+
+  const dashboardLabel = isAdmin
+    ? 'Admin Dashboard'
+    : isOfficer
+      ? 'Officer Dashboard'
+      : isFieldWorker
+        ? 'Field Dashboard'
+        : isVolunteer
+          ? 'Volunteer Dashboard'
+          : 'My Dashboard';
+
+  const panelPath = '/admin/manage-issues';
   const displayName = user?.name || 'user';
   const greetingText = isAdmin ? `Hi Admin, ${displayName}` : `Hi, ${displayName}`;
 
@@ -19,8 +44,9 @@ const Navbar = () => {
 
         <nav className="nav-links">
           {!isAdmin && <Link to="/issues">Browse Issues</Link>}
+          <Link to="/workflow">Workflow</Link>
           {isAuthenticated && <Link to={dashboardPath}>{dashboardLabel}</Link>}
-          {isAdmin && <Link to="/admin/analytics">Admin Panel</Link>}
+          {isAdmin && <Link to={panelPath}>Admin Panel</Link>}
         </nav>
       </div>
 

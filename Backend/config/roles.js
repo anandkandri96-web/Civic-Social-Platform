@@ -1,7 +1,14 @@
-const roles = {
-  CITIZEN: 'citizen',
-  ADMIN: 'admin',
-  VOLUNTEER: 'volunteer',
-};
+const ROLES = Object.freeze({
+  CITIZEN: "citizen",
+  VOLUNTEER: "volunteer",
+  OFFICER: "officer",
+  WORKER: "worker",
+  ADMIN: "admin",
+});
 
-module.exports = roles;
+// Legacy role aliases supported by old clients/data
+const ROLE_ALIASES = Object.freeze({
+  user: ROLES.CITIZEN,
+});
+
+module.exports = { ROLES, ROLE_ALIASES };

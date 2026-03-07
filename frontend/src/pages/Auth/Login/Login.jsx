@@ -1,6 +1,7 @@
 ﻿import { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../../hooks/useAuth';
+import { normalizeRole } from '../../../utils/roleCheck';
 import Button from '../../../components/common/Button/Button';
 import './Login.css';
 
@@ -47,10 +48,16 @@ const Login = () => {
         password,
       });
 
-      const actualRole = (res?.data?.user?.role || '').toLowerCase();
+      const actualRole = normalizeRole(res?.data?.user?.role || '');
 
       if (actualRole === 'admin') {
         navigate('/admin', { replace: true });
+      } else if (actualRole === 'department_officer') {
+        navigate('/dashboard/officer', { replace: true });
+      } else if (actualRole === 'field_worker') {
+        navigate('/dashboard/field-worker', { replace: true });
+      } else if (actualRole === 'volunteer') {
+        navigate('/dashboard/volunteer', { replace: true });
       } else {
         navigate(redirectTo, { replace: true });
       }

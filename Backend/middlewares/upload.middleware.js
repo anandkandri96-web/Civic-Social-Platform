@@ -42,3 +42,16 @@ exports.uploadIssueImage = multer({
   },
 }).single("image");
 
+/**
+ * Generic multiple image uploader.
+ */
+exports.uploadImages = (field = "images", maxCount = 5) =>
+  multer({
+    storage,
+    fileFilter,
+    limits: {
+      fileSize: 5 * 1024 * 1024,
+      files: maxCount,
+    },
+  }).array(field, maxCount);
+

@@ -1,15 +1,42 @@
-/**
- * Role hierarchy: user < volunteer < admin
- * Backend and JWT use lowercase; requiredRole may be "ADMIN" from routes.
- */
+const ROLE_ALIAS = {
+  citizen: 'citizen',
+  user: 'citizen',
+  volunteer: 'volunteer',
+  ngo: 'volunteer',
+  department_officer: 'department_officer',
+  officer: 'department_officer',
+  'department officer': 'department_officer',
+  field_worker: 'field_worker',
+  worker: 'field_worker',
+  'field worker': 'field_worker',
+  admin: 'admin',
+  system_admin: 'admin',
+  'system administrator': 'admin',
+};
+
+const ROLE_ACCESS = {
+  citizen: new Set(['citizen']),
+  volunteer: new Set(['volunteer']),
+  department_officer: new Set(['department_officer']),
+  field_worker: new Set(['field_worker']),
+  admin: new Set(['citizen', 'volunteer', 'department_officer', 'field_worker', 'admin']),
+};
+
+export const normalizeRole = (role) => {
+  if (!role) return null;
+  return ROLE_ALIAS[String(role).trim().toLowerCase()] || null;
+};
+
 export const hasRole = (userRole, requiredRole) => {
   if (!requiredRole) return true;
-  if (!userRole) return false;
 
-  const u = String(userRole).toLowerCase();
-  const r = String(requiredRole).toLowerCase();
-  const hierarchy = { user: 1, volunteer: 2, admin: 3 };
+  const normalizedUserRole = normalizeRole(userRole);
+  if (!normalizedUserRole) return false;
 
-  if (!hierarchy[u] || !hierarchy[r]) return false;
-  return hierarchy[u] >= hierarchy[r];
+  const roles = Array.isArray(requiredRole) ? requiredRole : [requiredRole];
+  return roles.some((role) => {
+    const normalizedRequiredRole = normalizeRole(role);
+    if (!normalizedRequiredRole) return false;
+    return ROLE_ACCESS[normalizedUserRole]?.has(normalizedRequiredRole) ?? false;
+  });
 };
