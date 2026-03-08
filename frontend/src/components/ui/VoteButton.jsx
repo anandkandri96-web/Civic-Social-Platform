@@ -1,7 +1,7 @@
 ﻿import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
-import { upvote as upvoteApi, removeVote as removeVoteApi } from '../../api/votes.api';
+import { upvote as upvoteApi, removeVote as removeVoteApi } from '@api/votes.api.js';
 import './VoteButton.css';
 
 const VoteButton = ({

@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { getAllIssuesAdmin } from '../../../api/admin.api';
-import { getErrorMessage } from '../../../api/utils';
+import { getAllIssuesAdmin } from '@api/admin.api';
+import { getErrorMessage } from '@api/utils';
 import Loader from '../../../components/common/Loader/Loader';
 import PageHeader from '../../../components/ui/PageHeader/PageHeader';
 import './AdminDashboard.css';

@@ -1,6 +1,6 @@
 import { useState } from 'react';
-import { updateWorkerTaskProgress } from '../../api/worker.api';
-import { getErrorMessage } from '../../api/utils';
+import { updateWorkerTaskProgress } from '@api/worker.api.js';
+import { getErrorMessage } from '@api/utils';
 import './TaskProgressUpload.css';
 
 const TaskProgressUpload = ({ task, onUpdate }) => {

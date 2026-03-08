@@ -8,8 +8,8 @@ import {
   getDepartmentsAdmin,
   updateUserRoleAdmin,
   updateUserStatusAdmin,
-} from '../../../api/admin.api';
-import { getErrorMessage } from '../../../api/utils';
+} from '@api/admin.api';
+import { getErrorMessage } from '@api/utils';
 import Loader from '../../../components/common/Loader/Loader';
 import './UserManagement.css';
 

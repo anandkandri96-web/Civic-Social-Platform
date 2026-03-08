@@ -1,6 +1,6 @@
 import { useState } from 'react';
-import { claimVolunteerIssue, updateVolunteerProgress, resolveVolunteerIssue } from '../../api/volunteer.api';
-import { getErrorMessage } from '../../api/utils';
+import { claimVolunteerIssue, updateVolunteerProgress, resolveVolunteerIssue } from '@api/volunteer.api.js';
+import { getErrorMessage } from '@api/utils';
 import './VolunteerPanel.css';
 
 const VolunteerPanel = ({ issue, onIssueUpdate }) => {

@@ -1,6 +1,6 @@
 import { useState } from 'react';
-import { acceptWorkerTask } from '../../api/worker.api';
-import { getErrorMessage } from '../../api/utils';
+import { acceptWorkerTask } from '@api/worker.api.js';
+import { getErrorMessage } from '@api/utils';
 import './TaskCard.css';
 
 const TaskCard = ({ task, children }) => {

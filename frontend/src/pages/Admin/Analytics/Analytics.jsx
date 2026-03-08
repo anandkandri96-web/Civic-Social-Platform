@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
-import { getAnalyticsHeatmap, getAnalyticsTrends } from '../../../api/analytics.api';
-import { getErrorMessage } from '../../../api/utils';
+import { getAnalyticsHeatmap, getAnalyticsTrends } from '@api/analytics.api';
+import { getErrorMessage } from '@api/utils';
 import Loader from '../../../components/common/Loader/Loader';
 import './Analytics.css';
 

@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
-import { getNotifications, markNotificationRead } from '../../api/notifications.api';
-import { getErrorMessage } from '../../api/utils';
+import { getNotifications, markNotificationRead } from "@api/notifications.api.js";
+import { getErrorMessage } from '@api/utils';
 import './NotificationPanel.css';
 
 const NotificationPanel = ({ isOpen, onClose }) => {

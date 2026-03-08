@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
-import { getWorkerTasks, acceptWorkerTask, updateWorkerTaskProgress } from '../../api/worker.api';
-import { getErrorMessage } from '../../api/utils';
+import { getWorkerTasks, acceptWorkerTask, updateWorkerTaskProgress } from '@api/worker.api.js';
+import { getErrorMessage } from '@api/utils';
 import TaskCard from '../../components/TaskCard';
 import TaskProgressUpload from '../../components/TaskProgressUpload';
 import './WorkerDashboard.css';

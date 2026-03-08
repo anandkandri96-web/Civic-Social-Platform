@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
-import { acceptWorkerTask, getWorkerTasks, updateWorkerTaskProgress } from '../../api/worker.api';
-import { getErrorMessage } from '../../api/utils';
+import { acceptWorkerTask, getWorkerTasks, updateWorkerTaskProgress } from '@api/worker.api.js';
+import { getErrorMessage } from '@api/utils';
 import './RoleDashboard.css';
 
 const WORKER_STATUSES = ['in_progress', 'completed', 'complication_reported'];

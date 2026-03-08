@@ -4,8 +4,8 @@ import {
   getAvailableVolunteerIssues,
   resolveVolunteerIssue,
   updateVolunteerProgress,
-} from '../../api/volunteer.api';
-import { getErrorMessage } from '../../api/utils';
+} from '@api/volunteer.api.js';
+import { getErrorMessage } from '@api/utils';
 import './RoleDashboard.css';
 
 const VolunteerDashboard = () => {

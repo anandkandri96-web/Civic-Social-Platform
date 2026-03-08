@@ -1,8 +1,8 @@
 ﻿import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../../../hooks/useAuth';
-import { getIssues } from '../../../api/issues.api';
-import { getErrorMessage } from '../../../api/utils';
+import { getIssues } from '@api/issues.api';
+import { getErrorMessage } from '@api/utils';
 import IssueCard from '../../../components/ui/IssueCard';
 import Loader from '../../../components/common/Loader/Loader';
 import './UserDashboard.css';

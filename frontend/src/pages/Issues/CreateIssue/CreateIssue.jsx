@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import { Link, Navigate, useNavigate } from 'react-router-dom';
-import { createIssue as createIssueApi } from '../../../api/issues.api';
-import { getErrorMessage } from '../../../api/utils';
+import { createIssue as createIssueApi } from '@api/issues.api';
+import { getErrorMessage } from '@api/utils';
 import { useRole } from '../../../hooks/useRole';
 import './CreateIssue.css';
 

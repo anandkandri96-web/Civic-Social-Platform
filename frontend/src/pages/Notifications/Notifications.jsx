@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
-import { getNotifications, markAllNotificationsRead, markNotificationRead } from '../../api/notifications.api';
-import { getErrorMessage } from '../../api/utils';
+import { getNotifications, markAllNotificationsRead, markNotificationRead } from '@api/notifications.api.js';
+import { getErrorMessage } from '@api/utils';
 import Loader from '../../components/common/Loader/Loader';
 import './Notifications.css';
 

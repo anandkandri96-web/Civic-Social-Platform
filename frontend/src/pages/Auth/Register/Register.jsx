@@ -1,7 +1,7 @@
 ﻿import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { register } from '../../../api/auth.api';
-import { getErrorMessage } from '../../../api/utils';
+import { register } from '@api/auth.api';
+import { getErrorMessage } from '@api/utils';
 import Button from '../../../components/common/Button/Button';
 import './Register.css';
 

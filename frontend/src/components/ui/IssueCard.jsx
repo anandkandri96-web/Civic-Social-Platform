@@ -3,8 +3,8 @@ import { Link } from 'react-router-dom';
 import VoteButton from './VoteButton';
 import { useAuth } from '../../hooks/useAuth';
 import { useRole } from '../../hooks/useRole';
-import { deleteIssue } from '../../api/issues.api';
-import { getErrorMessage } from '../../api/utils';
+import { deleteIssue } from '@api/issues.api.js';
+import { getErrorMessage } from '@api/utils';
 import { ISSUE_STATUS_LABELS } from '../../constants/issueStatus';
 import './IssueCard.css';
 

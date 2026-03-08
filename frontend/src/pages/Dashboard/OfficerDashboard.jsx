@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { assignOfficerWorker, getOfficerIssues, reviewOfficerIssue, updateOfficerIssueStatus } from '../../api/officer.api';
-import { getErrorMessage } from '../../api/utils';
+import { assignOfficerWorker, getOfficerIssues, reviewOfficerIssue, updateOfficerIssueStatus } from '@api/officer.api.js';
+import { getErrorMessage } from '@api/utils';
 import './RoleDashboard.css';
 import { canTransition } from '../../utils/statusFlow';
 

@@ -2,8 +2,8 @@ import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useRole } from '../../hooks/useRole';
 import IssueLeafletMap from '../../components/map/IssueLeafletMap';
-import { getAnalyticsHeatmap } from '../../api/analytics.api';
-import { getErrorMessage } from '../../api/utils';
+import { getAnalyticsHeatmap } from '@api/analytics.api.js';
+import { getErrorMessage } from '@api/utils';
 import './IssueMap.css';
 
 function normalizeIssue(issue) {

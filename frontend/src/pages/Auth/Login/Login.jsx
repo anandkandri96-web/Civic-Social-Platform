@@ -2,7 +2,7 @@
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../../hooks/useAuth';
 import { normalizeRole } from '../../../utils/roleCheck';
-import { getErrorMessage } from '../../../api/utils';
+import { getErrorMessage } from '@api/utils';
 import Button from '../../../components/common/Button/Button';
 import './Login.css';
 

@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
-import { getAllIssuesAdmin, updateIssueStatusAdmin } from '../../../api/admin.api';
-import { getErrorMessage } from '../../../api/utils';
+import { getAllIssuesAdmin, updateIssueStatusAdmin } from '@api/admin.api';
+import { getErrorMessage } from '@api/utils';
 import IssueCard from '../../../components/ui/IssueCard';
 import Loader from '../../../components/common/Loader/Loader';
 import PageHeader from '../../../components/ui/PageHeader/PageHeader';

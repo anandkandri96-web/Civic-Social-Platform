@@ -1,7 +1,7 @@
 ﻿import { useEffect, useState } from 'react';
 import { Link, Navigate } from 'react-router-dom';
-import { getIssues } from '../../../api/issues.api';
-import { getErrorMessage } from '../../../api/utils';
+import { getIssues } from '@api/issues.api';
+import { getErrorMessage } from '@api/utils';
 import { useRole } from '../../../hooks/useRole';
 import { ISSUE_STATUSES, ISSUE_STATUS_LABELS } from '../../../constants/issueStatus';
 import IssueCard from '../../../components/ui/IssueCard';

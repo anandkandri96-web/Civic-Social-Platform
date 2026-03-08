@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "../../hooks/useAuth";
 import { useRole } from "../../hooks/useRole";
-import { getIssues } from "../../api/issues.api";
+import { getIssues } from "@api/issues.api";
 import VoteButton from "../../components/ui/VoteButton";
 import IssueLeafletMap from "../../components/map/IssueLeafletMap";
 import "./Home.css";
