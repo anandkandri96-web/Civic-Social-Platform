@@ -4,6 +4,7 @@ import VoteButton from './VoteButton';
 import { useAuth } from '../../hooks/useAuth';
 import { useRole } from '../../hooks/useRole';
 import { deleteIssue } from '../../api/issues.api';
+import { getErrorMessage } from '../../api/utils';
 import './IssueCard.css';
 
 const STATUS_CLASS = {
@@ -61,7 +62,7 @@ const IssueCard = ({ issue, onVote, onDeleted }) => {
       await deleteIssue(issue._id);
       onDeleted?.(issue._id);
     } catch (err) {
-      alert(err?.response?.data?.message || err?.message || 'Failed to delete issue');
+      alert(getErrorMessage(err));
     } finally {
       setDeleting(false);
     }

@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { getAnalyticsHeatmap, getAnalyticsTrends } from '../../../api/analytics.api';
+import { getErrorMessage } from '../../../api/utils';
 import Loader from '../../../components/common/Loader/Loader';
 import './Analytics.css';
 
@@ -22,7 +23,7 @@ const Analytics = () => {
         setHeatmap(Array.isArray(heatmapData) ? heatmapData : []);
       } catch (err) {
         if (!mounted) return;
-        setError(err?.response?.data?.message || err?.message || 'Failed to load analytics');
+        setError(getErrorMessage(err));
       } finally {
         if (mounted) setLoading(false);
       }

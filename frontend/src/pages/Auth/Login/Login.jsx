@@ -2,6 +2,7 @@
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../../hooks/useAuth';
 import { normalizeRole } from '../../../utils/roleCheck';
+import { getErrorMessage } from '../../../api/utils';
 import Button from '../../../components/common/Button/Button';
 import './Login.css';
 
@@ -44,12 +45,12 @@ const Login = () => {
         return;
       }
 
-      const res = await login({
+      const data = await login({
         email,
         password,
       });
 
-      const actualRole = normalizeRole(res?.data?.user?.role || '');
+      const actualRole = normalizeRole(data?.user?.role || '');
 
       if (actualRole === 'admin') {
         navigate('/admin', { replace: true });
@@ -63,7 +64,7 @@ const Login = () => {
         navigate(redirectTo, { replace: true });
       }
     } catch (err) {
-      setError(err?.response?.data?.message || 'Login failed');
+      setError(getErrorMessage(err));
     } finally {
       setSubmitting(false);
     }

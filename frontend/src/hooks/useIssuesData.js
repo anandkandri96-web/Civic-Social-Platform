@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { getIssues } from '../api/issues.api';
+import { getErrorMessage } from '../api/utils';
 
 export const useIssuesData = ({ params = {}, enabled = true, select } = {}) => {
   const [issues, setIssues] = useState([]);
@@ -21,7 +22,7 @@ export const useIssuesData = ({ params = {}, enabled = true, select } = {}) => {
       setIssues(typeof select === 'function' ? select(list) : list);
     } catch (err) {
       setIssues([]);
-      setError(err?.response?.data?.message || err?.message || 'Failed to load issues');
+      setError(getErrorMessage(err));
     } finally {
       setLoading(false);
     }

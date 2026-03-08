@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 import { Link, Navigate, useNavigate } from 'react-router-dom';
 import { createIssue as createIssueApi } from '../../../api/issues.api';
+import { getErrorMessage } from '../../../api/utils';
 import { useRole } from '../../../hooks/useRole';
 import './CreateIssue.css';
 
@@ -101,7 +102,7 @@ const CreateIssue = () => {
       const issue = await createIssueApi(payload);
       navigate(`/issues/${issue._id}`, { replace: true });
     } catch (err) {
-      setError(err?.response?.data?.message || err?.message || 'Failed to submit issue');
+      setError(getErrorMessage(err));
     } finally {
       setSubmitting(false);
     }

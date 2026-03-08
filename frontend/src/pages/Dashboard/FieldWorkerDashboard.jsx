@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { acceptWorkerTask, getWorkerTasks, updateWorkerTaskProgress } from '../../api/worker.api';
+import { getErrorMessage } from '../../api/utils';
 import './RoleDashboard.css';
 
 const WORKER_STATUSES = ['in_progress', 'completed', 'complication_reported'];
@@ -20,7 +21,7 @@ const FieldWorkerDashboard = () => {
         const data = await getWorkerTasks();
         if (mounted) setTasks(Array.isArray(data) ? data : []);
       } catch (err) {
-        if (mounted) setError(err?.response?.data?.message || err?.message || 'Failed to load worker tasks');
+        if (mounted) setError(getErrorMessage(err));
       } finally {
         if (mounted) setLoading(false);
       }
@@ -42,7 +43,7 @@ const FieldWorkerDashboard = () => {
       const updated = await action();
       patchTask(updated);
     } catch (err) {
-      alert(err?.response?.data?.message || err?.message || 'Action failed');
+      alert(getErrorMessage(err));
     } finally {
       setWorkingId('');
     }

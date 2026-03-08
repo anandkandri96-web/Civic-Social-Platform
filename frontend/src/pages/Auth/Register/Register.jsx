@@ -1,6 +1,7 @@
 ﻿import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { register } from '../../../api/auth.api';
+import { getErrorMessage } from '../../../api/utils';
 import Button from '../../../components/common/Button/Button';
 import './Register.css';
 
@@ -62,11 +63,7 @@ const Register = () => {
       });
       navigate('/login', { replace: true });
     } catch (err) {
-      setError(
-        err?.response?.data?.message ||
-        err?.message ||
-        'Registration failed'
-      );
+      setError(getErrorMessage(err));
     } finally {
       setSubmitting(false);
     }

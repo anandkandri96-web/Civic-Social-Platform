@@ -9,6 +9,7 @@ import {
   updateUserRoleAdmin,
   updateUserStatusAdmin,
 } from '../../../api/admin.api';
+import { getErrorMessage } from '../../../api/utils';
 import Loader from '../../../components/common/Loader/Loader';
 import './UserManagement.css';
 
@@ -37,7 +38,7 @@ const UserManagement = () => {
         setDepartments(Array.isArray(deptsRes) ? deptsRes : []);
       } catch (err) {
         if (!mounted) return;
-        setError(err?.response?.data?.message || err?.message || 'Failed to load users');
+        setError(getErrorMessage(err));
       } finally {
         if (mounted) setLoading(false);
       }
@@ -59,7 +60,7 @@ const UserManagement = () => {
       const updated = await action();
       if (updated?._id) patchUser(updated);
     } catch (err) {
-      alert(err?.response?.data?.message || err?.message || 'Action failed');
+      alert(getErrorMessage(err));
     } finally {
       setWorking('');
     }
@@ -75,7 +76,7 @@ const UserManagement = () => {
       setDepartments((prev) => [...prev, created].sort((a, b) => a.name.localeCompare(b.name)));
       setNewDepartmentName('');
     } catch (err) {
-      alert(err?.response?.data?.message || err?.message || 'Failed to create department');
+      alert(getErrorMessage(err));
     } finally {
       setWorking('');
     }
@@ -88,7 +89,7 @@ const UserManagement = () => {
       await deleteUserAdmin(userId);
       setUsers((prev) => prev.filter((u) => u._id !== userId));
     } catch (err) {
-      alert(err?.response?.data?.message || err?.message || 'Failed to delete user');
+      alert(getErrorMessage(err));
     } finally {
       setWorking('');
     }

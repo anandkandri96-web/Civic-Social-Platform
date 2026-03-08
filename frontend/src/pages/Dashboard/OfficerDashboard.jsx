@@ -1,7 +1,9 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { assignOfficerWorker, getOfficerIssues, reviewOfficerIssue, updateOfficerIssueStatus } from '../../api/officer.api';
+import { getErrorMessage } from '../../api/utils';
 import './RoleDashboard.css';
+import { canTransition } from '../../utils/statusFlow';
 
 const OfficerDashboard = () => {
   const [issues, setIssues] = useState([]);
@@ -20,7 +22,7 @@ const OfficerDashboard = () => {
         const data = await getOfficerIssues();
         if (mounted) setIssues(Array.isArray(data) ? data : []);
       } catch (err) {
-        if (mounted) setError(err?.response?.data?.message || err?.message || 'Failed to load department issues');
+        if (mounted) setError(getErrorMessage(err));
       } finally {
         if (mounted) setLoading(false);
       }
@@ -42,7 +44,7 @@ const OfficerDashboard = () => {
       const updated = await action();
       patchIssue(updated);
     } catch (err) {
-      alert(err?.response?.data?.message || err?.message || 'Action failed');
+      alert(getErrorMessage(err));
     } finally {
       setWorkingId('');
     }
@@ -153,11 +155,13 @@ const OfficerDashboard = () => {
                             runAction(issue._id, () => updateOfficerIssueStatus(issue._id, e.target.value))
                           }
                         >
-                          {officerStatuses.map((status) => (
-                            <option key={status} value={status}>
-                              {status}
-                            </option>
-                          ))}
+                          {officerStatuses
+                            .filter((status) => status === issue.status || canTransition(issue.status, status))
+                            .map((status) => (
+                              <option key={status} value={status}>
+                                {status}
+                              </option>
+                            ))}
                         </select>
                       </div>
                     </td>

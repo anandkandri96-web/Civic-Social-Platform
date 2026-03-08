@@ -1,12 +1,13 @@
 import api from './axios';
+import { getResponseData } from './utils';
 
 export const getAnalyticsTrends = async (params = {}) => {
   const res = await api.get('/analytics/trends', { params });
-  return res.data?.data ?? {};
+  return getResponseData(res) || {};
 };
 
 export const getAnalyticsHeatmap = async () => {
   const res = await api.get('/analytics/heatmap');
-  return res.data?.data ?? [];
+  return getResponseData(res) || [];
 };
 

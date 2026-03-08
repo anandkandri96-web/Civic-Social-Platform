@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { getNotifications, markAllNotificationsRead, markNotificationRead } from '../../api/notifications.api';
+import { getErrorMessage } from '../../api/utils';
 import Loader from '../../components/common/Loader/Loader';
 import './Notifications.css';
 
@@ -22,7 +23,7 @@ const Notifications = () => {
         setMeta(data.meta || {});
       } catch (err) {
         if (!mounted) return;
-        setError(err?.response?.data?.message || err?.message || 'Failed to load notifications');
+        setError(getErrorMessage(err));
       } finally {
         if (mounted) setLoading(false);
       }
@@ -41,7 +42,7 @@ const Notifications = () => {
       setItems((prev) => prev.map((it) => (it._id === id ? updated : it)));
       setMeta((prev) => ({ ...prev, unreadCount: Math.max(0, Number(prev.unreadCount || 0) - 1) }));
     } catch (err) {
-      alert(err?.response?.data?.message || err?.message || 'Failed to mark notification');
+      alert(getErrorMessage(err));
     } finally {
       setWorking('');
     }
@@ -54,7 +55,7 @@ const Notifications = () => {
       setItems((prev) => prev.map((it) => ({ ...it, read: true })));
       setMeta((prev) => ({ ...prev, unreadCount: 0 }));
     } catch (err) {
-      alert(err?.response?.data?.message || err?.message || 'Failed to mark all notifications');
+      alert(getErrorMessage(err));
     } finally {
       setWorking('');
     }

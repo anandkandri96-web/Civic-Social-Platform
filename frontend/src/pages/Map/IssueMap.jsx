@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { useRole } from '../../hooks/useRole';
 import IssueLeafletMap from '../../components/map/IssueLeafletMap';
 import { getIssues } from '../../api/issues.api';
+import { getErrorMessage } from '../../api/utils';
 import './IssueMap.css';
 
 function normalizeIssue(issue) {
@@ -46,7 +47,7 @@ const IssueMap = () => {
         setActiveId(normalized[0]?.id || '');
       } catch (err) {
         if (!mounted) return;
-        setError(err?.response?.data?.message || err?.message || 'Failed to load map issues');
+        setError(getErrorMessage(err));
       } finally {
         if (mounted) setLoading(false);
       }

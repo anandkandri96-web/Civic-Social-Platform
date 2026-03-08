@@ -1,24 +1,25 @@
 import api from './axios';
+import { getResponseData } from './utils';
 
 export const getAvailableVolunteerIssues = async () => {
   const res = await api.get('/volunteer/issues/available');
-  return res.data?.data ?? [];
+  return getResponseData(res) || [];
 };
 
 export const claimVolunteerIssue = async (issueId) => {
   const res = await api.post(`/volunteer/issues/${issueId}/claim`);
-  return res.data?.data ?? res.data;
+  return getResponseData(res);
 };
 
 export const updateVolunteerProgress = async (issueId) => {
   const res = await api.patch(`/volunteer/issues/${issueId}/progress`);
-  return res.data?.data ?? res.data;
+  return getResponseData(res);
 };
 
 export const resolveVolunteerIssue = async (issueId, payload = []) => {
   if (Array.isArray(payload)) {
     const res = await api.patch(`/volunteer/issues/${issueId}/resolve`, { proof: payload });
-    return res.data?.data ?? res.data;
+    return getResponseData(res);
   }
 
   const proof = Array.isArray(payload?.proof) ? payload.proof : [];
@@ -33,9 +34,9 @@ export const resolveVolunteerIssue = async (issueId, payload = []) => {
     const res = await api.patch(`/volunteer/issues/${issueId}/resolve`, formData, {
       headers: { "Content-Type": "multipart/form-data" },
     });
-    return res.data?.data ?? res.data;
+    return getResponseData(res);
   }
 
   const res = await api.patch(`/volunteer/issues/${issueId}/resolve`, { proof });
-  return res.data?.data ?? res.data;
+  return getResponseData(res);
 };

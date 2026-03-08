@@ -2,6 +2,7 @@
 import { Link } from 'react-router-dom';
 import { useAuth } from '../../../hooks/useAuth';
 import { getIssues } from '../../../api/issues.api';
+import { getErrorMessage } from '../../../api/utils';
 import IssueCard from '../../../components/ui/IssueCard';
 import Loader from '../../../components/common/Loader/Loader';
 import './UserDashboard.css';
@@ -27,7 +28,7 @@ const UserDashboard = () => {
         });
         if (mounted) setIssues(mine);
       } catch (err) {
-        if (mounted) setError(err?.response?.data?.message || err?.message || 'Failed to load your issues');
+        if (mounted) setError(getErrorMessage(err));
       } finally {
         if (mounted) setLoading(false);
       }

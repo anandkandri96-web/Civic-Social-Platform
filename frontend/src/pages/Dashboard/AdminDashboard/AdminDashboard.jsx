@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { getAllIssuesAdmin } from '../../../api/admin.api';
+import { getErrorMessage } from '../../../api/utils';
 import Loader from '../../../components/common/Loader/Loader';
 import PageHeader from '../../../components/ui/PageHeader/PageHeader';
 import './AdminDashboard.css';
@@ -21,7 +22,7 @@ const AdminDashboard = () => {
         const payload = await getAllIssuesAdmin({ limit: 100 });
         if (mounted) setIssues(Array.isArray(payload?.data) ? payload.data : []);
       } catch (err) {
-        if (mounted) setError(err?.response?.data?.message || err?.message || 'Failed to load issues');
+        if (mounted) setError(getErrorMessage(err));
       } finally {
         if (mounted) setLoading(false);
       }

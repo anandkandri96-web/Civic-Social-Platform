@@ -1,6 +1,7 @@
 ﻿import { useEffect, useState } from 'react';
 import { Link, Navigate } from 'react-router-dom';
 import { getIssues } from '../../../api/issues.api';
+import { getErrorMessage } from '../../../api/utils';
 import { useRole } from '../../../hooks/useRole';
 import IssueCard from '../../../components/ui/IssueCard';
 import Loader from '../../../components/common/Loader/Loader';
@@ -49,7 +50,7 @@ const IssueList = () => {
         if (mounted) setError('');
       } catch (err) {
         if (mounted) {
-          setError(err?.response?.data?.message || err?.message || 'Failed to load issues');
+          setError(getErrorMessage(err));
           setIssues([]);
         }
       } finally {

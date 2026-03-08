@@ -50,6 +50,22 @@ api.interceptors.request.use(
   (error) => Promise.reject(error)
 );
 
+// response interceptor: unwrap data if needed and handle auth failures
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    // logout on 401 to force re-authentication
+    if (
+      error.response &&
+      error.response.status === 401 &&
+      typeof window !== 'undefined'
+    ) {
+      handleLogout();
+    }
+    return Promise.reject(error);
+  }
+);
+
 /**
  * RESPONSE INTERCEPTOR
  * ✅ DO NOT MUTATE RESPONSE SHAPE

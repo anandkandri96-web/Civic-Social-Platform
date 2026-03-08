@@ -1,4 +1,5 @@
 import api from "./axios.js";
+import { getResponseData } from './utils';
 
 /**
  * Add vote for an issue (requires auth)
@@ -6,7 +7,7 @@ import api from "./axios.js";
  */
 export const upvote = async (issueId) => {
   const res = await api.post(`/votes/${issueId}`);
-  const body = res.data?.data ?? res.data ?? {};
+  const body = getResponseData(res) ?? {};
   return { voteCount: body.voteCount ?? 0, voted: true };
 };
 
@@ -15,7 +16,7 @@ export const upvote = async (issueId) => {
  */
 export const removeVote = async (issueId) => {
   const res = await api.delete(`/votes/${issueId}`);
-  const body = res.data?.data ?? res.data ?? {};
+  const body = getResponseData(res) ?? {};
   return { voteCount: body.voteCount ?? 0, voted: false };
 };
 
@@ -24,6 +25,6 @@ export const removeVote = async (issueId) => {
  */
 export const getVoteStatus = async (issueId) => {
   const res = await api.get(`/votes/${issueId}`);
-  const body = res.data?.data ?? res.data ?? {};
+  const body = getResponseData(res) ?? {};
   return { voted: !!body.voted };
 };

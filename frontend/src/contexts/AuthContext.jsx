@@ -11,15 +11,14 @@ export const AuthProvider = ({ children }) => {
    */
   const fetchMe = useCallback(async () => {
     try {
-      const res = await authApi.getMe(); // ✅ correct API
-      const userData = res.data?.data || res.data?.user;
+      const userData = await authApi.getMe(); // helper returns the inner data
 
       if (userData && userData.role) {
         setUser({
           id: userData._id || userData.id,
           name: userData.name,
           email: userData.email,
-          role: userData.role.toLowerCase(),
+          role: String(userData.role).toLowerCase(),
         });
       } else {
         throw new Error("Invalid /me response");
@@ -55,15 +54,15 @@ export const AuthProvider = ({ children }) => {
    */
   const login = useCallback(
     async (credentials) => {
-      const res = await authApi.login(credentials);
-      const token = res.data?.token;
+      const data = await authApi.login(credentials);
+      const token = data?.token;
 
       if (token) {
         localStorage.setItem("token", token);
-        await fetchMe(); // ✅ IMPORTANT
+        await fetchMe(); // refresh user
       }
 
-      return res;
+      return data;
     },
     [fetchMe]
   );

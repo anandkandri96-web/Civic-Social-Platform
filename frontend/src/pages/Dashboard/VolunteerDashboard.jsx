@@ -5,6 +5,7 @@ import {
   resolveVolunteerIssue,
   updateVolunteerProgress,
 } from '../../api/volunteer.api';
+import { getErrorMessage } from '../../api/utils';
 import './RoleDashboard.css';
 
 const VolunteerDashboard = () => {
@@ -23,7 +24,7 @@ const VolunteerDashboard = () => {
         const data = await getAvailableVolunteerIssues();
         if (mounted) setIssues(Array.isArray(data) ? data : []);
       } catch (err) {
-        if (mounted) setError(err?.response?.data?.message || err?.message || 'Failed to load volunteer issues');
+        if (mounted) setError(getErrorMessage(err));
       } finally {
         if (mounted) setLoading(false);
       }
@@ -46,7 +47,7 @@ const VolunteerDashboard = () => {
       patchLocalIssue(updated);
       return true;
     } catch (err) {
-      alert(err?.response?.data?.message || err?.message || 'Action failed');
+      alert(getErrorMessage(err));
       return false;
     } finally {
       setWorkingId('');

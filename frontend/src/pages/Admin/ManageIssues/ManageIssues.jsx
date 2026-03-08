@@ -1,9 +1,11 @@
 import { useEffect, useState } from 'react';
 import { getAllIssuesAdmin, updateIssueStatusAdmin } from '../../../api/admin.api';
+import { getErrorMessage } from '../../../api/utils';
 import IssueCard from '../../../components/ui/IssueCard';
 import Loader from '../../../components/common/Loader/Loader';
 import PageHeader from '../../../components/ui/PageHeader/PageHeader';
 import { ISSUE_STATUSES } from '../../../utils/constants';
+import { canTransition } from '../../../utils/statusFlow';
 import './ManageIssues.css';
 
 const ManageIssues = () => {
@@ -22,7 +24,7 @@ const ManageIssues = () => {
         const payload = await getAllIssuesAdmin({ limit: 100 });
         if (mounted) setIssues(Array.isArray(payload?.data) ? payload.data : []);
       } catch (err) {
-        if (mounted) setError(err?.response?.data?.message || err?.message || 'Failed to load issues');
+        if (mounted) setError(getErrorMessage(err));
       } finally {
         if (mounted) setLoading(false);
       }
@@ -40,7 +42,7 @@ const ManageIssues = () => {
       const updated = await updateIssueStatusAdmin(issueId, status);
       setIssues((prev) => prev.map((i) => (i._id === issueId ? { ...i, status: updated.status } : i)));
     } catch (err) {
-      alert(err?.response?.data?.message || err?.message || 'Failed to update status');
+      alert(getErrorMessage(err));
     } finally {
       setUpdatingId(null);
     }
@@ -77,7 +79,7 @@ const ManageIssues = () => {
                       onChange={(e) => handleStatusChange(issue._id, e.target.value)}
                       disabled={updatingId === issue._id}
                     >
-                      {ISSUE_STATUSES.map((status) => (
+                      {ISSUE_STATUSES.filter((status) => status === issue.status || canTransition(issue.status, status)).map((status) => (
                         <option key={status} value={status}>{status}</option>
                       ))}
                     </select>

@@ -7,6 +7,8 @@ import { useAuth } from '../../../hooks/useAuth';
 import { useRole } from '../../../hooks/useRole';
 import { createIssueComment, deleteIssueComment, getIssueComments, updateIssueComment } from '../../../api/comments.api';
 import { closeIssue, deleteIssue, getIssueById, reopenIssue, verifyIssue } from '../../../api/issues.api';
+import { getErrorMessage } from '../../../api/utils';
+import { canTransition } from '../../../utils/statusFlow';
 import './IssueDetails.css';
 
 const normalizeImages = (images) =>
@@ -54,9 +56,11 @@ const IssueDetails = () => {
   const reporterId = issue?.reportedBy?._id ?? issue?.reportedBy;
   const isReporter = user?.id && String(reporterId) === String(user.id);
   const canDelete = isAdmin || isReporter;
-  const canClose = (isAdmin || isOfficer) && issue?.status === 'citizen_verified';
-  const canVerify = isReporter && ['resolved', 'resolved_by_community'].includes(issue?.status);
-  const canReopen = isReporter && ['resolved', 'resolved_by_community', 'closed'].includes(issue?.status);
+  const canClose = (isAdmin || isOfficer) && canTransition(issue?.status, 'closed');
+  const canVerify = isReporter && canTransition(issue?.status, 'citizen_verified');
+  const REOPENABLE = ['resolved', 'resolved_by_community', 'closed'];
+  const canReopen = isReporter && REOPENABLE.includes(issue?.status);
+
   const backPath = isAdmin ? '/admin' : '/issues';
   const backLabel = isAdmin ? 'Admin Dashboard' : 'Issues';
   const submittedImages = normalizeImages(issue?.images);
@@ -75,7 +79,7 @@ const IssueDetails = () => {
       await deleteIssue(issue._id);
       navigate(backPath, { replace: true });
     } catch (err) {
-      setDeleteError(err?.response?.data?.message || err?.message || 'Failed to delete');
+      setDeleteError(getErrorMessage(err));
     } finally {
       setDeleteLoading(false);
     }
@@ -88,7 +92,7 @@ const IssueDetails = () => {
       const updated = await action(issue._id);
       setIssue(updated);
     } catch (err) {
-      alert(err?.response?.data?.message || err?.message || 'Action failed');
+      alert(getErrorMessage(err));
     } finally {
       setActionLoading(false);
     }
@@ -105,7 +109,7 @@ const IssueDetails = () => {
       setComments((prev) => [created, ...prev]);
       setCommentText('');
     } catch (err) {
-      alert(err?.response?.data?.message || err?.message || 'Failed to add comment');
+      alert(getErrorMessage(err));
     } finally {
       setCommentLoading(false);
     }
@@ -118,7 +122,7 @@ const IssueDetails = () => {
       const updated = await updateIssueComment(commentId, { message: nextMessage.trim() });
       setComments((prev) => prev.map((c) => (c._id === commentId ? { ...c, ...updated } : c)));
     } catch (err) {
-      alert(err?.response?.data?.message || err?.message || 'Failed to update comment');
+      alert(getErrorMessage(err));
     }
   };
 
@@ -128,7 +132,7 @@ const IssueDetails = () => {
       await deleteIssueComment(commentId);
       setComments((prev) => prev.filter((c) => c._id !== commentId));
     } catch (err) {
-      alert(err?.response?.data?.message || err?.message || 'Failed to delete comment');
+      alert(getErrorMessage(err));
     }
   };
 
