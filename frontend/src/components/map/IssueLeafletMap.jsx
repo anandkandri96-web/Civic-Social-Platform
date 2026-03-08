@@ -28,6 +28,7 @@ function MapFocus({ active }) {
 
 const IssueLeafletMap = ({
   issues = [],
+  heatmapData = [],
   activeId = '',
   onSelect,
   className = 'issue-leaflet-map',
@@ -35,6 +36,13 @@ const IssueLeafletMap = ({
 }) => {
   const active = issues.find((item) => item.id === activeId) || issues[0] || null;
   const center = active ? [active.lat, active.lng] : DEFAULT_CENTER;
+
+  // If heatmapData is provided, use it for heat intensity
+  const data = heatmapData.length > 0 ? heatmapData : issues.map(point => ({
+    lat: point.lat,
+    lng: point.lng,
+    weight: point.priority || 1
+  }));
 
   return (
     <MapContainer center={center} zoom={zoom} scrollWheelZoom className={className}>
@@ -45,28 +53,31 @@ const IssueLeafletMap = ({
 
       <MapFocus active={active} />
 
-      {issues.map((point) => {
-        const color = PRIORITY_COLORS[Number(point.priority)] || '#00c8f8';
+      {data.map((point, index) => {
+        const intensity = point.weight / 10; // Normalize weight to 0-1
+        const color = `rgba(255, 0, 0, ${intensity})`; // Red with opacity
         return (
           <CircleMarker
-            key={point.id}
+            key={point.id || index}
             center={[point.lat, point.lng]}
             pathOptions={{
               color,
               fillColor: color,
-              fillOpacity: active?.id === point.id ? 0.9 : 0.65,
-              weight: active?.id === point.id ? 2 : 1,
+              fillOpacity: intensity,
+              weight: 1,
             }}
-            radius={active?.id === point.id ? 9 : 7}
-            eventHandlers={{ click: () => onSelect?.(point.id) }}
+            radius={Math.max(5, point.weight)}
+            eventHandlers={onSelect ? { click: () => onSelect?.(point.id) } : {}}
           >
-            <Popup>
-              <strong>{point.title}</strong>
-              <br />
-              {point.locationText}
-              <br />
-              {point.category} | {point.status}
-            </Popup>
+            {point.title && (
+              <Popup>
+                <strong>{point.title}</strong>
+                <br />
+                {point.locationText}
+                <br />
+                {point.category} | {point.status}
+              </Popup>
+            )}
           </CircleMarker>
         );
       })}

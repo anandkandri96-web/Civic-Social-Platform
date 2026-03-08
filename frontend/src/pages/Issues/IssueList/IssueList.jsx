@@ -3,6 +3,7 @@ import { Link, Navigate } from 'react-router-dom';
 import { getIssues } from '../../../api/issues.api';
 import { getErrorMessage } from '../../../api/utils';
 import { useRole } from '../../../hooks/useRole';
+import { ISSUE_STATUSES, ISSUE_STATUS_LABELS } from '../../../constants/issueStatus';
 import IssueCard from '../../../components/ui/IssueCard';
 import Loader from '../../../components/common/Loader/Loader';
 import './IssueList.css';
@@ -19,13 +20,16 @@ const CATEGORIES = [
 
 const STATUSES = [
   { value: '', label: 'All Statuses' },
-  { value: 'reported', label: 'Reported' },
-  { value: 'under_review', label: 'Under Review' },
-  { value: 'assigned_to_department', label: 'Assigned to Department' },
-  { value: 'work_in_progress', label: 'Work In Progress' },
-  { value: 'resolved', label: 'Resolved' },
-  { value: 'resolved_by_community', label: 'Resolved by Community' },
-  { value: 'closed', label: 'Closed' },
+  { value: ISSUE_STATUSES.REPORTED, label: ISSUE_STATUS_LABELS[ISSUE_STATUSES.REPORTED] },
+  { value: ISSUE_STATUSES.UNDER_REVIEW, label: ISSUE_STATUS_LABELS[ISSUE_STATUSES.UNDER_REVIEW] },
+  { value: ISSUE_STATUSES.ASSIGNED_TO_DEPARTMENT, label: ISSUE_STATUS_LABELS[ISSUE_STATUSES.ASSIGNED_TO_DEPARTMENT] },
+  { value: ISSUE_STATUSES.WORK_IN_PROGRESS, label: ISSUE_STATUS_LABELS[ISSUE_STATUSES.WORK_IN_PROGRESS] },
+  { value: ISSUE_STATUSES.RESOLVED, label: ISSUE_STATUS_LABELS[ISSUE_STATUSES.RESOLVED] },
+  { value: ISSUE_STATUSES.CITIZEN_VERIFIED, label: ISSUE_STATUS_LABELS[ISSUE_STATUSES.CITIZEN_VERIFIED] },
+  { value: ISSUE_STATUSES.CLOSED, label: ISSUE_STATUS_LABELS[ISSUE_STATUSES.CLOSED] },
+  { value: ISSUE_STATUSES.VOLUNTEER_CLAIMED, label: ISSUE_STATUS_LABELS[ISSUE_STATUSES.VOLUNTEER_CLAIMED] },
+  { value: ISSUE_STATUSES.COMMUNITY_FIX_IN_PROGRESS, label: ISSUE_STATUS_LABELS[ISSUE_STATUSES.COMMUNITY_FIX_IN_PROGRESS] },
+  { value: ISSUE_STATUSES.RESOLVED_BY_COMMUNITY, label: ISSUE_STATUS_LABELS[ISSUE_STATUSES.RESOLVED_BY_COMMUNITY] },
 ];
 
 const IssueList = () => {

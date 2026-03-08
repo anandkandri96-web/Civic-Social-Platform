@@ -5,6 +5,7 @@ import { useAuth } from '../../hooks/useAuth';
 import { useRole } from '../../hooks/useRole';
 import { deleteIssue } from '../../api/issues.api';
 import { getErrorMessage } from '../../api/utils';
+import { ISSUE_STATUS_LABELS } from '../../constants/issueStatus';
 import './IssueCard.css';
 
 const STATUS_CLASS = {
@@ -15,6 +16,9 @@ const STATUS_CLASS = {
   resolved: 'resolved',
   resolved_by_community: 'resolved',
   closed: 'resolved',
+  citizen_verified: 'resolved',
+  volunteer_claimed: 'in-progress',
+  community_fix_in_progress: 'in-progress',
 };
 
 function formatLocation(location, locationText) {
@@ -74,7 +78,7 @@ const IssueCard = ({ issue, onVote, onDeleted }) => {
     <article className="issue-card">
       <div className="issue-card__top">
         <span className="issue-card__category">{issue.category || 'Other'}</span>
-        <span className={`issue-card__status issue-card__status--${statusKey}`}>{issue.status || 'Reported'}</span>
+        <span className={`issue-card__status issue-card__status--${statusKey}`}>{ISSUE_STATUS_LABELS[issue.status] || issue.status}</span>
       </div>
 
       <Link to={`/issues/${issue._id}`} className="issue-card__title-link">
@@ -84,6 +88,7 @@ const IssueCard = ({ issue, onVote, onDeleted }) => {
       <div className="issue-card__meta">
         <span className="issue-card__location">?? {formatLocation(issue.location, issue.locationText)}</span>
         <span className="issue-card__time">{formatTimeAgo(issue.createdAt)}</span>
+        {issue.department && <span className="issue-card__department">Department: {issue.department}</span>}
       </div>
 
       <p className="issue-card__desc">{issue.description || 'No description provided.'}</p>

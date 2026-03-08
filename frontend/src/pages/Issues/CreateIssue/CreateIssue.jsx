@@ -94,6 +94,7 @@ const CreateIssue = () => {
       payload.append('description', form.description.trim());
       payload.append('category', form.category);
       payload.append('severity', String(Number(form.severity)));
+      payload.append('priorityScore', String(Number(form.severity)));
       payload.append('lat', String(Number(form.lat)));
       payload.append('lng', String(Number(form.lng)));
       payload.append('locationText', form.locationText.trim());

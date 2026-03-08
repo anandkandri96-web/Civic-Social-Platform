@@ -9,6 +9,8 @@ import { createIssueComment, deleteIssueComment, getIssueComments, updateIssueCo
 import { closeIssue, deleteIssue, getIssueById, reopenIssue, verifyIssue } from '../../../api/issues.api';
 import { getErrorMessage } from '../../../api/utils';
 import { canTransition } from '../../../utils/statusFlow';
+import VolunteerPanel from '../../../components/VolunteerPanel';
+import StatusTimeline from '../../../components/StatusTimeline';
 import './IssueDetails.css';
 
 const normalizeImages = (images) =>
@@ -21,7 +23,7 @@ const normalizeImages = (images) =>
 const IssueDetails = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { user, isAuthenticated } = useAuth();
+  const { user, isAuthentica, isVolunteerted } = useAuth();
   const { isAdmin, isOfficer } = useRole();
   const [issue, setIssue] = useState(null);
   const [comments, setComments] = useState([]);
@@ -192,6 +194,7 @@ const IssueDetails = () => {
             </span>
             <span>Date: {new Date(issue.createdAt).toDateString()}</span>
             <span>Reported by {issue.reportedBy?.name ?? 'Unknown'}</span>
+            {issue.department && <span>Department: {issue.department}</span>}
           </div>
 
           {canDelete && (
@@ -220,13 +223,19 @@ const IssueDetails = () => {
                   Close Issue
                 </button>
               )}
-            </div>
+            
+
+          {isVolunteer && (
+            <VolunteerPanel issue={issue} onIssueUpdate={setIssue} />
+          )}</div>
           )}
 
           <div className="issue-description">
             <h3>Description</h3>
             <p>{issue.description || 'No description provided.'}</p>
           </div>
+
+          <StatusTimeline statusHistory={issue.statusHistory} />
 
           {isResolvedFlow && afterImages.length > 0 && (
             <div className="issue-images-section">

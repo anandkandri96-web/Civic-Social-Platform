@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useRole } from '../../hooks/useRole';
 import IssueLeafletMap from '../../components/map/IssueLeafletMap';
-import { getIssues } from '../../api/issues.api';
+import { getAnalyticsHeatmap } from '../../api/analytics.api';
 import { getErrorMessage } from '../../api/utils';
 import './IssueMap.css';
 
@@ -26,9 +26,7 @@ function normalizeIssue(issue) {
 
 const IssueMap = () => {
   const { isAdmin } = useRole();
-  const [issues, setIssues] = useState([]);
-  const [category, setCategory] = useState('all');
-  const [activeId, setActiveId] = useState('');
+  const [heatmapData, setHeatmapData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
@@ -39,12 +37,15 @@ const IssueMap = () => {
       setLoading(true);
       setError('');
       try {
-        const data = await getIssues();
+        const data = await getAnalyticsHeatmap();
         if (!mounted) return;
 
-        const normalized = (Array.isArray(data) ? data : []).map(normalizeIssue).filter(Boolean);
-        setIssues(normalized);
-        setActiveId(normalized[0]?.id || '');
+        const normalized = (Array.isArray(data) ? data : []).map(point => ({
+          lat: point.coordinates[1],
+          lng: point.coordinates[0],
+          weight: point.weight
+        }));
+        setHeatmapData(normalized);
       } catch (err) {
         if (!mounted) return;
         setError(getErrorMessage(err));
@@ -58,56 +59,22 @@ const IssueMap = () => {
       mounted = false;
     };
   }, []);
-
-  const categories = useMemo(() => {
-    const set = new Set(issues.map((i) => i.category).filter(Boolean));
-    return ['all', ...Array.from(set).sort()];
-  }, [issues]);
-
-  const filtered = useMemo(() => {
-    if (category === 'all') return issues;
-    return issues.filter((issue) => issue.category === category);
-  }, [issues, category]);
-
-  const active = filtered.find((i) => i.id === activeId) || filtered[0] || null;
-
-  return (
+return (
     <section className="issue-map-page">
       <div className="issue-map-layout card">
         <aside className="issue-map-sidebar">
           <div className="issue-map-head">
-            <span>Bengaluru - Anekal Issue Map</span>
+            <span>Bengaluru - Issue Heatmap</span>
             {!isAdmin && <Link to="/issues/create">+ Report</Link>}
-          </div>
-
-          <div className="issue-map-filter-group">
-            <label htmlFor="map-category">Category</label>
-            <select id="map-category" value={category} onChange={(e) => setCategory(e.target.value)}>
-              {categories.map((cat) => (
-                <option key={cat} value={cat}>{cat === 'all' ? 'All' : cat}</option>
-              ))}
-            </select>
           </div>
 
           {error && <div className="issue-map-error">{error}</div>}
 
           <div className="issue-map-list">
             {loading ? (
-              <p className="issue-map-note">Loading issues...</p>
-            ) : filtered.length === 0 ? (
-              <p className="issue-map-note">No issues for selected category.</p>
+              <p className="issue-map-note">Loading heatmap...</p>
             ) : (
-              filtered.map((point) => (
-                <button
-                  type="button"
-                  key={point.id}
-                  className={`issue-map-item${active?.id === point.id ? ' is-active' : ''}`}
-                  onClick={() => setActiveId(point.id)}
-                >
-                  <strong>{point.title}</strong>
-                  <small>{point.locationText}</small>
-                </button>
-              ))
+              <p className="issue-map-note">Heatmap shows issue density</p>
             )}
           </div>
         </aside>
@@ -115,28 +82,10 @@ const IssueMap = () => {
         <div className="issue-map-canvas-wrap">
           <div className="issue-map-canvas">
             <IssueLeafletMap
-              issues={filtered}
-              activeId={active?.id || ''}
-              onSelect={setActiveId}
+              heatmapData={heatmapData}
               className="issue-map-leaflet"
               zoom={11}
-            />
-          </div>
-
-          <div className="issue-map-detail">
-            {active ? (
-              <>
-                <h3>{active.title}</h3>
-                <p>{active.locationText}</p>
-                <div className="issue-map-tags">
-                  <span>{active.status}</span>
-                  <span style={{ color: active.priority >= 4 ? '#ff7a35' : active.priority >= 3 ? '#ffd166' : '#00c8f8' }}>
-                    Severity {active.priority}
-                  </span>
-                </div>
-              </>
-            ) : (
-              <p>No issue selected.</p>
+            /><p>No issue selected.</p>
             )}
           </div>
         </div>

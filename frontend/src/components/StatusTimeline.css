@@ -1,0 +1,27 @@
+.status-timeline {
+  margin-top: 20px;
+}
+
+.timeline-list {
+  list-style: none;
+  padding: 0;
+}
+
+.timeline-item {
+  display: flex;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.timeline-dot {
+  width: 10px;
+  height: 10px;
+  background: #007bff;
+  border-radius: 50%;
+  margin-right: 10px;
+}
+
+.timeline-content small {
+  display: block;
+  color: #666;
+}

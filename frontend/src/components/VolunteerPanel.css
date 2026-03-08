@@ -1,0 +1,14 @@
+.volunteer-panel {
+  margin-top: 20px;
+  padding: 15px;
+  border: 1px solid #ddd;
+  border-radius: 5px;
+}
+
+.volunteer-panel h3 {
+  margin-top: 0;
+}
+
+.volunteer-panel button {
+  margin-right: 10px;
+}

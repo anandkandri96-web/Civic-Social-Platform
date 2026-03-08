@@ -1,10 +1,13 @@
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../../../hooks/useAuth';
 import { normalizeRole } from '../../../utils/roleCheck';
+import NotificationPanel from '../../NotificationPanel';
 import './Navbar.css';
 
 const Navbar = () => {
   const { user, logout, isAuthenticated } = useAuth();
+  const [notificationsOpen, setNotificationsOpen] = useState(false);
   const role = normalizeRole(user?.role);
   const isAdmin = role === 'admin';
   const isOfficer = role === 'officer';
@@ -58,6 +61,10 @@ const Navbar = () => {
           <>
             <span className="user-text">{greetingText}</span>
 
+            <button onClick={() => setNotificationsOpen(true)} className="notification-bell">
+              🔔
+            </button>
+
             <button onClick={logout} className="logout-btn">
               Logout
             </button>
@@ -75,6 +82,8 @@ const Navbar = () => {
           </>
         )}
       </div>
+
+      <NotificationPanel isOpen={notificationsOpen} onClose={() => setNotificationsOpen(false)} />
     </header>
   );
 };

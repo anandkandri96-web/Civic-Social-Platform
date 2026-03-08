@@ -25,7 +25,7 @@ const UserManagement = lazy(() => import('../pages/Admin/UserManagement/UserMana
 const CivicWorkflow = lazy(() => import('../pages/CivicWorkflow/CivicWorkflow'));
 const VolunteerDashboard = lazy(() => import('../pages/Dashboard/VolunteerDashboard'));
 const OfficerDashboard = lazy(() => import('../pages/Dashboard/OfficerDashboard'));
-const WorkerDashboard = lazy(() => import('../pages/Dashboard/FieldWorkerDashboard'));
+const WorkerDashboard = lazy(() => import('../pages/WorkerDashboard'));
 const Notifications = lazy(() => import('../pages/Notifications/Notifications'));
 const IssueMap = lazy(() => import('../pages/Map/IssueMap'));
 const Profile = lazy(() => import('../pages/Profile/Profile'));
