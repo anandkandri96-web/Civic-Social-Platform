@@ -47,6 +47,7 @@ const locationCoordinateMap = {
   koramangala: [77.6245, 12.9352],
   jayanagar: [77.5822, 12.925],
   "hsr layout": [77.6476, 12.9116],
+  anekal: [77.6958, 12.7096],
 };
 
 function parseExportLiteral(source, exportName) {

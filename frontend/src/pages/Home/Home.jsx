@@ -4,14 +4,16 @@ import { useAuth } from "../../hooks/useAuth";
 import { useRole } from "../../hooks/useRole";
 import { getIssues } from "../../api/issues.api";
 import VoteButton from "../../components/ui/VoteButton";
+import IssueLeafletMap from "../../components/map/IssueLeafletMap";
 import "./Home.css";
 
 const CATEGORY_LABELS = {
-  ROADS: "Roads",
-  ELECTRICITY: "Electricity",
-  GARBAGE: "Garbage",
-  DRAINAGE: "Drainage",
-  OTHER: "Other",
+  roads: "Roads",
+  electricity: "Electricity",
+  garbage: "Garbage",
+  drainage: "Drainage",
+  water: "Water",
+  other: "Other",
 };
 
 const CATEGORY_COLORS = {
@@ -56,27 +58,6 @@ const HOW_IT_WORKS = [
       "Track updates from acknowledgement to completion with transparent progress.",
   },
 ];
-
-const HEATMAP_POINTS = [
-  { x: 22, y: 30, intensity: 5, label: "MG Road" },
-  { x: 45, y: 20, intensity: 3, label: "City Mall" },
-  { x: 65, y: 45, intensity: 4, label: "Station Rd" },
-  { x: 35, y: 60, intensity: 2, label: "Riverside" },
-  { x: 75, y: 30, intensity: 5, label: "Central Sq" },
-  { x: 55, y: 70, intensity: 3, label: "East Wing" },
-  { x: 15, y: 55, intensity: 2, label: "Park Ave" },
-  { x: 82, y: 60, intensity: 4, label: "Tech Hub" },
-  { x: 30, y: 80, intensity: 3, label: "South Gate" },
-  { x: 68, y: 15, intensity: 2, label: "North Link" },
-];
-
-const INTENSITY_COLORS = {
-  5: "#ef4444",
-  4: "#f59e0b",
-  3: "#38b6ff",
-  2: "#10b981",
-  1: "#a78bfa",
-};
 
 const GLOBE_FRAME_URLS = Object.entries(
   import.meta.glob("../../../globe images/*.png", {
@@ -131,7 +112,7 @@ function getLocation(issue) {
 }
 
 function normalizeIssue(issue) {
-  const rawCategory = issue.category || "OTHER";
+  const rawCategory = String(issue.category || "other").toLowerCase();
   const category = CATEGORY_LABELS[rawCategory] || rawCategory || "Other";
   const status = normalizeStatus(issue.status);
   const votes = issue.voteCount ?? issue.votes ?? 0;
@@ -146,6 +127,7 @@ function normalizeIssue(issue) {
     votes,
     comments: issue.commentCount ?? issue.commentsCount ?? 0,
     location: getLocation(issue),
+    coordinates: Array.isArray(issue?.location?.coordinates) ? issue.location.coordinates : null,
     reportedAt: formatRelativeDate(issue.createdAt || issue.reportedAt),
     userVoted: Boolean(issue.userVoted),
   };
@@ -396,9 +378,6 @@ function HomeHeader({
               <Link to="/issues" className="header__nav-link">
                 Browse Issues
               </Link>
-              <Link to="/workflow" className="header__nav-link">
-                Workflow
-              </Link>
               <Link to={dashboardPath} className="header__nav-link">
                 Dashboard
               </Link>
@@ -415,9 +394,6 @@ function HomeHeader({
             <>
               <Link to="/issues" className="header__nav-link">
                 Browse Issues
-              </Link>
-              <Link to="/workflow" className="header__nav-link">
-                Workflow
               </Link>
               <Link to={dashboardPath} className="header__nav-link">
                 Dashboard
@@ -714,14 +690,16 @@ function PriorityIssuesSection({
                   </div>
 
                   <div className="issue-card__footer">
-                    <div className="issue-card__vote">
-                      <VoteButton
-                        issueId={issue.id}
-                        voteCount={issue.votes}
-                        userVoted={issue.userVoted}
-                        onVote={(result) => onVote(issue.id, result)}
-                      />
-                    </div>
+                    {!isAdmin && (
+                      <div className="issue-card__vote">
+                        <VoteButton
+                          issueId={issue.id}
+                          voteCount={issue.votes}
+                          userVoted={issue.userVoted}
+                          onVote={(result) => onVote(issue.id, result)}
+                        />
+                      </div>
+                    )}
                     <span className="issue-card__comments">
                       <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                         <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z" />
@@ -738,29 +716,9 @@ function PriorityIssuesSection({
   );
 }
 
-function MapPreviewSection() {
-  const sectionRef = useRef(null);
-
-  useEffect(() => {
-    const observer = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          if (entry.isIntersecting) {
-            entry.target.querySelectorAll(".map-point").forEach((pt, i) => {
-              setTimeout(() => pt.classList.add("map-point--visible"), i * 90);
-            });
-          }
-        });
-      },
-      { threshold: 0.2 }
-    );
-
-    if (sectionRef.current) observer.observe(sectionRef.current);
-    return () => observer.disconnect();
-  }, []);
-
+function MapPreviewSection({ mapIssues = [] }) {
   return (
-    <section className="map-section" id="map" ref={sectionRef}>
+    <section className="map-section" id="map">
       <div className="container">
         <div className="map-layout">
           <div className="map-info fade-in-up visible">
@@ -800,65 +758,19 @@ function MapPreviewSection() {
               </div>
             </div>
 
-            <Link to="/issues" className="btn btn-primary map-info__cta">
+            <Link to="/map" className="btn btn-primary map-info__cta">
               Open Full Map
             </Link>
           </div>
 
           <div className="map-visual fade-in-up visible">
             <div className="map-canvas">
-              <div className="map-grid" aria-hidden="true">
-                {Array.from({ length: 8 }).map((_, i) => (
-                  <div key={`h-${i}`} className="map-grid__h-line" style={{ top: `${(i + 1) * 11}%` }} />
-                ))}
-                {Array.from({ length: 10 }).map((_, i) => (
-                  <div key={`v-${i}`} className="map-grid__v-line" style={{ left: `${(i + 1) * 9}%` }} />
-                ))}
-              </div>
-
-              <div className="map-blocks" aria-hidden="true">
-                <div className="map-block" style={{ left: "10%", top: "15%", width: "14%", height: "10%" }} />
-                <div className="map-block" style={{ left: "30%", top: "10%", width: "18%", height: "12%" }} />
-                <div className="map-block" style={{ left: "58%", top: "18%", width: "12%", height: "8%" }} />
-                <div className="map-block" style={{ left: "78%", top: "12%", width: "10%", height: "14%" }} />
-                <div className="map-block" style={{ left: "8%", top: "40%", width: "16%", height: "9%" }} />
-                <div className="map-block" style={{ left: "28%", top: "45%", width: "20%", height: "11%" }} />
-                <div className="map-block" style={{ left: "56%", top: "38%", width: "14%", height: "12%" }} />
-                <div className="map-block" style={{ left: "76%", top: "42%", width: "12%", height: "10%" }} />
-                <div className="map-block" style={{ left: "12%", top: "65%", width: "15%", height: "9%" }} />
-                <div className="map-block" style={{ left: "34%", top: "68%", width: "18%", height: "10%" }} />
-                <div className="map-block" style={{ left: "60%", top: "62%", width: "12%", height: "11%" }} />
-                <div className="map-block" style={{ left: "80%", top: "65%", width: "10%", height: "12%" }} />
-              </div>
-
-              {HEATMAP_POINTS.map((pt, idx) => {
-                const color = INTENSITY_COLORS[pt.intensity] || "#38b6ff";
-                return (
-                  <div
-                    key={idx}
-                    className="map-point"
-                    style={{ left: `${pt.x}%`, top: `${pt.y}%`, "--pt-color": color }}
-                    title={`${pt.label} | Intensity: ${pt.intensity}`}
-                  >
-                    <div className="map-point__ring" />
-                    <div className="map-point__dot" />
-                    <div className="map-point__halo" />
-                    <span className="map-point__label">{pt.label}</span>
-                  </div>
-                );
-              })}
-
-              <div className="map-compass" aria-label="North">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-                  <circle cx="12" cy="12" r="10" />
-                  <path d="M12 2v4M12 18v4M2 12h4M18 12h4" strokeWidth="1" />
-                  <path d="M12 2l2 8H10L12 2z" fill="#38b6ff" stroke="none" />
-                  <path d="M12 22l-2-8h4L12 22z" fill="rgba(56,182,255,0.3)" stroke="none" />
-                </svg>
-                <span>N</span>
-              </div>
-
-              <div className="map-overlay-label">LIVE | CIVICPULSE MAP</div>
+              <IssueLeafletMap
+                issues={mapIssues}
+                activeId={mapIssues[0]?.id || ""}
+                className="map-preview-leaflet"
+                zoom={11}
+              />
             </div>
           </div>
         </div>
@@ -867,6 +779,38 @@ function MapPreviewSection() {
   );
 }
 
+function WhoAreYouSection() {
+  const roles = [
+    { icon: 'CT', title: 'Citizen', text: 'Report local civic issues and track resolution progress in real time.', glow: '#00c8f8' },
+    { icon: 'VO', title: 'Volunteer', text: 'Support neighborhood fixes with verification, community mobilization, and field work.', glow: '#00e5a0' },
+    { icon: 'OF', title: 'Department Officer', text: 'Prioritize, assign, and monitor incoming issues with transparent public updates.', glow: '#ffd166' },
+    { icon: 'WK', title: 'Field Worker', text: 'Execute assigned tasks on ground and upload progress with completion evidence.', glow: '#ff7a35' },
+  ];
+
+  return (
+    <section className="roles-section" id="about">
+      <div className="container">
+        <div className="roles-header">
+          <span className="section-label">Platform Roles</span>
+          <h2 className="section-title">Who are you?</h2>
+          <p className="section-subtitle">
+            CivicPulse adapts to every stakeholder in the city problem-solving loop.
+          </p>
+        </div>
+
+        <div className="roles-grid">
+          {roles.map((role) => (
+            <article key={role.title} className="roles-card" style={{ "--role-glow": role.glow }}>
+              <span className="roles-card__icon">{role.icon}</span>
+              <h3>{role.title}</h3>
+              <p>{role.text}</p>
+            </article>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
 function Footer() {
   const year = new Date().getFullYear();
 
@@ -996,6 +940,29 @@ const Home = () => {
     );
   };
 
+  const mapPreviewIssues = useMemo(() => {
+    return issues
+      .filter((issue) => Array.isArray(issue.coordinates) && issue.coordinates.length >= 2)
+      .slice(0, 20)
+      .map((issue) => {
+        const lng = Number(issue.coordinates[0]);
+        const lat = Number(issue.coordinates[1]);
+        if (Number.isNaN(lng) || Number.isNaN(lat)) return null;
+
+        return {
+          id: issue.id,
+          title: issue.title,
+          category: issue.category,
+          status: issue.statusLabel,
+          priority: Math.min(5, Math.max(1, Number(issue.raw?.severity || 3))),
+          locationText: issue.location,
+          lat,
+          lng,
+        };
+      })
+      .filter(Boolean);
+  }, [issues]);
+
   return (
     <div className="home-page">
       <HomeHeader
@@ -1018,7 +985,8 @@ const Home = () => {
           onVote={handleVoteUpdate}
           isAdmin={isAdmin}
         />
-        <MapPreviewSection />
+        <MapPreviewSection mapIssues={mapPreviewIssues} />
+        <WhoAreYouSection />
       </main>
 
       <Footer />
@@ -1027,3 +995,5 @@ const Home = () => {
 };
 
 export default Home;
+
+

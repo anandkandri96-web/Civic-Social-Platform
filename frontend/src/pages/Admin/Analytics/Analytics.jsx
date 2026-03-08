@@ -1,37 +1,92 @@
-import { lifecycle, sampleIssues } from '../../../utils/civicMockData';
+import { useEffect, useMemo, useState } from 'react';
+import { getAnalyticsHeatmap, getAnalyticsTrends } from '../../../api/analytics.api';
+import Loader from '../../../components/common/Loader/Loader';
 import './Analytics.css';
 
-const roleOps = [
-  { role: 'Citizens', count: 1260 },
-  { role: 'Volunteers / NGOs', count: 164 },
-  { role: 'Department Officers', count: 24 },
-  { role: 'Field Workers', count: 87 },
-  { role: 'Admins', count: 4 },
-];
-
-const areaHeat = [
-  ['MG Road', 34],
-  ['Koramangala', 28],
-  ['Indiranagar', 22],
-  ['HSR Layout', 19],
-  ['JP Nagar', 15],
-];
-
 const Analytics = () => {
-  const totalIssues = sampleIssues.length;
-  const communityResolved = sampleIssues.filter((issue) => issue.path === 'Community').length;
-  const highPriority = sampleIssues.filter((issue) => issue.priority === 'High').length;
-  const avgSupport = Math.round(
-    sampleIssues.reduce((sum, issue) => sum + issue.support, 0) / Math.max(totalIssues, 1)
+  const [trends, setTrends] = useState(null);
+  const [heatmap, setHeatmap] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+
+  useEffect(() => {
+    let mounted = true;
+
+    const fetchAnalytics = async () => {
+      setLoading(true);
+      setError('');
+      try {
+        const [trendsData, heatmapData] = await Promise.all([getAnalyticsTrends(), getAnalyticsHeatmap()]);
+        if (!mounted) return;
+        setTrends(trendsData || {});
+        setHeatmap(Array.isArray(heatmapData) ? heatmapData : []);
+      } catch (err) {
+        if (!mounted) return;
+        setError(err?.response?.data?.message || err?.message || 'Failed to load analytics');
+      } finally {
+        if (mounted) setLoading(false);
+      }
+    };
+
+    fetchAnalytics();
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
+  const statusMap = useMemo(() => {
+    const list = trends?.statusBreakdown || [];
+    return list.reduce((acc, item) => {
+      acc[item._id] = item.count;
+      return acc;
+    }, {});
+  }, [trends]);
+
+  const categoryData = useMemo(() => trends?.issuesByCategory || [], [trends]);
+  const totalIssues = useMemo(() => Object.values(statusMap).reduce((sum, n) => sum + Number(n || 0), 0), [statusMap]);
+  const communityResolved = Number(statusMap.resolved_by_community || 0);
+  const highPriority = useMemo(() => heatmap.filter((p) => Number(p.weight || 0) >= 8).length, [heatmap]);
+  const avgSupport = useMemo(() => {
+    if (heatmap.length === 0) return 0;
+    const sum = heatmap.reduce((acc, p) => acc + Number(p.voteCount || 0), 0);
+    return Math.round(sum / heatmap.length);
+  }, [heatmap]);
+
+  const govtPath = Number(statusMap.assigned_to_department || 0) + Number(statusMap.work_in_progress || 0) + Number(statusMap.resolved || 0);
+  const communityPath = Number(statusMap.volunteer_claimed || 0) + Number(statusMap.community_fix_in_progress || 0) + Number(statusMap.resolved_by_community || 0);
+  const verifyPath = Number(statusMap.citizen_verified || 0);
+  const maxPath = Math.max(govtPath, communityPath, verifyPath, 1);
+  const govtPathHeight = `${Math.max(16, Math.round((govtPath / maxPath) * 100))}%`;
+  const communityPathHeight = `${Math.max(16, Math.round((communityPath / maxPath) * 100))}%`;
+  const verifyHeight = `${Math.max(16, Math.round((verifyPath / maxPath) * 100))}%`;
+
+  const avgResolutionTime = Number(trends?.avgResolutionTime || 0).toFixed(1);
+  const resolvedCount = Number(statusMap.resolved || 0) + Number(statusMap.resolved_by_community || 0) + Number(statusMap.closed || 0);
+  const resolutionRate = totalIssues > 0 ? Math.round((resolvedCount / totalIssues) * 100) : 0;
+  const escalatedProxy = totalIssues > 0 ? Math.round(((statusMap.under_review || 0) / totalIssues) * 100) : 0;
+  const citizenVerifiedRate = resolvedCount > 0 ? Math.round(((statusMap.citizen_verified || 0) / resolvedCount) * 100) : 0;
+
+  const topHeat = useMemo(
+    () =>
+      [...heatmap]
+        .sort((a, b) => Number(b.weight || 0) - Number(a.weight || 0))
+        .slice(0, 5),
+    [heatmap]
   );
 
-  const govtPathHeight = `${Math.round((lifecycle.government.length / 7) * 100)}%`;
-  const communityPathHeight = `${Math.round((lifecycle.community.length / 7) * 100)}%`;
+  const formatCoord = (point) => {
+    const coords = point?.location?.coordinates;
+    if (!Array.isArray(coords) || coords.length < 2) return 'Unknown';
+    return `${Number(coords[1]).toFixed(4)}, ${Number(coords[0]).toFixed(4)}`;
+  };
+
+  if (loading) return <Loader fullScreen />;
 
   return (
     <section className="admin-page page">
       <div className="container">
         <h1 className="admin-title">Admin Analytics</h1>
+        {error && <div className="issues-error">{error}</div>}
 
         <div className="stats-grid">
           <div className="stat-card card">
@@ -80,7 +135,7 @@ const Analytics = () => {
                 <span>Community Path</span>
               </div>
               <div className="bar-wrapper">
-                <div className="bar pending" style={{ height: '58%' }} />
+                <div className="bar pending" style={{ height: verifyHeight }} />
                 <span>Citizen Verification</span>
               </div>
             </div>
@@ -91,19 +146,19 @@ const Analytics = () => {
             <ul className="metric-list">
               <li>
                 <span>Average resolution time</span>
-                <strong>26h</strong>
+                <strong>{avgResolutionTime}h</strong>
               </li>
               <li>
-                <span>First response under 2h</span>
-                <strong>74%</strong>
+                <span>Resolved / closed rate</span>
+                <strong>{resolutionRate}%</strong>
               </li>
               <li>
-                <span>Escalated beyond SLA</span>
-                <strong>9%</strong>
+                <span>Under-review workload</span>
+                <strong>{escalatedProxy}%</strong>
               </li>
               <li>
                 <span>Citizen verified closures</span>
-                <strong>88%</strong>
+                <strong>{citizenVerifiedRate}%</strong>
               </li>
             </ul>
           </div>
@@ -111,11 +166,11 @@ const Analytics = () => {
 
         <div className="admin-panels admin-panels--secondary">
           <div className="panel card">
-            <h3>Role Participation</h3>
+            <h3>Category Distribution</h3>
             <ul className="metric-list">
-              {roleOps.map((item) => (
-                <li key={item.role}>
-                  <span>{item.role}</span>
+              {categoryData.map((item) => (
+                <li key={item._id}>
+                  <span>{item._id}</span>
                   <strong>{item.count}</strong>
                 </li>
               ))}
@@ -125,10 +180,10 @@ const Analytics = () => {
           <div className="panel card">
             <h3>Top Issue Heatmap Areas</h3>
             <ul className="metric-list">
-              {areaHeat.map(([area, count]) => (
-                <li key={area}>
-                  <span>{area}</span>
-                  <strong>{count} reports</strong>
+              {topHeat.map((point) => (
+                <li key={point._id}>
+                  <span>{formatCoord(point)}</span>
+                  <strong>Weight {point.weight}</strong>
                 </li>
               ))}
             </ul>

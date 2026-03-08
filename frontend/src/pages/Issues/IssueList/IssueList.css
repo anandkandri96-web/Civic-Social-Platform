@@ -1,4 +1,4 @@
-﻿.issues-page {
+.issues-page {
   padding-top: 0;
 }
 
@@ -8,7 +8,7 @@
 
 .issues-header h1 {
   font-family: var(--font-heading);
-  font-size: clamp(1.8rem, 2vw, 2.2rem);
+  font-size: clamp(1.7rem, 2vw, 2.1rem);
   margin-bottom: var(--space-xs);
 }
 
@@ -32,28 +32,29 @@
 }
 
 .issues-filter-select {
-  padding: 10px 12px;
-  font-size: var(--font-size-sm);
+  padding: 9px 12px;
+  font-size: 0.82rem;
   color: var(--text-primary);
   background: var(--bg-card);
   border: 1px solid var(--border-color);
   border-radius: var(--radius-sm);
-  min-width: 170px;
+  min-width: 190px;
 }
 
 .issues-filter-select:focus {
   outline: none;
   border-color: var(--color-primary);
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-primary) 22%, transparent);
 }
 
 .issues-create-link,
 .issues-empty-cta {
   padding: 10px 16px;
   background: var(--color-primary);
-  color: #fff;
-  font-size: var(--font-size-sm);
+  color: #001118;
+  font-size: 0.8rem;
   border-radius: var(--radius-sm);
+  font-weight: 700;
+  box-shadow: 0 0 16px rgba(0, 200, 248, 0.22);
 }
 
 .issues-error {
@@ -62,10 +63,10 @@
   gap: var(--space-sm);
   padding: 12px var(--space-md);
   margin-bottom: var(--space-md);
-  background: color-mix(in srgb, var(--color-danger) 16%, transparent);
-  color: color-mix(in srgb, var(--color-danger) 80%, var(--text-primary));
+  background: rgba(255, 69, 96, 0.15);
+  color: #ff8295;
   border-radius: var(--radius-sm);
-  border: 1px solid color-mix(in srgb, var(--color-danger) 35%, transparent);
+  border: 1px solid rgba(255, 69, 96, 0.35);
 }
 
 .issues-empty {

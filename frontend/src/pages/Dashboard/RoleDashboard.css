@@ -1,35 +1,41 @@
 .role-dashboard {
-  background: var(--bg-main);
+  background: transparent;
 }
 
 .role-dashboard__header {
   display: flex;
   justify-content: space-between;
-  gap: 14px;
-  margin-bottom: 18px;
   align-items: flex-start;
+  gap: 16px;
+  margin-bottom: 18px;
 }
 
 .role-dashboard__header h1 {
   font-family: var(--font-heading);
-  font-size: 1.7rem;
+  font-size: 1.45rem;
+  letter-spacing: -0.02em;
 }
 
 .role-dashboard__header p {
-  color: var(--text-secondary);
   margin-top: 6px;
+  color: var(--text-secondary);
+  font-size: 0.86rem;
 }
 
 .role-dashboard__action {
-  border: 1px solid var(--border-bright);
-  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
   padding: 8px 12px;
   color: var(--color-primary-light);
-  font-size: 0.85rem;
+  font-size: 0.72rem;
+  font-family: var(--font-mono);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
 }
 
 .role-dashboard__action:hover {
-  background: color-mix(in srgb, var(--color-primary-light) 14%, transparent);
+  border-color: var(--border-bright);
+  background: rgba(0, 200, 248, 0.1);
 }
 
 .role-dashboard__grid {
@@ -40,24 +46,24 @@
 }
 
 .role-dashboard__stat {
-  padding: 14px;
+  padding: 16px;
+  border-radius: 10px;
+  border-top: 3px solid var(--color-primary);
 }
 
 .role-dashboard__stat-label {
   color: var(--text-secondary);
-  font-size: 0.82rem;
+  font-size: 0.67rem;
+  font-family: var(--font-mono);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
 }
 
 .role-dashboard__stat-value {
-  font-family: var(--font-heading);
-  font-size: 1.5rem;
   margin-top: 8px;
-}
-
-.role-dashboard__panels {
-  display: grid;
-  grid-template-columns: 1.2fr 1fr;
-  gap: 12px;
+  font-family: var(--font-mono);
+  font-size: 1.5rem;
+  color: var(--color-primary-light);
 }
 
 .role-dashboard__panel {
@@ -66,7 +72,7 @@
 
 .role-dashboard__panel h2 {
   font-family: var(--font-heading);
-  font-size: 1.1rem;
+  font-size: 1.02rem;
   margin-bottom: 12px;
 }
 
@@ -77,61 +83,59 @@
 
 .role-dashboard__table th,
 .role-dashboard__table td {
-  padding: 9px 8px;
+  padding: 10px 9px;
   border-bottom: 1px solid var(--border-color);
   text-align: left;
-  font-size: 0.85rem;
+  font-size: 0.8rem;
+  vertical-align: middle;
 }
 
 .role-dashboard__table th {
+  font-size: 0.63rem;
+  font-family: var(--font-mono);
+  text-transform: uppercase;
+  letter-spacing: 0.09em;
   color: var(--text-secondary);
-  font-weight: 600;
 }
 
-.role-dashboard__badge {
-  font-size: 0.72rem;
-  border: 1px solid var(--border-bright);
-  background: color-mix(in srgb, var(--color-primary-light) 16%, transparent);
-  color: var(--color-primary-light);
-  padding: 3px 8px;
-  border-radius: 999px;
+.role-dashboard__actions {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
 }
 
-.role-dashboard__list {
-  list-style: none;
-  display: grid;
-  gap: 8px;
-}
-
-.role-dashboard__list li {
+.role-dashboard__actions button,
+.role-dashboard__actions select,
+.role-dashboard__actions input {
   border: 1px solid var(--border-color);
-  background: color-mix(in srgb, var(--bg-card) 86%, #000 14%);
-  border-radius: 10px;
-  padding: 10px;
-  font-size: 0.88rem;
-  color: var(--text-secondary);
-}
-
-.role-dashboard__list strong {
+  border-radius: 7px;
+  background: var(--bg-surface);
   color: var(--text-primary);
+  font-size: 0.7rem;
+  padding: 6px 8px;
 }
 
-@media (max-width: 1024px) {
+.role-dashboard__actions button {
+  cursor: pointer;
+}
+
+.role-dashboard__actions button:hover {
+  border-color: var(--border-bright);
+  color: var(--color-primary-light);
+}
+
+@media (max-width: 1100px) {
   .role-dashboard__grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
-
-  .role-dashboard__panels {
-    grid-template-columns: 1fr;
-  }
 }
 
-@media (max-width: 640px) {
-  .role-dashboard__grid {
-    grid-template-columns: 1fr;
-  }
-
+@media (max-width: 760px) {
   .role-dashboard__header {
     flex-direction: column;
+  }
+
+  .role-dashboard__grid {
+    grid-template-columns: 1fr;
   }
 }

@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { getIssues } from '../../../api/issues.api';
+import { getAllIssuesAdmin } from '../../../api/admin.api';
 import Loader from '../../../components/common/Loader/Loader';
 import PageHeader from '../../../components/ui/PageHeader/PageHeader';
 import './AdminDashboard.css';
@@ -18,8 +18,8 @@ const AdminDashboard = () => {
       setError('');
 
       try {
-        const data = await getIssues();
-        if (mounted) setIssues(Array.isArray(data) ? data : []);
+        const payload = await getAllIssuesAdmin({ limit: 100 });
+        if (mounted) setIssues(Array.isArray(payload?.data) ? payload.data : []);
       } catch (err) {
         if (mounted) setError(err?.response?.data?.message || err?.message || 'Failed to load issues');
       } finally {
@@ -35,8 +35,8 @@ const AdminDashboard = () => {
 
   const stats = useMemo(() => {
     const total = issues.length;
-    const pending = issues.filter((i) => i.status === 'pending').length;
-    const assigned = issues.filter((i) => i.status === 'assigned').length;
+    const pending = issues.filter((i) => ['reported', 'under_review'].includes(i.status)).length;
+    const assigned = issues.filter((i) => ['assigned_to_department', 'work_in_progress'].includes(i.status)).length;
     const resolved = issues.filter((i) => i.status === 'resolved').length;
     return { total, pending, assigned, resolved };
   }, [issues]);
@@ -69,6 +69,9 @@ const AdminDashboard = () => {
             <div className="admin-dashboard-actions">
               <Link className="admin-dashboard-link" to="/admin/analytics">
                 View Analytics
+              </Link>
+              <Link className="admin-dashboard-link" to="/admin/users">
+                Manage Users
               </Link>
               <Link className="admin-dashboard-link admin-dashboard-link--primary" to="/admin/manage-issues">
                 Open Admin Panel
@@ -127,7 +130,7 @@ const AdminDashboard = () => {
                   <li key={issue._id}>
                     <span className="admin-recent-title">{issue.title}</span>
                     <span className="admin-recent-meta">
-                      {issue.category || 'Other'} · {issue.status || 'pending'}
+                      {issue.category || 'other'} · {issue.status || 'reported'}
                     </span>
                   </li>
                 ))}

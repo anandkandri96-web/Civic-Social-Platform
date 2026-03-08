@@ -7,16 +7,16 @@ const Navbar = () => {
   const { user, logout, isAuthenticated } = useAuth();
   const role = normalizeRole(user?.role);
   const isAdmin = role === 'admin';
-  const isOfficer = role === 'department_officer';
-  const isFieldWorker = role === 'field_worker';
+  const isOfficer = role === 'officer';
+  const isWorker = role === 'worker';
   const isVolunteer = role === 'volunteer';
 
   const dashboardPath = isAdmin
     ? '/admin'
     : isOfficer
       ? '/dashboard/officer'
-      : isFieldWorker
-        ? '/dashboard/field-worker'
+      : isWorker
+        ? '/dashboard/worker'
         : isVolunteer
           ? '/dashboard/volunteer'
           : '/dashboard';
@@ -25,8 +25,8 @@ const Navbar = () => {
     ? 'Admin Dashboard'
     : isOfficer
       ? 'Officer Dashboard'
-      : isFieldWorker
-        ? 'Field Dashboard'
+      : isWorker
+        ? 'Worker Dashboard'
         : isVolunteer
           ? 'Volunteer Dashboard'
           : 'My Dashboard';
@@ -44,9 +44,12 @@ const Navbar = () => {
 
         <nav className="nav-links">
           {!isAdmin && <Link to="/issues">Browse Issues</Link>}
-          <Link to="/workflow">Workflow</Link>
+          {!isAdmin && <Link to="/map">Issue Map</Link>}
           {isAuthenticated && <Link to={dashboardPath}>{dashboardLabel}</Link>}
+          {isAuthenticated && <Link to="/profile">Profile</Link>}
+          {isAuthenticated && <Link to="/notifications">Notifications</Link>}
           {isAdmin && <Link to={panelPath}>Admin Panel</Link>}
+          {isAdmin && <Link to="/admin/users">Users</Link>}
         </nav>
       </div>
 

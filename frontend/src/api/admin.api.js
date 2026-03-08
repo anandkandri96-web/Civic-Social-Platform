@@ -1,45 +1,56 @@
 import api from './axios';
 
-/**
- * Fetch all issues (admin only)
- * GET /api/admin/issues
- */
-export const getAllIssuesAdmin = async (params = {}) => {
-  return await api.get('/admin/issues', { params });
-};
-
-/**
- * Fetch admin statistics
- * GET /api/admin/stats
- */
 export const getAdminStats = async () => {
-  return await api.get('/admin/stats');
+  const res = await api.get('/admin/stats');
+  return res.data?.data ?? {};
 };
 
-/**
- * Update issue status (admin / volunteer)
- * PUT /api/issues/:id/status
- */
-export const updateIssueStatusAdmin = async (id, status) => {
-  if (!id || !status) {
-    throw new Error('Issue ID and status are required');
-  }
-
-  return await api.patch(`/issues/${id}/status`, { status });
+export const getAllIssuesAdmin = async (params = {}) => {
+  const res = await api.get('/admin/issues', { params });
+  return res.data?.data ?? { data: [], pagination: {} };
 };
 
-/**
- * Delete issue (admin only)
- * DELETE /api/issues/:id
- */
-export const deleteIssueAdmin = async (id) => {
-  if (!id) {
-    throw new Error('Issue ID is required');
-  }
-
-  return await api.delete(`/issues/${id}`);
+export const getAdminUsers = async (params = {}) => {
+  const res = await api.get('/admin/users', { params });
+  return res.data?.data ?? { data: [], pagination: {} };
 };
-export const getAllIssues = async () => {
-  const res = await api.get('/admin/issues');
+
+export const updateUserRoleAdmin = async (userId, role) => {
+  const res = await api.patch(`/admin/users/${userId}/role`, { role });
+  return res.data?.data ?? res.data;
+};
+
+export const updateUserStatusAdmin = async (userId, isActive) => {
+  const res = await api.patch(`/admin/users/${userId}/status`, { isActive });
+  return res.data?.data ?? res.data;
+};
+
+export const approveUserAdmin = async (userId, isApproved) => {
+  const res = await api.patch(`/admin/users/${userId}/approve`, { isApproved });
+  return res.data?.data ?? res.data;
+};
+
+export const assignUserDepartmentAdmin = async (userId, departmentId) => {
+  const res = await api.patch(`/admin/users/${userId}/department`, { departmentId });
+  return res.data?.data ?? res.data;
+};
+
+export const deleteUserAdmin = async (userId) => {
+  const res = await api.delete(`/admin/users/${userId}`);
   return res.data;
+};
+
+export const getDepartmentsAdmin = async () => {
+  const res = await api.get('/admin/departments');
+  return res.data?.data ?? [];
+};
+
+export const createDepartmentAdmin = async (payload) => {
+  const res = await api.post('/admin/departments', payload);
+  return res.data?.data ?? res.data;
+};
+
+export const updateIssueStatusAdmin = async (issueId, status) => {
+  const res = await api.patch(`/issues/${issueId}/status`, { status });
+  return res.data?.data ?? res.data;
 };

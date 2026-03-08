@@ -1,133 +1,126 @@
 .issue-card {
-  background: #ffffff;
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
   border-radius: 12px;
-  border: 1px solid #e5eaf1;
-  overflow: hidden;
+  padding: 20px;
   display: flex;
   flex-direction: column;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);
+  gap: 12px;
+  transition: transform var(--transition-normal), border-color var(--transition-normal);
 }
 
-.issue-card-image {
-  position: relative;
-  background: #f4f7fb;
-  height: 140px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+.issue-card:hover {
+  border-color: var(--border-bright);
+  transform: translateY(-3px);
 }
 
-.issue-icon {
-  font-size: 32px;
-}
-
-.issue-card-content {
-  padding: 16px;
-}
-
-.issue-tags {
-  display: flex;
-  gap: 8px;
-  margin-bottom: 8px;
-}
-
-.category-tag {
-  background: #eef4ff;
-  color: #2563eb;
-  font-size: 12px;
-  padding: 3px 8px;
-  border-radius: 6px;
-  font-weight: 500;
-}
-
-.severity-tag {
-  font-size: 12px;
-  padding: 3px 8px;
-  border-radius: 6px;
-  font-weight: 500;
-}
-
-.severity-tag.low {
-  background: #ecfdf5;
-  color: #059669;
-}
-
-.severity-tag.medium {
-  background: #fffbeb;
-  color: #d97706;
-}
-
-.severity-tag.high {
-  background: #fef2f2;
-  color: #dc2626;
-}
-
-.issue-title {
-  font-size: 16px;
-  font-weight: 600;
-  margin: 6px 0;
-  color: #111827;
-}
-
-.issue-location {
-  font-size: 13px;
-  color: #6b7280;
-  margin-bottom: 6px;
-}
-
-.issue-description {
-  font-size: 14px;
-  color: #4b5563;
-  margin-bottom: 12px;
-}
-
-.issue-footer {
+.issue-card__top,
+.issue-card__meta,
+.issue-card__footer {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  border-top: 1px solid #e5eaf1;
-  padding-top: 10px;
-  font-size: 13px;
-  color: #6b7280;
+  gap: 8px;
 }
 
-.issue-actions {
+.issue-card__category {
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-primary-light);
+  background: rgba(0, 200, 248, 0.1);
+  border: 1px solid rgba(0, 200, 248, 0.25);
+  border-radius: 4px;
+  padding: 3px 8px;
+  font-family: var(--font-mono);
+}
+
+.issue-card__status {
+  font-size: 0.68rem;
+  font-weight: 600;
+  border-radius: 4px;
+  padding: 3px 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  font-family: var(--font-mono);
+}
+
+.issue-card__status--open {
+  color: var(--color-primary-light);
+  background: rgba(0, 200, 248, 0.14);
+}
+
+.issue-card__status--in-progress {
+  color: var(--color-warning);
+  background: rgba(255, 122, 53, 0.12);
+}
+
+.issue-card__status--resolved {
+  color: var(--color-success);
+  background: rgba(0, 229, 160, 0.12);
+}
+
+.issue-card__title-link {
+  text-decoration: none;
+}
+
+.issue-card__title {
+  font-family: var(--font-heading);
+  font-size: 1rem;
+  color: var(--text-primary);
+}
+
+.issue-card__meta {
+  font-size: 0.76rem;
+  color: var(--text-muted);
+}
+
+.issue-card__location,
+.issue-card__time {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.issue-card__desc {
+  color: var(--text-secondary);
+  font-size: 0.82rem;
+  line-height: 1.5;
+}
+
+.issue-card__footer {
+  border-top: 1px solid var(--border-color);
+  padding-top: 10px;
+}
+
+.issue-card__vote {
+  margin-right: auto;
+}
+
+.issue-card__actions {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 8px;
 }
 
 .details-link {
-  color: #2563eb;
-  text-decoration: none;
-  font-weight: 500;
-}
-
-.details-link:hover {
-  text-decoration: underline;
+  color: var(--color-primary-light);
+  font-size: 0.78rem;
+  font-weight: 600;
 }
 
 .issue-card-delete {
-  padding: 4px 10px;
-  font-size: 12px;
-  color: #b91c1c;
-  background: #fef2f2;
-  border: 1px solid #fecaca;
+  border: 1px solid rgba(255, 69, 96, 0.35);
   border-radius: 6px;
+  background: rgba(255, 69, 96, 0.12);
+  color: var(--color-danger);
+  padding: 4px 8px;
+  font-size: 0.7rem;
   cursor: pointer;
 }
 
-.issue-card-delete:hover:not(:disabled) {
-  background: #fee2e2;
-}
-
 .issue-card-delete:disabled {
-  opacity: 0.7;
+  opacity: 0.65;
   cursor: not-allowed;
-}
-
-.admin-status {
-  margin-top: 8px;
-  font-size: 12px;
-  color: #6b7280;
 }

@@ -11,7 +11,7 @@ const Register = () => {
     name: '',
     email: '',
     password: '',
-    role: 'user',
+    role: 'citizen',
   });
 
   const [error, setError] = useState('');
@@ -47,8 +47,8 @@ const Register = () => {
         setError('Password must be 6-128 characters');
         return;
       }
-      const role = String(userData.role || 'user').toLowerCase();
-      if (!['user', 'volunteer', 'admin'].includes(role)) {
+      const role = String(userData.role || 'citizen').toLowerCase();
+      if (!['citizen', 'volunteer'].includes(role)) {
         setError('Invalid role selected');
         return;
       }
@@ -129,9 +129,8 @@ const Register = () => {
               onChange={handleChange}
               required
             >
-              <option value="user">Citizen</option>
+              <option value="citizen">Citizen</option>
               <option value="volunteer">Volunteer</option>
-              <option value="admin">Admin</option>
             </select>
           </div>
 

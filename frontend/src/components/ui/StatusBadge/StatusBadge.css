@@ -2,32 +2,30 @@
   position: absolute;
   top: 12px;
   right: 12px;
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 600;
-  padding: 4px 10px;
+  padding: 4px 9px;
   border-radius: 999px;
-  letter-spacing: 0.5px;
-  background: #fff7ed;
+  letter-spacing: 0.06em;
+  font-family: var(--font-mono);
+  text-transform: uppercase;
   border: 1px solid transparent;
 }
 
-/* Pending */
 .status-pending {
-  color: #d97706;
-  background: #fff7ed;
-  border-color: #fed7aa;
+  color: var(--color-warning);
+  background: rgba(255, 122, 53, 0.14);
+  border-color: rgba(255, 122, 53, 0.34);
 }
 
-/* Assigned */
 .status-progress {
-  color: #ca8a04;
-  background: #fefce8;
-  border-color: #fde68a;
+  color: var(--color-primary-light);
+  background: rgba(0, 200, 248, 0.14);
+  border-color: rgba(0, 200, 248, 0.34);
 }
 
-/* Resolved */
 .status-resolved {
-  color: #15803d;
-  background: #ecfdf5;
-  border-color: #a7f3d0;
+  color: var(--color-success);
+  background: rgba(0, 229, 160, 0.14);
+  border-color: rgba(0, 229, 160, 0.34);
 }

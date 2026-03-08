@@ -1,10 +1,10 @@
-﻿.page {
-  min-height: calc(100vh - 64px);
+.page {
+  min-height: calc(100vh - 58px);
   padding: var(--space-xl) 0;
 }
 
 .container {
-  width: min(1200px, 100% - 2 * var(--space-lg));
+  width: min(1240px, 100% - 2 * var(--space-lg));
   margin: 0 auto;
 }
 
@@ -13,7 +13,7 @@
 }
 
 .card {
-  background: var(--bg-card);
+  background: linear-gradient(180deg, rgba(14, 24, 40, 0.95), rgba(10, 18, 32, 0.96));
   border: 1px solid var(--border-color);
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-sm);

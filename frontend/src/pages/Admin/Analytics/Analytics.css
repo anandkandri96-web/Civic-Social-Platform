@@ -1,4 +1,4 @@
-﻿.admin-title {
+.admin-title {
   font-family: var(--font-heading);
   font-size: clamp(1.7rem, 2vw, 2.2rem);
   margin-bottom: var(--space-lg);
@@ -13,6 +13,7 @@
 
 .stat-card {
   padding: var(--space-md);
+  border-top: 3px solid var(--color-primary);
 }
 
 .stat-header {
@@ -20,6 +21,10 @@
   justify-content: space-between;
   color: var(--text-secondary);
   margin-bottom: var(--space-sm);
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
 }
 
 .icon {
@@ -35,6 +40,7 @@
   grid-template-columns: 1fr 1fr;
   gap: var(--space-md);
 }
+
 .admin-panels--secondary {
   margin-top: var(--space-md);
 }
@@ -45,6 +51,7 @@
 
 .panel h3 {
   margin-bottom: var(--space-md);
+  font-family: var(--font-heading);
 }
 
 .chart {
@@ -60,7 +67,9 @@
   gap: var(--space-sm);
   justify-items: center;
   color: var(--text-secondary);
-  font-size: var(--font-size-sm);
+  font-size: 0.72rem;
+  font-family: var(--font-mono);
+  text-transform: uppercase;
 }
 
 .bar {
@@ -85,7 +94,7 @@
   gap: var(--space-sm);
   border-bottom: 1px solid var(--border-color);
   padding-bottom: var(--space-sm);
-  font-size: var(--font-size-sm);
+  font-size: 0.84rem;
 }
 
 .metric-list span {

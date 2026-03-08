@@ -1,79 +1,172 @@
+import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { sampleIssues } from '../../utils/civicMockData';
+import { assignOfficerWorker, getOfficerIssues, reviewOfficerIssue, updateOfficerIssueStatus } from '../../api/officer.api';
 import './RoleDashboard.css';
 
-const officerIssues = sampleIssues.filter((issue) => issue.path === 'Government');
-
 const OfficerDashboard = () => {
+  const [issues, setIssues] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [workingId, setWorkingId] = useState('');
+  const [workerInputs, setWorkerInputs] = useState({});
+
+  useEffect(() => {
+    let mounted = true;
+
+    const fetchIssues = async () => {
+      setLoading(true);
+      setError('');
+      try {
+        const data = await getOfficerIssues();
+        if (mounted) setIssues(Array.isArray(data) ? data : []);
+      } catch (err) {
+        if (mounted) setError(err?.response?.data?.message || err?.message || 'Failed to load department issues');
+      } finally {
+        if (mounted) setLoading(false);
+      }
+    };
+
+    fetchIssues();
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
+  const patchIssue = (updatedIssue) => {
+    setIssues((prev) => prev.map((issue) => (issue._id === updatedIssue._id ? updatedIssue : issue)));
+  };
+
+  const runAction = async (issueId, action) => {
+    setWorkingId(issueId);
+    try {
+      const updated = await action();
+      patchIssue(updated);
+    } catch (err) {
+      alert(err?.response?.data?.message || err?.message || 'Action failed');
+    } finally {
+      setWorkingId('');
+    }
+  };
+
+  const grouped = {
+    underReview: issues.filter((issue) => issue.status === 'under_review').length,
+    assigned: issues.filter((issue) => issue.status === 'assigned_to_department').length,
+    progress: issues.filter((issue) => issue.status === 'work_in_progress').length,
+    resolved: issues.filter((issue) => issue.status === 'resolved').length,
+  };
+
+  const officerStatuses = useMemo(
+    () => ['under_review', 'assigned_to_department', 'work_in_progress', 'resolved', 'rejected'],
+    []
+  );
+
   return (
     <section className="role-dashboard page">
       <div className="container">
         <header className="role-dashboard__header">
           <div>
-            <h1>Department Officer Dashboard</h1>
-            <p>Review routed reports, assign field workers, and verify completion evidence.</p>
+            <h1>Officer Dashboard</h1>
+            <p>Review department issues and move valid reports across the government resolution flow.</p>
           </div>
-          <Link to="/admin/analytics" className="role-dashboard__action">
-            Open Analytics
+          <Link to="/dashboard/officer/analytics" className="role-dashboard__action">
+            View Analytics
           </Link>
         </header>
+
+        {error && <div className="issues-error">{error}</div>}
 
         <div className="role-dashboard__grid">
           <article className="card role-dashboard__stat">
             <div className="role-dashboard__stat-label">Under Review</div>
-            <div className="role-dashboard__stat-value">12</div>
+            <div className="role-dashboard__stat-value">{grouped.underReview}</div>
           </article>
           <article className="card role-dashboard__stat">
-            <div className="role-dashboard__stat-label">Assigned to Field Workers</div>
-            <div className="role-dashboard__stat-value">21</div>
+            <div className="role-dashboard__stat-label">Assigned to Department</div>
+            <div className="role-dashboard__stat-value">{grouped.assigned}</div>
           </article>
           <article className="card role-dashboard__stat">
-            <div className="role-dashboard__stat-label">Escalated</div>
-            <div className="role-dashboard__stat-value">4</div>
+            <div className="role-dashboard__stat-label">Work In Progress</div>
+            <div className="role-dashboard__stat-value">{grouped.progress}</div>
           </article>
           <article className="card role-dashboard__stat">
-            <div className="role-dashboard__stat-label">Closed this Week</div>
-            <div className="role-dashboard__stat-value">18</div>
+            <div className="role-dashboard__stat-label">Resolved</div>
+            <div className="role-dashboard__stat-value">{grouped.resolved}</div>
           </article>
         </div>
 
-        <div className="role-dashboard__panels">
-          <section className="card role-dashboard__panel">
-            <h2>Department Queue</h2>
+        <section className="card role-dashboard__panel">
+          <h2>Department Queue</h2>
+          {loading ? (
+            <p className="text-muted">Loading...</p>
+          ) : issues.length === 0 ? (
+            <p className="text-muted">No issues assigned to your department.</p>
+          ) : (
             <table className="role-dashboard__table">
               <thead>
                 <tr>
-                  <th>ID</th>
                   <th>Issue</th>
-                  <th>Priority</th>
                   <th>Status</th>
-                  <th>Assigned</th>
+                  <th>Category</th>
+                  <th>Reporter</th>
+                  <th>Action</th>
                 </tr>
               </thead>
               <tbody>
-                {officerIssues.map((issue) => (
-                  <tr key={issue.id}>
-                    <td>{issue.id}</td>
+                {issues.map((issue) => (
+                  <tr key={issue._id}>
                     <td>{issue.title}</td>
-                    <td>{issue.priority}</td>
-                    <td><span className="role-dashboard__badge">{issue.status}</span></td>
-                    <td>{issue.assignedTo}</td>
+                    <td>{issue.status}</td>
+                    <td>{issue.category}</td>
+                    <td>{issue.reportedBy?.name || '-'}</td>
+                    <td>
+                      <div className="role-dashboard__actions">
+                        <button
+                          type="button"
+                          disabled={workingId === issue._id}
+                          onClick={() => runAction(issue._id, () => reviewOfficerIssue(issue._id))}
+                        >
+                          Review
+                        </button>
+                        <input
+                          type="text"
+                          placeholder="Worker ID"
+                          value={workerInputs[issue._id] ?? ''}
+                          onChange={(e) =>
+                            setWorkerInputs((prev) => ({ ...prev, [issue._id]: e.target.value }))
+                          }
+                        />
+                        <button
+                          type="button"
+                          disabled={workingId === issue._id || !(workerInputs[issue._id] || '').trim()}
+                          onClick={() =>
+                            runAction(issue._id, () =>
+                              assignOfficerWorker(issue._id, String(workerInputs[issue._id]).trim())
+                            )
+                          }
+                        >
+                          Assign
+                        </button>
+                        <select
+                          defaultValue={issue.status}
+                          disabled={workingId === issue._id}
+                          onChange={(e) =>
+                            runAction(issue._id, () => updateOfficerIssueStatus(issue._id, e.target.value))
+                          }
+                        >
+                          {officerStatuses.map((status) => (
+                            <option key={status} value={status}>
+                              {status}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                    </td>
                   </tr>
                 ))}
               </tbody>
             </table>
-          </section>
-
-          <section className="card role-dashboard__panel">
-            <h2>Officer Workflow</h2>
-            <ul className="role-dashboard__list">
-              <li><strong>Validate:</strong> reject duplicates/spam and verify report quality.</li>
-              <li><strong>Prioritize:</strong> combine severity and support score.</li>
-              <li><strong>Assign:</strong> allocate field worker by zone and workload.</li>
-              <li><strong>Verify:</strong> review completion evidence before closure.</li>
-            </ul>
-          </section>
-        </div>
+          )}
+        </section>
       </div>
     </section>
   );

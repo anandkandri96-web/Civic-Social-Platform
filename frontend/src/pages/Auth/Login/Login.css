@@ -1,10 +1,10 @@
-﻿.login-page {
+.login-page {
   min-height: 100vh;
   display: flex;
   align-items: center;
   justify-content: center;
   position: relative;
-  background: linear-gradient(160deg, var(--bg-main), var(--bg-surface));
+  background: radial-gradient(circle at top right, rgba(0, 200, 248, 0.09), transparent 30%), var(--bg-main);
   padding: var(--space-lg);
 }
 
@@ -12,8 +12,11 @@
   position: absolute;
   top: var(--space-lg);
   left: var(--space-lg);
-  font-size: var(--font-size-sm);
+  font-size: 0.78rem;
   color: var(--text-secondary);
+  font-family: var(--font-mono);
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
 }
 
 .login-card {
@@ -35,9 +38,9 @@
 }
 
 .login-error {
-  background: color-mix(in srgb, var(--color-danger) 16%, transparent);
-  border: 1px solid color-mix(in srgb, var(--color-danger) 35%, transparent);
-  color: color-mix(in srgb, var(--color-danger) 80%, var(--text-primary));
+  background: rgba(255, 69, 96, 0.15);
+  border: 1px solid rgba(255, 69, 96, 0.35);
+  color: #ff8295;
   border-radius: var(--radius-sm);
   padding: var(--space-sm) var(--space-md);
   margin-bottom: var(--space-md);
@@ -49,8 +52,11 @@
 }
 
 .login-card label {
-  font-size: var(--font-size-sm);
+  font-size: 0.72rem;
   color: var(--text-secondary);
+  font-family: var(--font-mono);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
 }
 
 .login-card input {
@@ -66,7 +72,34 @@
 .login-card input:focus {
   outline: none;
   border-color: var(--color-primary);
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-primary) 25%, transparent);
+}
+
+.password-field {
+  position: relative;
+}
+
+.password-field input {
+  margin-bottom: var(--space-sm);
+  padding-right: 70px;
+}
+
+.password-toggle {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(calc(-50% - 4px));
+  border: none;
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: 0.72rem;
+  font-family: var(--font-mono);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  cursor: pointer;
+}
+
+.password-toggle:hover {
+  color: var(--color-primary);
 }
 
 .login-footer {

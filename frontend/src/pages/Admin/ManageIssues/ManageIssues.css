@@ -18,11 +18,14 @@
 }
 
 .manage-issue-controls label {
-  font-size: var(--font-size-sm);
+  font-size: 0.74rem;
   color: var(--text-secondary);
   display: inline-flex;
   align-items: center;
   gap: var(--space-sm);
+  font-family: var(--font-mono);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
 }
 
 .manage-issue-controls select {
@@ -30,8 +33,9 @@
   border: 1px solid var(--border-color);
   border-radius: var(--radius-sm);
   padding: 8px 10px;
-  font-size: var(--font-size-sm);
+  font-size: 0.76rem;
   color: var(--text-primary);
+  min-width: 220px;
 }
 
 .manage-issue-controls select:focus {

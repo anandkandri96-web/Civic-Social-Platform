@@ -1,0 +1,83 @@
+.user-management-header {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.user-management-header h1 {
+  font-family: var(--font-heading);
+}
+
+.user-management-header p {
+  color: var(--text-secondary);
+}
+
+.dept-create {
+  display: flex;
+  gap: 8px;
+}
+
+.dept-create input,
+.dept-create button {
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  background: var(--bg-surface);
+  color: var(--text-primary);
+  padding: 8px 10px;
+}
+
+.user-table-wrap {
+  padding: 10px;
+}
+
+.user-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.user-table th,
+.user-table td {
+  border-bottom: 1px solid var(--border-color);
+  text-align: left;
+  padding: 8px;
+  font-size: 0.8rem;
+}
+
+.user-table th {
+  color: var(--text-secondary);
+  font-family: var(--font-mono);
+  text-transform: uppercase;
+  font-size: 0.66rem;
+  letter-spacing: 0.08em;
+}
+
+.user-table select,
+.user-table button {
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  background: var(--bg-surface);
+  color: var(--text-primary);
+  padding: 5px 8px;
+  font-size: 0.74rem;
+}
+
+.user-table .danger {
+  border-color: color-mix(in srgb, var(--color-danger) 55%, var(--border-color));
+  color: var(--color-danger);
+}
+
+@media (max-width: 960px) {
+  .user-management-header {
+    flex-direction: column;
+  }
+
+  .user-table-wrap {
+    overflow-x: auto;
+  }
+
+  .user-table {
+    min-width: 900px;
+  }
+}
+

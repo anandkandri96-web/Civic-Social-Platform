@@ -1,27 +1,6 @@
-const fs = require("fs");
-const path = require("path");
 const multer = require("multer");
 
-const UPLOAD_DIR = path.join(__dirname, "..", "uploads", "issues");
-
-function ensureDir() {
-  try {
-    fs.mkdirSync(UPLOAD_DIR, { recursive: true });
-  } catch (_) {}
-}
-
-const storage = multer.diskStorage({
-  destination: function (_req, _file, cb) {
-    ensureDir();
-    cb(null, UPLOAD_DIR);
-  },
-  filename: function (_req, file, cb) {
-    const ext = path.extname(file.originalname || "").toLowerCase();
-    const safeExt = [".jpg", ".jpeg", ".png", ".webp"].includes(ext) ? ext : ".jpg";
-    const name = `issue_${Date.now()}_${Math.random().toString(16).slice(2)}${safeExt}`;
-    cb(null, name);
-  },
-});
+const memoryStorage = multer.memoryStorage();
 
 const fileFilter = (_req, file, cb) => {
   const allowed = ["image/jpeg", "image/png", "image/webp"];
@@ -31,27 +10,32 @@ const fileFilter = (_req, file, cb) => {
   cb(null, true);
 };
 
-/**
- * Accept a single image file under field name "image".
- */
-exports.uploadIssueImage = multer({
-  storage,
+const baseUploader = multer({
+  storage: memoryStorage,
   fileFilter,
   limits: {
-    fileSize: 5 * 1024 * 1024, // 5MB
+    fileSize: 5 * 1024 * 1024,
+    files: 6,
   },
-}).single("image");
+});
+
+/**
+ * Accept issue images from either `image` (single) or `images` (multiple).
+ */
+exports.uploadIssueImage = baseUploader.fields([
+  { name: "image", maxCount: 1 },
+  { name: "images", maxCount: 5 },
+]);
 
 /**
  * Generic multiple image uploader.
  */
 exports.uploadImages = (field = "images", maxCount = 5) =>
   multer({
-    storage,
+    storage: memoryStorage,
     fileFilter,
     limits: {
       fileSize: 5 * 1024 * 1024,
       files: maxCount,
     },
   }).array(field, maxCount);
-

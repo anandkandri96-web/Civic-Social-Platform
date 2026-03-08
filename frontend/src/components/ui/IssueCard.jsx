@@ -1,13 +1,20 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import StatusBadge from './StatusBadge/StatusBadge';
 import VoteButton from './VoteButton';
 import { useAuth } from '../../hooks/useAuth';
 import { useRole } from '../../hooks/useRole';
 import { deleteIssue } from '../../api/issues.api';
 import './IssueCard.css';
 
-const SEVERITY_LABELS = { 1: 'Low', 2: 'Medium', 3: 'High', 4: 'Critical', 5: 'Urgent' };
+const STATUS_CLASS = {
+  reported: 'open',
+  under_review: 'in-progress',
+  assigned_to_department: 'in-progress',
+  work_in_progress: 'in-progress',
+  resolved: 'resolved',
+  resolved_by_community: 'resolved',
+  closed: 'resolved',
+};
 
 function formatLocation(location, locationText) {
   const manual = locationText && String(locationText).trim();
@@ -23,20 +30,20 @@ function formatLocation(location, locationText) {
 }
 
 function formatTimeAgo(date) {
-  if (!date) return '';
+  if (!date) return 'Recently';
   const d = new Date(date);
   const now = new Date();
   const sec = Math.floor((now - d) / 1000);
   if (sec < 60) return 'just now';
   if (sec < 3600) return `${Math.floor(sec / 60)} min ago`;
-  if (sec < 86400) return `${Math.floor(sec / 3600)} hours ago`;
-  if (sec < 2592000) return `${Math.floor(sec / 86400)} days ago`;
+  if (sec < 86400) return `${Math.floor(sec / 3600)} hr ago`;
+  if (sec < 2592000) return `${Math.floor(sec / 86400)} day${Math.floor(sec / 86400) > 1 ? 's' : ''} ago`;
   return d.toLocaleDateString();
 }
 
 const IssueCard = ({ issue, onVote, onDeleted }) => {
   const { user } = useAuth();
-  const { isAdmin, isVolunteer } = useRole();
+  const { isAdmin } = useRole();
   const [deleting, setDeleting] = useState(false);
 
   if (!issue) return null;
@@ -54,80 +61,58 @@ const IssueCard = ({ issue, onVote, onDeleted }) => {
       await deleteIssue(issue._id);
       onDeleted?.(issue._id);
     } catch (err) {
-      console.error('Delete issue failed:', err);
       alert(err?.response?.data?.message || err?.message || 'Failed to delete issue');
     } finally {
       setDeleting(false);
     }
   };
 
-  const severityLabel = typeof issue.severity === 'number'
-    ? (SEVERITY_LABELS[issue.severity] || `Level ${issue.severity}`)
-    : (issue.severity || 'Low');
-  const severityClass = typeof issue.severity === 'number'
-    ? (SEVERITY_LABELS[issue.severity] || 'medium').toLowerCase()
-    : String(issue.severity || 'low').toLowerCase();
+  const statusKey = STATUS_CLASS[String(issue.status || '').toLowerCase()] || 'open';
 
   return (
-    <div className="issue-card card">
-      <div className="issue-card-image">
-        <StatusBadge status={issue.status} />
-        <div className="issue-icon">Issue</div>
+    <article className="issue-card">
+      <div className="issue-card__top">
+        <span className="issue-card__category">{issue.category || 'Other'}</span>
+        <span className={`issue-card__status issue-card__status--${statusKey}`}>{issue.status || 'Reported'}</span>
       </div>
 
-      <div className="issue-card-content">
-        <div className="issue-tags">
-          <span className="category-tag">
-            {issue.category || 'Other'}
-          </span>
-          <span className={`severity-tag ${severityClass}`}>
-            {severityLabel}
-          </span>
-        </div>
+      <Link to={`/issues/${issue._id}`} className="issue-card__title-link">
+        <h3 className="issue-card__title">{issue.title}</h3>
+      </Link>
 
-        <h3 className="issue-title">{issue.title}</h3>
+      <div className="issue-card__meta">
+        <span className="issue-card__location">?? {formatLocation(issue.location, issue.locationText)}</span>
+        <span className="issue-card__time">{formatTimeAgo(issue.createdAt)}</span>
+      </div>
 
-        <p className="issue-location">Location: {formatLocation(issue.location, issue.locationText)}</p>
+      <p className="issue-card__desc">{issue.description || 'No description provided.'}</p>
 
-        <p className="issue-description">{issue.description || 'No description provided.'}</p>
-
-        <div className="issue-footer">
-          <span className="issue-time">Time: {formatTimeAgo(issue.createdAt)}</span>
-
-          <div className="issue-actions">
+      <div className="issue-card__footer">
+        {!isAdmin && (
+          <div className="issue-card__vote">
             <VoteButton
               issueId={issue._id}
               voteCount={issue.voteCount ?? issue.votes ?? 0}
               userVoted={issue.userVoted}
               onVote={onVote}
             />
-            <Link
-              to={`/issues/${issue._id}`}
-              className="details-link"
-            >
-              View
-            </Link>
-            {canDelete && (
-              <button
-                type="button"
-                className="issue-card-delete"
-                onClick={handleDelete}
-                disabled={deleting}
-                aria-label="Delete issue"
-              >
-                {deleting ? '...' : 'Delete'}
-              </button>
-            )}
-          </div>
-        </div>
-
-        {(isAdmin || isVolunteer) && (
-          <div className="admin-status">
-            Status: {issue.status}
           </div>
         )}
+        <div className="issue-card__actions">
+          <Link to={`/issues/${issue._id}`} className="details-link">View</Link>
+          {canDelete && (
+            <button
+              type="button"
+              className="issue-card-delete"
+              onClick={handleDelete}
+              disabled={deleting}
+            >
+              {deleting ? '...' : 'Delete'}
+            </button>
+          )}
+        </div>
       </div>
-    </div>
+    </article>
   );
 };
 

@@ -10,14 +10,14 @@ export const useRole = () => {
   const isVolunteer = hasRole(role, ROLES.VOLUNTEER);
   const isCitizen = hasRole(role, [ROLES.CITIZEN, ROLES.USER]);
   const isOfficer = hasRole(role, ROLES.OFFICER);
-  const isFieldWorker = hasRole(role, ROLES.FIELD_WORKER);
+  const isWorker = hasRole(role, ROLES.WORKER);
 
   const dashboardPath = isAdmin
     ? '/admin'
     : isOfficer
       ? '/dashboard/officer'
-      : isFieldWorker
-        ? '/dashboard/field-worker'
+      : isWorker
+        ? '/dashboard/worker'
         : isVolunteer
           ? '/dashboard/volunteer'
           : '/dashboard';
@@ -33,7 +33,7 @@ export const useRole = () => {
     isCitizen,
     isVolunteer,
     isOfficer,
-    isFieldWorker,
+    isWorker,
     isAdmin,
     dashboardPath,
     hasPermission,

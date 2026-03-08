@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react';
-import { getIssues, updateIssueStatus } from '../../../api/issues.api';
+import { getAllIssuesAdmin, updateIssueStatusAdmin } from '../../../api/admin.api';
 import IssueCard from '../../../components/ui/IssueCard';
 import Loader from '../../../components/common/Loader/Loader';
 import PageHeader from '../../../components/ui/PageHeader/PageHeader';
+import { ISSUE_STATUSES } from '../../../utils/constants';
 import './ManageIssues.css';
 
 const ManageIssues = () => {
@@ -18,8 +19,8 @@ const ManageIssues = () => {
       setLoading(true);
       setError('');
       try {
-        const data = await getIssues();
-        if (mounted) setIssues(Array.isArray(data) ? data : []);
+        const payload = await getAllIssuesAdmin({ limit: 100 });
+        if (mounted) setIssues(Array.isArray(payload?.data) ? payload.data : []);
       } catch (err) {
         if (mounted) setError(err?.response?.data?.message || err?.message || 'Failed to load issues');
       } finally {
@@ -36,7 +37,7 @@ const ManageIssues = () => {
   const handleStatusChange = async (issueId, status) => {
     setUpdatingId(issueId);
     try {
-      const updated = await updateIssueStatus(issueId, status);
+      const updated = await updateIssueStatusAdmin(issueId, status);
       setIssues((prev) => prev.map((i) => (i._id === issueId ? { ...i, status: updated.status } : i)));
     } catch (err) {
       alert(err?.response?.data?.message || err?.message || 'Failed to update status');
@@ -72,13 +73,13 @@ const ManageIssues = () => {
                   <label>
                     Status
                     <select
-                      value={issue.status || 'pending'}
+                      value={issue.status || 'reported'}
                       onChange={(e) => handleStatusChange(issue._id, e.target.value)}
                       disabled={updatingId === issue._id}
                     >
-                      <option value="pending">pending</option>
-                      <option value="assigned">assigned</option>
-                      <option value="resolved">resolved</option>
+                      {ISSUE_STATUSES.map((status) => (
+                        <option key={status} value={status}>{status}</option>
+                      ))}
                     </select>
                   </label>
                 </div>

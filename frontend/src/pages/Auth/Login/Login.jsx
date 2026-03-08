@@ -19,6 +19,7 @@ const Login = () => {
 
   const [error, setError] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   const EMAIL_RE = /^\S+@\S+\.\S+$/;
 
   const handleChange = (e) => {
@@ -52,10 +53,10 @@ const Login = () => {
 
       if (actualRole === 'admin') {
         navigate('/admin', { replace: true });
-      } else if (actualRole === 'department_officer') {
+      } else if (actualRole === 'officer') {
         navigate('/dashboard/officer', { replace: true });
-      } else if (actualRole === 'field_worker') {
-        navigate('/dashboard/field-worker', { replace: true });
+      } else if (actualRole === 'worker') {
+        navigate('/dashboard/worker', { replace: true });
       } else if (actualRole === 'volunteer') {
         navigate('/dashboard/volunteer', { replace: true });
       } else {
@@ -70,7 +71,7 @@ const Login = () => {
 
   return (
     <div className="login-page page">
-      <Link to="/" className="auth-back-home">Back to home</Link>
+      <Link to="/" className="auth-back-home">← Back to home</Link>
 
       <div className="login-card card">
         <h1 className="login-brand">Social Civic Platform</h1>
@@ -92,14 +93,24 @@ const Login = () => {
           />
 
           <label>Password</label>
-          <input
-            type="password"
-            name="password"
-            value={credentials.password}
-            onChange={handleChange}
-            placeholder="Enter password"
-            required
-          />
+          <div className="password-field">
+            <input
+              type={showPassword ? 'text' : 'password'}
+              name="password"
+              value={credentials.password}
+              onChange={handleChange}
+              placeholder="Enter password"
+              required
+            />
+            <button
+              type="button"
+              className="password-toggle"
+              onClick={() => setShowPassword((prev) => !prev)}
+              aria-label={showPassword ? 'Hide password' : 'Show password'}
+            >
+              {showPassword ? 'Hide' : 'Show'}
+            </button>
+          </div>
 
           <Button type="submit" disabled={submitting} className="full-width">
             {submitting ? 'Signing in...' : 'Sign In'}

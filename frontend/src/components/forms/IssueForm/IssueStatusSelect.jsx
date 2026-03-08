@@ -1,13 +1,14 @@
 import PropTypes from 'prop-types';
+import { ISSUE_STATUSES } from '../../../utils/constants';
 import './IssueStatusSelect.css';
 
-const STATUS_OPTIONS = ['pending', 'assigned', 'resolved'];
+const STATUS_OPTIONS = ISSUE_STATUSES;
 
 const IssueStatusSelect = ({ value, onChange, disabled = false, className = '' }) => {
   return (
     <select
       className={`issue-status-select ${className}`.trim()}
-      value={value || 'pending'}
+      value={value || 'reported'}
       onChange={(e) => onChange?.(e.target.value)}
       disabled={disabled}
     >

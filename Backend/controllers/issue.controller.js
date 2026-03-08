@@ -1,4 +1,5 @@
 const Issue = require("../models/issue");
+const Task = require("../models/task");
 const Vote = require("../models/vote");
 const User = require("../models/user");
 const { apiResponse } = require("../utils/apiResponse");
@@ -6,16 +7,12 @@ const { ISSUE_CATEGORIES, ISSUE_STATUS, ROLES } = require("../utils/constants");
 const { getOrCreateDepartmentByCategory, normalizeCategory } = require("../services/routing.service");
 const { recomputeIssuePriority } = require("../services/priority.service");
 const { createNotificationsBulk, createNotification } = require("../services/notification.service");
+const { normalizeMulterFiles, persistUploadedFiles } = require("../services/imageAsset.service");
 
 const TITLE_MAX = 120;
 const DESC_MAX = 2000;
 const VALID_STATUSES = new Set(Object.values(ISSUE_STATUS));
 const CITIZEN_EDITABLE_STATUSES = new Set([ISSUE_STATUS.REPORTED, ISSUE_STATUS.UNDER_REVIEW]);
-
-function buildPublicFileUrl(req, relativePath) {
-  const proto = req.headers["x-forwarded-proto"] || req.protocol;
-  return `${proto}://${req.get("host")}${relativePath}`;
-}
 
 function parseCoords(lat, lng) {
   const latitude = Number(lat);
@@ -25,6 +22,30 @@ function parseCoords(lat, lng) {
   if (latitude < -90 || latitude > 90 || longitude < -180 || longitude > 180) return null;
 
   return { latitude, longitude };
+}
+
+function normalizeImageInput(rawImages) {
+  if (Array.isArray(rawImages)) {
+    return rawImages.filter((img) => typeof img === "string" && img.trim()).map((img) => img.trim());
+  }
+
+  if (typeof rawImages !== "string") return [];
+  const trimmed = rawImages.trim();
+  if (!trimmed) return [];
+
+  if (trimmed.startsWith("[")) {
+    try {
+      const parsed = JSON.parse(trimmed);
+      if (Array.isArray(parsed)) {
+        return parsed.filter((img) => typeof img === "string" && img.trim()).map((img) => img.trim());
+      }
+    } catch (_) {}
+  }
+
+  return trimmed
+    .split(",")
+    .map((img) => img.trim())
+    .filter(Boolean);
 }
 
 exports.createIssue = async (req, res) => {
@@ -69,15 +90,11 @@ exports.createIssue = async (req, res) => {
       return apiResponse(res, 400, "Location text is required");
     }
 
-    if (!Array.isArray(images)) {
-      return apiResponse(res, 400, "Images must be an array");
-    }
-
-    const safeImages = images.filter((img) => typeof img === "string" && img.length > 0);
-
-    if (req.file?.filename) {
-      const rel = `/uploads/issues/${req.file.filename}`;
-      safeImages.unshift(buildPublicFileUrl(req, rel));
+    const safeImages = normalizeImageInput(images);
+    const uploadedFiles = normalizeMulterFiles(req, ["image", "images"]);
+    if (uploadedFiles.length > 0) {
+      const uploadedUrls = await persistUploadedFiles(req, uploadedFiles, req.user?._id || null);
+      safeImages.unshift(...uploadedUrls);
     }
 
     const location = { type: "Point", coordinates: [coords.longitude, coords.latitude] };
@@ -202,13 +219,13 @@ exports.updateIssue = async (req, res) => {
     }
 
     if (images !== undefined) {
-      if (!Array.isArray(images)) return apiResponse(res, 400, "Images must be an array");
-      issue.images = images.filter((img) => typeof img === "string" && img.length > 0);
+      issue.images = normalizeImageInput(images);
     }
 
-    if (req.file?.filename) {
-      const rel = `/uploads/issues/${req.file.filename}`;
-      issue.images = [buildPublicFileUrl(req, rel), ...(issue.images || [])];
+    const uploadedFiles = normalizeMulterFiles(req, ["image", "images"]);
+    if (uploadedFiles.length > 0) {
+      const uploadedUrls = await persistUploadedFiles(req, uploadedFiles, req.user?._id || null);
+      issue.images = [...uploadedUrls, ...(issue.images || [])];
     }
 
     if (categoryChanged || locationChanged) {
@@ -329,7 +346,13 @@ exports.getIssue = async (req, res) => {
 
     if (!issue) return apiResponse(res, 404, "Issue not found");
 
-    let result = issue.toObject();
+    const task = await Task.findOne({ issue: issue._id }).select("status progressImages completionReport completedAt").lean();
+
+    let result = {
+      ...issue.toObject(),
+      workerProgressImages: Array.isArray(task?.progressImages) ? task.progressImages.filter(Boolean) : [],
+      workerTask: task || null,
+    };
     if (req.user) {
       const voted = await Vote.findOne({ user: req.user._id, issue: req.params.id }).lean();
       result = { ...result, userVoted: !!voted };

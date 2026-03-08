@@ -3,6 +3,29 @@ const { apiResponse } = require("../utils/apiResponse");
 const { ISSUE_STATUS } = require("../utils/constants");
 const { canTransition } = require("../utils/statusFlow");
 const { createNotification } = require("../services/notification.service");
+const { normalizeMulterFiles, persistUploadedFiles } = require("../services/imageAsset.service");
+
+function normalizeProofInput(rawProof) {
+  if (Array.isArray(rawProof)) return rawProof.filter(Boolean).map((p) => String(p).trim()).filter(Boolean);
+  if (typeof rawProof !== "string") return [];
+
+  const trimmed = rawProof.trim();
+  if (!trimmed) return [];
+
+  if (trimmed.startsWith("[")) {
+    try {
+      const parsed = JSON.parse(trimmed);
+      if (Array.isArray(parsed)) {
+        return parsed.filter(Boolean).map((p) => String(p).trim()).filter(Boolean);
+      }
+    } catch (_) {}
+  }
+
+  return trimmed
+    .split(",")
+    .map((p) => p.trim())
+    .filter(Boolean);
+}
 
 exports.getAvailableIssues = async (_req, res) => {
   try {
@@ -84,7 +107,11 @@ exports.updateCommunityProgress = async (req, res) => {
 exports.submitCommunityResolution = async (req, res) => {
   try {
     const { issueId } = req.params;
-    const { proof = [] } = req.body;
+    const proofFromBody = normalizeProofInput(req.body?.proof);
+    const uploadedFiles = normalizeMulterFiles(req, ["proofImages"]);
+    const proofFromFiles = uploadedFiles.length
+      ? await persistUploadedFiles(req, uploadedFiles, req.user?._id || null)
+      : [];
     const issue = await Issue.findById(issueId);
 
     if (!issue) return apiResponse(res, 404, "Issue not found");
@@ -96,7 +123,7 @@ exports.submitCommunityResolution = async (req, res) => {
       return apiResponse(res, 400, `Invalid transition from ${issue.status}`);
     }
 
-    const safeProof = Array.isArray(proof) ? proof.filter(Boolean) : [];
+    const safeProof = [...new Set([...proofFromFiles, ...proofFromBody])];
     if (!safeProof.length) {
       return apiResponse(res, 400, "At least one proof item is required");
     }

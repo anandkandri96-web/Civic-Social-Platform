@@ -1,134 +1,123 @@
 .admin-dashboard {
-  padding-top: 0;
+  background: transparent;
 }
 
 .admin-dashboard-actions {
   display: flex;
-  gap: var(--space-sm);
+  gap: 8px;
+  flex-wrap: wrap;
 }
 
 .admin-dashboard-link {
   border: 1px solid var(--border-color);
-  border-radius: var(--radius-sm);
+  border-radius: 8px;
   color: var(--text-primary);
-  font-size: var(--font-size-sm);
-  padding: 8px 12px;
+  font-size: 0.68rem;
+  padding: 8px 10px;
+  font-family: var(--font-mono);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
 }
 
 .admin-dashboard-link--primary {
   background: var(--color-primary);
   border-color: var(--color-primary);
-  color: #fff;
+  color: #061021;
 }
 
 .admin-stats-grid {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: var(--space-md);
-  margin-bottom: var(--space-lg);
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+  margin-bottom: 16px;
 }
 
 .admin-stat-card {
-  padding: var(--space-md);
+  padding: 16px;
+  border-top: 3px solid var(--color-primary);
 }
 
 .admin-stat-card span {
   color: var(--text-secondary);
-  font-size: var(--font-size-sm);
+  font-family: var(--font-mono);
+  font-size: 0.66rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
 }
 
 .admin-stat-card h2 {
-  font-family: var(--font-heading);
-  font-size: clamp(1.6rem, 2vw, 2rem);
-  margin-top: var(--space-xs);
+  margin-top: 8px;
+  font-family: var(--font-mono);
+  font-size: 1.5rem;
 }
 
-.status-warning {
-  color: var(--color-warning);
-}
-
-.status-primary {
-  color: var(--color-primary-light);
-}
-
-.status-success {
-  color: var(--color-success);
-}
+.status-warning { color: var(--color-warning); }
+.status-primary { color: var(--color-primary-light); }
+.status-success { color: var(--color-success); }
 
 .admin-dashboard-panels {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: var(--space-md);
+  gap: 12px;
 }
 
 .admin-panel {
-  padding: var(--space-md);
+  padding: 16px;
 }
 
 .admin-panel h3 {
-  margin-bottom: var(--space-md);
+  margin-bottom: 12px;
+  font-family: var(--font-heading);
+  font-size: 1rem;
 }
 
 .admin-chart {
+  height: 160px;
   display: flex;
   align-items: flex-end;
-  gap: var(--space-md);
-  height: 180px;
+  gap: 10px;
 }
 
 .admin-bar-wrapper {
   flex: 1;
   display: grid;
-  gap: var(--space-sm);
   justify-items: center;
+  gap: 6px;
   color: var(--text-secondary);
-  font-size: var(--font-size-sm);
+  font-size: 0.62rem;
+  text-transform: uppercase;
+  font-family: var(--font-mono);
 }
 
 .admin-bar {
   width: 100%;
-  border-radius: var(--radius-sm);
   min-height: 16%;
+  border-radius: 6px;
 }
 
-.admin-bar.pending {
-  background: color-mix(in srgb, var(--color-warning) 70%, transparent);
-}
-
-.admin-bar.assigned {
-  background: color-mix(in srgb, var(--color-primary) 70%, transparent);
-}
-
-.admin-bar.resolved {
-  background: color-mix(in srgb, var(--color-success) 70%, transparent);
-}
+.admin-bar.pending { background: rgba(255, 122, 53, 0.55); }
+.admin-bar.assigned { background: rgba(0, 200, 248, 0.55); }
+.admin-bar.resolved { background: rgba(0, 229, 160, 0.55); }
 
 .admin-recent-list {
   display: grid;
-  gap: var(--space-sm);
+  gap: 10px;
   list-style: none;
 }
 
 .admin-recent-list li {
   border-bottom: 1px solid var(--border-color);
+  padding-bottom: 9px;
   display: grid;
-  gap: 2px;
-  padding-bottom: var(--space-sm);
+  gap: 4px;
 }
 
-.admin-recent-title {
-  font-weight: 600;
-}
+.admin-recent-title { font-size: 0.84rem; font-weight: 600; }
+.admin-recent-meta, .admin-note { font-size: 0.78rem; color: var(--text-secondary); }
 
-.admin-recent-meta,
-.admin-note {
-  color: var(--text-secondary);
-  font-size: var(--font-size-sm);
-}
-
-@media (max-width: 1000px) {
+@media (max-width: 980px) {
   .admin-stats-grid {
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .admin-dashboard-panels {
@@ -136,13 +125,8 @@
   }
 }
 
-@media (max-width: 768px) {
-  .admin-dashboard-actions {
-    width: 100%;
-  }
-
-  .admin-dashboard-link {
-    flex: 1;
-    text-align: center;
+@media (max-width: 700px) {
+  .admin-stats-grid {
+    grid-template-columns: 1fr;
   }
 }

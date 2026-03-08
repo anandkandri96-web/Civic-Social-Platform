@@ -1,0 +1,69 @@
+.notifications-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 14px;
+}
+
+.notifications-header h1 {
+  font-family: var(--font-heading);
+}
+
+.notifications-header p {
+  color: var(--text-secondary);
+}
+
+.notifications-header button {
+  border: 1px solid var(--border-color);
+  background: var(--bg-surface);
+  color: var(--text-primary);
+  border-radius: 8px;
+  padding: 8px 10px;
+}
+
+.notifications-list {
+  display: grid;
+  gap: 10px;
+}
+
+.notifications-item {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 12px;
+}
+
+.notifications-item h3 {
+  font-size: 0.96rem;
+  margin-bottom: 6px;
+}
+
+.notifications-item p {
+  color: var(--text-secondary);
+  margin-bottom: 6px;
+}
+
+.notifications-item small {
+  color: var(--text-muted);
+}
+
+.notifications-item.is-unread {
+  border-left: 3px solid var(--color-primary);
+}
+
+.notifications-item.is-read {
+  opacity: 0.75;
+}
+
+.notifications-actions button {
+  border: 1px solid var(--border-color);
+  background: var(--bg-surface);
+  color: var(--text-primary);
+  border-radius: 8px;
+  padding: 6px 10px;
+}
+
+.notifications-empty {
+  padding: 16px;
+}
+

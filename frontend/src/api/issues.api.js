@@ -54,6 +54,29 @@ export const updateIssueStatus = async (id, status) => {
   return body.data ?? body;
 };
 
+export const updateIssue = async (id, payload) => {
+  const isFormData = typeof FormData !== 'undefined' && payload instanceof FormData;
+  const res = await api.patch(`/issues/${id}`, payload, isFormData ? {
+    headers: { 'Content-Type': 'multipart/form-data' },
+  } : undefined);
+  return res.data?.data ?? res.data;
+};
+
+export const verifyIssue = async (id) => {
+  const res = await api.patch(`/issues/${id}/verify`);
+  return res.data?.data ?? res.data;
+};
+
+export const reopenIssue = async (id) => {
+  const res = await api.patch(`/issues/${id}/reopen`);
+  return res.data?.data ?? res.data;
+};
+
+export const closeIssue = async (id) => {
+  const res = await api.patch(`/issues/${id}/close`);
+  return res.data?.data ?? res.data;
+};
+
 /**
  * Delete issue
  */

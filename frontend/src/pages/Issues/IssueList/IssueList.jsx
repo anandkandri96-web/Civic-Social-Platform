@@ -8,18 +8,23 @@ import './IssueList.css';
 
 const CATEGORIES = [
   { value: '', label: 'All Categories' },
-  { value: 'ROADS', label: 'Roads' },
-  { value: 'ELECTRICITY', label: 'Electricity' },
-  { value: 'GARBAGE', label: 'Garbage' },
-  { value: 'DRAINAGE', label: 'Drainage' },
-  { value: 'OTHER', label: 'Other' },
+  { value: 'roads', label: 'Roads' },
+  { value: 'electricity', label: 'Electricity' },
+  { value: 'garbage', label: 'Garbage' },
+  { value: 'drainage', label: 'Drainage' },
+  { value: 'water', label: 'Water' },
+  { value: 'other', label: 'Other' },
 ];
 
 const STATUSES = [
   { value: '', label: 'All Statuses' },
-  { value: 'pending', label: 'Pending' },
-  { value: 'assigned', label: 'Assigned' },
+  { value: 'reported', label: 'Reported' },
+  { value: 'under_review', label: 'Under Review' },
+  { value: 'assigned_to_department', label: 'Assigned to Department' },
+  { value: 'work_in_progress', label: 'Work In Progress' },
   { value: 'resolved', label: 'Resolved' },
+  { value: 'resolved_by_community', label: 'Resolved by Community' },
+  { value: 'closed', label: 'Closed' },
 ];
 
 const IssueList = () => {

@@ -3,12 +3,12 @@ const ROLE_ALIAS = {
   user: 'citizen',
   volunteer: 'volunteer',
   ngo: 'volunteer',
-  department_officer: 'department_officer',
-  officer: 'department_officer',
-  'department officer': 'department_officer',
-  field_worker: 'field_worker',
-  worker: 'field_worker',
-  'field worker': 'field_worker',
+  department_officer: 'officer',
+  officer: 'officer',
+  'department officer': 'officer',
+  field_worker: 'worker',
+  worker: 'worker',
+  'field worker': 'worker',
   admin: 'admin',
   system_admin: 'admin',
   'system administrator': 'admin',
@@ -17,9 +17,9 @@ const ROLE_ALIAS = {
 const ROLE_ACCESS = {
   citizen: new Set(['citizen']),
   volunteer: new Set(['volunteer']),
-  department_officer: new Set(['department_officer']),
-  field_worker: new Set(['field_worker']),
-  admin: new Set(['citizen', 'volunteer', 'department_officer', 'field_worker', 'admin']),
+  officer: new Set(['officer']),
+  worker: new Set(['worker']),
+  admin: new Set(['citizen', 'volunteer', 'officer', 'worker', 'admin']),
 };
 
 export const normalizeRole = (role) => {
