@@ -6,7 +6,7 @@ const { apiResponse } = require("../utils/apiResponse");
 const { ISSUE_CATEGORIES, ISSUE_STATUS, ROLES } = require("../utils/constants");
 const { getOrCreateDepartmentByCategory, normalizeCategory } = require("../services/routing.service");
 const { recomputeIssuePriority } = require("../services/priority.service");
-const { createNotificationsBulk, createNotification } = require("../services/notification.service");
+const { createNotificationsBulk, createNotification, notifyCitizenVerificationRequest } = require("../services/notification.service");
 const { normalizeMulterFiles, persistUploadedFiles } = require("../services/imageAsset.service");
 
 const TITLE_MAX = 120;

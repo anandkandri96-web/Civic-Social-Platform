@@ -54,15 +54,28 @@ exports.getHeatmap = async (req, res) => {
   try {
     const points = await Issue.aggregate([
       {
+        $group: {
+          _id: "$location.coordinates",
+          count: { $sum: 1 },
+          avgSeverity: { $avg: "$severity" },
+          totalVotes: { $sum: "$voteCount" },
+        },
+      },
+      {
         $project: {
-          _id: 1,
-          location: 1,
-          severity: 1,
-          voteCount: 1,
+          _id: 0,
+          coordinates: "$_id",
           weight: {
-            $add: [{ $multiply: ["$severity", 2] }, "$voteCount"],
+            $add: [
+              { $multiply: ["$count", 2] },
+              { $multiply: ["$avgSeverity", 1.5] },
+              "$totalVotes",
+            ],
           },
         },
+      },
+      {
+        $sort: { weight: -1 },
       },
     ]);
 

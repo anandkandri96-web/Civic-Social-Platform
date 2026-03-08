@@ -17,6 +17,22 @@ const departmentSchema = new mongoose.Schema(
       type: [String],
       default: [],
     },
+    officers: {
+      type: [mongoose.Schema.Types.ObjectId],
+      ref: "User",
+      default: [],
+    },
+    contactEmail: {
+      type: String,
+      trim: true,
+      lowercase: true,
+      match: [/^\S+@\S+\.\S+$/, "Please use a valid email address"],
+    },
+    serviceArea: {
+      type: String,
+      trim: true,
+      default: "",
+    },
     coverageArea: {
       type: {
         type: String,

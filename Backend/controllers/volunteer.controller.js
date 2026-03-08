@@ -2,7 +2,7 @@ const Issue = require("../models/issue");
 const { apiResponse } = require("../utils/apiResponse");
 const { ISSUE_STATUS } = require("../utils/constants");
 const { canTransition } = require("../utils/statusFlow");
-const { createNotification } = require("../services/notification.service");
+const { createNotification, notifyVolunteerClaimed, notifyIssueResolved, notifyCitizenVerificationRequest } = require("../services/notification.service");
 const { normalizeMulterFiles, persistUploadedFiles } = require("../services/imageAsset.service");
 
 function normalizeProofInput(rawProof) {
@@ -66,12 +66,7 @@ exports.claimIssue = async (req, res) => {
     issue.status = ISSUE_STATUS.VOLUNTEER_CLAIMED;
     await issue.save();
 
-    await createNotification({
-      userId: issue.reportedBy,
-      title: "Volunteer claimed your issue",
-      message: "A volunteer has claimed your reported issue for community resolution.",
-      issueId: issue._id,
-    });
+    await notifyVolunteerClaimed(issue, req.user);
 
     return apiResponse(res, 200, "Issue claimed successfully", issue);
   } catch (error) {
@@ -132,12 +127,8 @@ exports.submitCommunityResolution = async (req, res) => {
     issue.resolvedAt = new Date();
     await issue.save();
 
-    await createNotification({
-      userId: issue.reportedBy,
-      title: "Issue resolved by community",
-      message: "A volunteer marked your issue as resolved. Please verify the resolution.",
-      issueId: issue._id,
-    });
+    await notifyIssueResolved(issue, "volunteer");
+    await notifyCitizenVerificationRequest(issue);
 
     return apiResponse(res, 200, "Issue marked resolved by community", issue);
   } catch (error) {
