@@ -1,8 +1,11 @@
 const express = require("express");
+const mongoose = require("mongoose");
 const cors = require("cors");
 const helmet = require("helmet");
 const path = require("path");
 const rateLimit = require("express-rate-limit");
+
+mongoose.set("strictQuery", true);
 
 const authRoutes = require("./routes/auth.routes");
 const issueRoutes = require("./routes/issue.routes");
@@ -10,18 +13,23 @@ const voteRoutes = require("./routes/vote.routes");
 const commentRoutes = require("./routes/comment.routes");
 const volunteerRoutes = require("./routes/volunteer.routes");
 const officerRoutes = require("./routes/officer.routes");
-const workerRoutes = require("./routes/worker.routes");
 const taskRoutes = require("./routes/task.routes");
 const departmentRoutes = require("./routes/department.routes");
 const adminRoutes = require("./routes/admin.routes");
 const analyticsRoutes = require("./routes/analytics.routes");
+const heatmapRoutes = require("./routes/heatmap.routes");
 const notificationRoutes = require("./routes/notification.routes");
 const imageRoutes = require("./routes/image.routes");
 const errorHandler = require("./middlewares/error.middleware");
 
 const app = express();
 
-app.use(helmet());
+// Allow the frontend (different origin in dev) to embed images served by this backend.
+app.use(
+  helmet({
+    crossOriginResourcePolicy: { policy: "cross-origin" },
+  })
+);
 
 const clientUrl = process.env.CLIENT_URL;
 app.use(
@@ -73,11 +81,11 @@ app.use("/api/votes", voteRoutes);
 app.use("/api/comments", commentRoutes);
 app.use("/api/volunteer", volunteerRoutes);
 app.use("/api/officer", officerRoutes);
-app.use("/api/worker", workerRoutes);
 app.use("/api/tasks", taskRoutes);
 app.use("/api/departments", departmentRoutes);
 app.use("/api/admin", adminRoutes);
 app.use("/api/analytics", analyticsRoutes);
+app.use("/api/heatmap", heatmapRoutes);
 app.use("/api/notifications", notificationRoutes);
 app.use("/api/images", imageRoutes);
 

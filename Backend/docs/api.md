@@ -1,6 +1,6 @@
 # Civic Backend API
 
-Base URL: `/api`
+Default dev base URL: `http://localhost:5000/api`
 
 Auth header for protected routes:
 
@@ -40,7 +40,8 @@ Run these from the `Backend` directory:
 ## Issues
 
 - `GET /issues`
-  - query: `category`, `status`, `search`, `lat`, `lng`, `radius`
+  - query: `category`, `status`, `search`, `lat`, `lng`, `radius`, `sort`
+  - sort values (when not using `lat/lng`): `priority` (default), `newest`, `most_supported`
 - `GET /issues/nearby`
   - query: `lat`, `lng`, `radius`
 - `GET /issues/:id`
@@ -54,6 +55,7 @@ Run these from the `Backend` directory:
 - `PATCH /issues/:id/verify` (reporting citizen)
 - `PATCH /issues/:id/reopen` (reporting citizen)
 - `PATCH /issues/:id/close` (admin/officer)
+  - note: requires `citizen_verified` status
 - `DELETE /issues/:id` (admin or issue owner in reported state)
 
 ## Votes
@@ -77,25 +79,33 @@ Run these from the `Backend` directory:
 - `POST /volunteer/issues/:issueId/claim` (volunteer)
 - `PATCH /volunteer/issues/:issueId/progress` (volunteer claimant)
 - `PATCH /volunteer/issues/:issueId/resolve` (volunteer claimant)
-  - body: `{ "proof": ["before-after-url"] }`
+  - multipart/files: `proofImages` (after-fix photos)
+  - body: `{ "reportText": "text", "proof"?: ["url1"] }`
 
 ## Officer Workflow
 
 - `GET /officer/issues` (officer/admin)
   - query: `departmentId` (optional)
   - note: officer role is restricted to own department scope
+- `GET /officer/workers` (officer/admin)
+  - query: `departmentId` (optional, admin only)
+  - response: list of active workers (optionally includes `activeTasks` count)
 - `PATCH /officer/issues/:issueId/review` (officer/admin)
 - `PATCH /officer/issues/:issueId/assign-worker` (officer/admin)
   - body: `{ "workerId": "<user_id>" }`
 - `PATCH /officer/issues/:issueId/status` (officer/admin)
   - body: `{ "status": "<next_valid_status>" }`
 
-## Worker Workflow
+## Tasks (Worker/Officer/Admin)
 
-- `GET /worker/tasks` (worker)
-- `PATCH /worker/tasks/:taskId/accept` (worker)
-- `PATCH /worker/tasks/:taskId/progress` (worker)
-  - body: `{ "status": "in_progress|completed|complication_reported", "progressImages": [], "completionReport": "", "complicationReport": "" }`
+- `GET /tasks/my` (worker)
+- `POST /tasks` (officer/admin)
+  - body: `{ "issueId": "<issue_id>", "workerId": "<user_id>" }`
+- `PATCH /tasks/:id/status` (worker)
+  - body: `{ "status": "assigned|accepted|in_progress|completed|complication_reported" }`
+- `POST /tasks/:id/progress` (worker)
+  - multipart/files: `progressImages`
+  - body: `{ "completionReport"?: "", "complicationReport"?: "" }`
 
 ## Admin
 
@@ -123,7 +133,25 @@ Run these from the `Backend` directory:
 
 - `GET /analytics/trends` (admin/officer)
   - query: `from`, `to`
-- `GET /analytics/heatmap` (admin/officer)
+
+## Heatmap
+
+- `GET /heatmap` (public)
+  - response: `[{ "lat": 12.9716, "lng": 77.5946, "count": 12 }]`
+- `GET /admin/analytics/heatmap` (admin/officer)
+
+## Departments (Admin)
+
+- `GET /departments` (admin)
+- `POST /departments` (admin)
+  - body: `{ "name": "", "description"?: "", "categories"?: ["roads"], "coverageArea"?: { "type": "Polygon", "coordinates": [[[77.0,12.0],[77.1,12.0],[77.1,12.1],[77.0,12.1],[77.0,12.0]]] } }`
+- `PUT /departments/:id` (admin)
+- `DELETE /departments/:id` (admin)
+
+## Images
+
+- `GET /images/:id` (public)
+  - note: streams stored image assets (used by issues, comments, tasks)
 
 ## Notifications
 

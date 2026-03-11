@@ -1,0 +1,123 @@
+.notif-panel {
+  position: absolute;
+  top: 52px;
+  right: 0;
+  width: min(420px, calc(100vw - 28px));
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: 16px;
+  box-shadow: var(--shadow-md);
+  overflow: hidden;
+  z-index: 40;
+}
+
+.notif-panel__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.notif-panel__title {
+  font-family: var(--font-heading);
+  font-size: 0.95rem;
+}
+
+.notif-panel__close {
+  height: 36px;
+  width: 36px;
+  border-radius: 12px;
+  border: 1px solid var(--border-color);
+  background: var(--bg-surface);
+  color: var(--text-secondary);
+}
+
+.notif-panel__close:hover {
+  background: var(--bg-hover);
+  border-color: var(--border-bright);
+  color: var(--text-primary);
+}
+
+.notif-panel__list {
+  max-height: 420px;
+  overflow: auto;
+  display: grid;
+  gap: 8px;
+  padding: 12px;
+}
+
+.notif-panel__empty {
+  padding: 18px 14px;
+  color: var(--text-secondary);
+  text-align: center;
+}
+
+.notif-item {
+  border: 1px solid var(--border-color);
+  border-radius: 14px;
+  background: var(--bg-surface);
+  padding: 12px;
+  display: grid;
+  gap: 6px;
+}
+
+.notif-item.is-unread {
+  border-color: rgba(0, 200, 248, 0.25);
+  background: rgba(0, 200, 248, 0.06);
+}
+
+.notif-item__top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.notif-item__title {
+  font-weight: 800;
+  font-size: 0.9rem;
+  line-height: 1.2;
+}
+
+.notif-item__message {
+  color: var(--text-secondary);
+  font-size: 0.85rem;
+  line-height: 1.5;
+}
+
+.notif-item__meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  color: var(--text-muted);
+  font-size: 12px;
+  font-family: var(--font-mono);
+}
+
+.notif-item__actions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+.notif-item__btn {
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  background: var(--bg-hover);
+  color: var(--text-primary);
+  padding: 8px 10px;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.notif-item__btn:hover {
+  border-color: var(--border-bright);
+}
+
+.notif-item__btn--ghost {
+  background: transparent;
+  color: var(--text-secondary);
+}
+

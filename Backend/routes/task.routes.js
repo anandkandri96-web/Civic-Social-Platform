@@ -3,24 +3,25 @@ const { protect, checkRole } = require("../middlewares/auth.middleware");
 const { uploadImages } = require("../middlewares/upload.middleware");
 const { ROLES } = require("../utils/constants");
 const {
-  assignTask,
-  getWorkerTasks,
-  updateTaskProgress,
-  completeTask,
+  createTask,
+  getMyTasks,
+  updateTaskStatus,
+  addTaskProgress,
 } = require("../controllers/task.controller");
 
 router.use(protect);
 
-// Officer/Admin can assign tasks
-router.post("/assign", checkRole([ROLES.OFFICER, ROLES.ADMIN]), assignTask);
+// Worker: list own tasks
+router.get("/my", checkRole([ROLES.WORKER]), getMyTasks);
 
-// Workers can view their tasks, officers/admins can view any
-router.get("/worker/:workerId", checkRole([ROLES.WORKER, ROLES.OFFICER, ROLES.ADMIN]), getWorkerTasks);
+// Officer/Admin: create/assign a task for an issue
+router.post("/", checkRole([ROLES.OFFICER, ROLES.ADMIN]), createTask);
 
-// Workers can update progress
-router.patch("/:taskId/progress", checkRole([ROLES.WORKER]), uploadImages("progressImages", 5), updateTaskProgress);
+// Worker: update task status (accept / in_progress / completed / complication_reported)
+router.patch("/:id/status", checkRole([ROLES.WORKER]), updateTaskStatus);
 
-// Workers can complete tasks
-router.patch("/:taskId/complete", checkRole([ROLES.WORKER]), uploadImages("completionImages", 5), completeTask);
+// Worker: upload progress images / reports
+router.post("/:id/progress", checkRole([ROLES.WORKER]), uploadImages("progressImages", 5), addTaskProgress);
 
 module.exports = router;
+

@@ -1,6 +1,8 @@
 const Department = require("../models/department");
 const { apiResponse } = require("../utils/apiResponse");
 
+const escapeRegex = (value) => String(value).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
 exports.createDepartment = async (req, res) => {
   try {
     const { name, description, categories, officers, contactEmail, serviceArea, coverageArea } = req.body;
@@ -9,13 +11,16 @@ exports.createDepartment = async (req, res) => {
       return apiResponse(res, 400, "Department name is required");
     }
 
-    const existing = await Department.findOne({ name: name.trim() });
+    const normalizedName = String(name).trim().replace(/\s+/g, " ");
+    const existing = await Department.findOne({
+      name: { $regex: new RegExp(`^${escapeRegex(normalizedName)}$`, "i") },
+    });
     if (existing) {
       return apiResponse(res, 409, "Department with this name already exists");
     }
 
     const department = await Department.create({
-      name: name.trim(),
+      name: normalizedName,
       description: description?.trim() || "",
       categories: categories || [],
       officers: officers || [],
@@ -54,12 +59,15 @@ exports.updateDepartment = async (req, res) => {
     }
 
     if (name !== undefined) {
-      const trimmedName = name.trim();
+      const trimmedName = String(name).trim().replace(/\s+/g, " ");
       if (!trimmedName) {
         return apiResponse(res, 400, "Department name cannot be empty");
       }
 
-      const existing = await Department.findOne({ name: trimmedName, _id: { $ne: id } });
+      const existing = await Department.findOne({
+        _id: { $ne: id },
+        name: { $regex: new RegExp(`^${escapeRegex(trimmedName)}$`, "i") },
+      });
       if (existing) {
         return apiResponse(res, 409, "Department with this name already exists");
       }

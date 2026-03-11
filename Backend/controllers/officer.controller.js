@@ -1,3 +1,4 @@
+const mongoose = require("mongoose");
 const Issue = require("../models/issue");
 const Task = require("../models/task");
 const User = require("../models/user");
@@ -33,7 +34,8 @@ exports.getDepartmentIssues = async (req, res) => {
     const issues = await Issue.find(filter)
       .sort({ priorityScore: -1, createdAt: -1 })
       .populate("assignedDepartment", "name")
-      .populate("reportedBy", "name email");
+      .populate("reportedBy", "name email")
+      .populate("assignedWorker", "name email workerId department");
 
     return apiResponse(res, 200, "Department issues fetched", issues);
   } catch (error) {
@@ -42,8 +44,50 @@ exports.getDepartmentIssues = async (req, res) => {
   }
 };
 
+exports.getDepartmentWorkers = async (req, res) => {
+  try {
+    const filter = { role: ROLES.WORKER, isActive: true };
+
+    if (req.user.role === ROLES.OFFICER) {
+      if (!hasOfficerScope(req.user)) {
+        return apiResponse(res, 400, "Officer must be assigned to a department");
+      }
+      filter.department = req.user.department;
+    } else if (req.query.departmentId) {
+      filter.department = req.query.departmentId;
+    }
+
+    const workers = await User.find(filter)
+      .select("_id name email department isActive workerId")
+      .populate("department", "_id name")
+      .sort({ createdAt: -1 })
+      .limit(200)
+      .lean();
+
+    const workerIds = workers.map((w) => w._id);
+    const activeStatuses = ["assigned", "accepted", "in_progress", "complication_reported"];
+    const loads = workerIds.length
+      ? await Task.aggregate([
+          { $match: { worker: { $in: workerIds }, status: { $in: activeStatuses } } },
+          { $group: { _id: "$worker", activeTasks: { $sum: 1 } } },
+        ])
+      : [];
+
+    const loadMap = new Map(loads.map((r) => [String(r._id), Number(r.activeTasks || 0)]));
+    const payload = workers.map((w) => ({ ...w, activeTasks: loadMap.get(String(w._id)) || 0 }));
+
+    return apiResponse(res, 200, "Department workers fetched", payload);
+  } catch (error) {
+    console.error("Get department workers error:", error);
+    return apiResponse(res, 500, "Failed to fetch workers");
+  }
+};
+
 exports.reviewIssue = async (req, res) => {
   try {
+    if (!mongoose.Types.ObjectId.isValid(req.params.issueId)) {
+      return apiResponse(res, 400, "Invalid issue id");
+    }
     const issue = await Issue.findById(req.params.issueId);
     if (!issue) return apiResponse(res, 404, "Issue not found");
     if (req.user.role === ROLES.OFFICER && !hasOfficerScope(req.user)) {
@@ -72,9 +116,20 @@ exports.assignWorker = async (req, res) => {
     const { issueId } = req.params;
     const { workerId } = req.body;
 
+    if (!mongoose.Types.ObjectId.isValid(issueId)) {
+      return apiResponse(res, 400, "Invalid issue id");
+    }
     const issue = await Issue.findById(issueId);
     if (!issue) return apiResponse(res, 404, "Issue not found");
     if (!workerId) return apiResponse(res, 400, "workerId is required");
+
+    const rawWorkerId = String(workerId || "").trim();
+    const isObjectId = mongoose.Types.ObjectId.isValid(rawWorkerId);
+    const isSerial = /^W-\d{3,}$/i.test(rawWorkerId);
+    if (!isObjectId && !isSerial) {
+      return apiResponse(res, 400, "workerId must be a valid id or a serial like W-001");
+    }
+
     if (req.user.role === ROLES.OFFICER) {
       if (!hasOfficerScope(req.user)) return apiResponse(res, 400, "Officer must be assigned to a department");
       if (String(issue.assignedDepartment) !== String(req.user.department)) {
@@ -82,7 +137,11 @@ exports.assignWorker = async (req, res) => {
       }
     }
 
-    const worker = await User.findOne({ _id: workerId, role: ROLES.WORKER, isActive: true });
+    const worker = await User.findOne({
+      ...(isObjectId ? { _id: rawWorkerId } : { workerId: rawWorkerId.toUpperCase() }),
+      role: ROLES.WORKER,
+      isActive: true,
+    });
     if (!worker) return apiResponse(res, 404, "Worker not found");
     if (req.user.role === ROLES.OFFICER && worker.department && String(worker.department) !== String(req.user.department)) {
       return apiResponse(res, 400, "Worker belongs to a different department");
@@ -140,6 +199,9 @@ exports.updateOfficerStatus = async (req, res) => {
     const { status } = req.body;
     const next = String(status || "").toLowerCase();
 
+    if (!mongoose.Types.ObjectId.isValid(issueId)) {
+      return apiResponse(res, 400, "Invalid issue id");
+    }
     const issue = await Issue.findById(issueId);
     if (!issue) return apiResponse(res, 404, "Issue not found");
     if (req.user.role === ROLES.OFFICER && !hasOfficerScope(req.user)) {

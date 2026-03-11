@@ -1,16 +1,10 @@
 import axios from "axios";
 
-/**
- * Axios instance
- */
 const api = axios.create({
   baseURL: import.meta.env.VITE_API_URL,
   timeout: 10000,
 });
 
-/**
- * Safely get JWT token
- */
 const getToken = () => {
   try {
     return localStorage.getItem("token");
@@ -19,9 +13,6 @@ const getToken = () => {
   }
 };
 
-/**
- * Centralized logout handler
- */
 const handleLogout = () => {
   try {
     localStorage.removeItem("token");
@@ -35,9 +26,6 @@ const handleLogout = () => {
   }
 };
 
-/**
- * REQUEST INTERCEPTOR
- */
 api.interceptors.request.use(
   (config) => {
     const token = getToken();
@@ -50,38 +38,14 @@ api.interceptors.request.use(
   (error) => Promise.reject(error)
 );
 
-// response interceptor: unwrap data if needed and handle auth failures
+// Do not mutate response shape. Handle auth failures centrally.
 api.interceptors.response.use(
   (response) => response,
   (error) => {
-    // logout on 401 to force re-authentication
-    if (
-      error.response &&
-      error.response.status === 401 &&
-      typeof window !== 'undefined'
-    ) {
+    const status = error?.response?.status;
+    if (status === 401 && typeof window !== "undefined") {
       handleLogout();
     }
-    return Promise.reject(error);
-  }
-);
-
-/**
- * RESPONSE INTERCEPTOR
- * ✅ DO NOT MUTATE RESPONSE SHAPE
- */
-api.interceptors.response.use(
-  (response) => {
-    // ✅ return full axios response
-    return response;
-  },
-  (error) => {
-    const status = error.response?.status;
-
-    if (status === 401) {
-      handleLogout();
-    }
-
     return Promise.reject(error);
   }
 );

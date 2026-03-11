@@ -124,6 +124,31 @@
   color: var(--color-primary-light);
 }
 
+.role-dashboard__profile {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+  padding: 12px 14px;
+  min-width: 320px;
+}
+
+.role-dashboard__profile-kv span {
+  display: block;
+  font-size: 0.62rem;
+  font-family: var(--font-mono);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-secondary);
+}
+
+.role-dashboard__profile-kv strong {
+  display: block;
+  margin-top: 6px;
+  font-family: var(--font-mono);
+  color: var(--color-primary-light);
+  font-size: 0.9rem;
+}
+
 @media (max-width: 1100px) {
   .role-dashboard__grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -133,6 +158,12 @@
 @media (max-width: 760px) {
   .role-dashboard__header {
     flex-direction: column;
+  }
+
+  .role-dashboard__profile {
+    min-width: auto;
+    width: 100%;
+    grid-template-columns: 1fr;
   }
 
   .role-dashboard__grid {

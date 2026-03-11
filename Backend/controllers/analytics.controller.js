@@ -12,7 +12,7 @@ exports.getTrends = async (req, res) => {
       if (to) matchStage.createdAt.$lte = new Date(to);
     }
 
-    const [issuesOverTime, issuesByCategory, statusBreakdown, avgResolutionTime] = await Promise.all([
+    const [issuesOverTime, issuesByCategory, statusBreakdown, avgResolutionTime, resolvedByDepartment] = await Promise.all([
       Issue.aggregate([
         { $match: matchStage },
         {
@@ -36,6 +36,34 @@ exports.getTrends = async (req, res) => {
         },
         { $group: { _id: null, avgHours: { $avg: "$resolutionTime" } } },
       ]),
+      Issue.aggregate([
+        {
+          $match: {
+            ...matchStage,
+            assignedDepartment: { $ne: null },
+            status: { $in: ["resolved", "resolved_by_community", "citizen_verified", "closed"] },
+          },
+        },
+        { $group: { _id: "$assignedDepartment", count: { $sum: 1 } } },
+        {
+          $lookup: {
+            from: "departments",
+            localField: "_id",
+            foreignField: "_id",
+            as: "dept",
+          },
+        },
+        { $unwind: { path: "$dept", preserveNullAndEmptyArrays: true } },
+        {
+          $project: {
+            _id: 0,
+            departmentId: "$_id",
+            department: { $ifNull: ["$dept.name", "Unknown"] },
+            count: 1,
+          },
+        },
+        { $sort: { count: -1 } },
+      ]),
     ]);
 
     return apiResponse(res, 200, "Analytics data retrieved", {
@@ -43,6 +71,7 @@ exports.getTrends = async (req, res) => {
       issuesByCategory,
       statusBreakdown,
       avgResolutionTime: avgResolutionTime[0]?.avgHours || 0,
+      resolvedByDepartment,
     });
   } catch (error) {
     console.error("Analytics Error:", error);

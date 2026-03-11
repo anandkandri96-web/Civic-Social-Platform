@@ -3,6 +3,7 @@ const mongoose = require("mongoose");
 const User = require("../models/user");
 const Department = require("../models/department");
 const { ROLES } = require("../utils/constants");
+const { formatSerial, getMaxSerialNumber } = require("../services/serialId.service");
 
 const MONGO_URI = process.env.MONGO_URI || "mongodb://127.0.0.1:27017/community-heatmap";
 
@@ -31,12 +32,55 @@ async function run() {
     departmentBackfilled = deptResult.modifiedCount || 0;
   }
 
+  // Backfill human-friendly serial IDs for staff users.
+  const backfillSerials = async ({ role, field, prefix }) => {
+    const missing = await User.find({
+      role,
+      $or: [{ [field]: null }, { [field]: { $exists: false } }, { [field]: "" }],
+    })
+      .sort({ createdAt: 1, _id: 1 })
+      .select("_id createdAt")
+      .lean();
+
+    if (missing.length === 0) {
+      return { role, field, assigned: 0, startFrom: null };
+    }
+
+    const max = await getMaxSerialNumber(field, prefix);
+    let next = max + 1;
+
+    const ops = missing.map((u) => ({
+      updateOne: {
+        filter: {
+          _id: u._id,
+          $or: [{ [field]: null }, { [field]: { $exists: false } }, { [field]: "" }],
+        },
+        update: { $set: { [field]: formatSerial(prefix, next++) } },
+      },
+    }));
+
+    const result = await User.bulkWrite(ops, { ordered: false });
+    return {
+      role,
+      field,
+      assigned: Number(result?.modifiedCount || 0),
+      startFrom: formatSerial(prefix, max + 1),
+    };
+  };
+
+  const [workerSerials, officerSerials] = await Promise.all([
+    backfillSerials({ role: ROLES.WORKER, field: "workerId", prefix: "W" }),
+    backfillSerials({ role: ROLES.OFFICER, field: "officerId", prefix: "O" }),
+  ]);
+
   console.log(
     JSON.stringify(
       {
         approvalsBackfilled: approvedResult.modifiedCount || 0,
         departmentBackfilled,
         defaultDepartment: defaultDept ? defaultDept.name : null,
+        workerSerials,
+        officerSerials,
       },
       null,
       2

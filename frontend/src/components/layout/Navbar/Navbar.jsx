@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../../../hooks/useAuth';
 import { normalizeRole } from '../../../utils/roleCheck';
-import NotificationPanel from '../../NotificationPanel';
+import NotificationPanel from '../../notifications/NotificationPanel/NotificationPanel';
 import './Navbar.css';
 
 const Navbar = () => {

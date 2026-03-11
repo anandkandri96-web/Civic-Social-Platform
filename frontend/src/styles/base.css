@@ -26,6 +26,12 @@ body {
   text-rendering: optimizeLegibility;
 }
 
+*:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+  border-radius: 10px;
+}
+
 a {
   color: inherit;
   text-decoration: none;
@@ -56,6 +62,7 @@ select {
 button {
   border: none;
   background: none;
+  cursor: pointer;
 }
 
 ::selection {
@@ -79,4 +86,15 @@ button {
 
 ::-webkit-scrollbar-thumb:hover {
   background: var(--color-primary);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
 }

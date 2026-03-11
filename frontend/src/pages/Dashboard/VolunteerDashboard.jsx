@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import {
   claimVolunteerIssue,
   getAvailableVolunteerIssues,
-  resolveVolunteerIssue,
   updateVolunteerProgress,
 } from '@api/volunteer.api.js';
 import { getErrorMessage } from '@api/utils';
@@ -13,7 +13,6 @@ const VolunteerDashboard = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [workingId, setWorkingId] = useState('');
-  const [proofFilesByIssue, setProofFilesByIssue] = useState({});
 
   useEffect(() => {
     let mounted = true;
@@ -56,23 +55,6 @@ const VolunteerDashboard = () => {
 
   const claimedCount = issues.filter((issue) => issue.status === 'volunteer_claimed').length;
   const communityFixCount = issues.filter((issue) => issue.status === 'community_fix_in_progress').length;
-
-  const handleResolve = async (issueId) => {
-    const proofFiles = proofFilesByIssue[issueId] || [];
-    if (proofFiles.length === 0) {
-      alert('Please upload at least one after-fix photo to resolve this issue.');
-      return;
-    }
-
-    const success = await runAction(issueId, () => resolveVolunteerIssue(issueId, { proofFiles }));
-    if (success) {
-      setProofFilesByIssue((prev) => {
-        const next = { ...prev };
-        delete next[issueId];
-        return next;
-      });
-    }
-  };
 
   return (
     <section className="role-dashboard page">
@@ -147,23 +129,11 @@ const VolunteerDashboard = () => {
                         >
                           Start Fix
                         </button>
-                        <button
-                          type="button"
-                          disabled={workingId === issue._id || issue.status !== 'community_fix_in_progress'}
-                          onClick={() => void handleResolve(issue._id)}
-                        >
-                          Resolve
-                        </button>
-                        <input
-                          type="file"
-                          accept="image/*"
-                          multiple
-                          disabled={workingId === issue._id || issue.status !== 'community_fix_in_progress'}
-                          onChange={(e) => {
-                            const files = Array.from(e.target.files || []);
-                            setProofFilesByIssue((prev) => ({ ...prev, [issue._id]: files }));
-                          }}
-                        />
+                        {issue.status === 'community_fix_in_progress' ? (
+                          <Link to={`/dashboard/volunteer/submit/${issue._id}`}>Open Submit Form</Link>
+                        ) : (
+                          <span className="text-muted">Start fix to resolve</span>
+                        )}
                       </div>
                     </td>
                   </tr>

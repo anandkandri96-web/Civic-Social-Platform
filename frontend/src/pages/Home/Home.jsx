@@ -3,8 +3,9 @@ import { Link } from "react-router-dom";
 import { useAuth } from "../../hooks/useAuth";
 import { useRole } from "../../hooks/useRole";
 import { getIssues } from "@api/issues.api";
-import VoteButton from "../../components/ui/VoteButton";
+import VoteButton from "../../components/issues/VoteButton/VoteButton";
 import IssueLeafletMap from "../../components/map/IssueLeafletMap";
+import SafeImage from "../../components/common/SafeImage/SafeImage";
 import "./Home.css";
 
 const CATEGORY_LABELS = {
@@ -499,9 +500,6 @@ function HeroSection({ isLoggedIn, isAdmin, enableGlobe }) {
 
           {isLoggedIn && isAdmin && (
             <>
-              <Link to="/admin" className="btn btn-primary">
-                Open Admin Panel
-              </Link>
               <Link to="/issues" className="btn btn-secondary">
                 Browse Issues
               </Link>
@@ -663,8 +661,30 @@ function PriorityIssuesSection({
             )
             : filteredIssues.map((issue) => {
               const catColor = CATEGORY_COLORS[issue.category] || "#38b6ff";
+              const submittedImages = Array.isArray(issue?.raw?.images)
+                ? issue.raw.images.map((img) => String(img || "").trim()).filter(Boolean)
+                : [];
+              const volunteerAfterImages = Array.isArray(issue?.raw?.communityProof)
+                ? issue.raw.communityProof.map((img) => String(img || "").trim()).filter(Boolean)
+                : [];
+              const workerAfterImages = Array.isArray(issue?.raw?.workerProgressImages)
+                ? issue.raw.workerProgressImages.map((img) => String(img || "").trim()).filter(Boolean)
+                : [];
+              const afterImages = Array.from(new Set([...volunteerAfterImages, ...workerAfterImages]));
+              const rawStatus = String(issue?.raw?.status || "").toLowerCase();
+              const isResolvedFlow = ["resolved", "resolved_by_community", "citizen_verified", "closed"].includes(rawStatus);
+              const coverImage = isResolvedFlow && afterImages[0] ? afterImages[0] : submittedImages[0];
               return (
                 <div className="issue-card" key={issue.id}>
+                  <div className="issue-card__media" aria-label="Issue photo">
+                    <SafeImage
+                      src={coverImage}
+                      alt={issue.title}
+                      showSkeleton
+                      style={{ width: "100%", height: "100%" }}
+                    />
+                  </div>
+
                   <div className="issue-card__top">
                     <span className="issue-card__category" style={{ "--cat-color": catColor }}>
                       {issue.category}
@@ -794,7 +814,7 @@ function WhoAreYouSection() {
           <span className="section-label">Platform Roles</span>
           <h2 className="section-title">Who are you?</h2>
           <p className="section-subtitle">
-            CivicPulse adapts to every stakeholder in the city problem-solving loop.
+            Social Civic Platform adapts to every stakeholder in the city problem-solving loop.
           </p>
         </div>
 
@@ -995,5 +1015,3 @@ const Home = () => {
 };
 
 export default Home;
-
-

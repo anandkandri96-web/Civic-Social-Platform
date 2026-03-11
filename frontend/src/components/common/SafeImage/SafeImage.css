@@ -1,0 +1,32 @@
+.safe-image {
+  display: block;
+  position: relative;
+}
+
+.safe-image__img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.safe-image--skeleton .safe-image__img {
+  position: relative;
+  z-index: 1;
+}
+
+.safe-image__skeleton {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: linear-gradient(90deg, rgba(255,255,255,0.06), rgba(255,255,255,0.12), rgba(255,255,255,0.06));
+  background-size: 180% 100%;
+  animation: safeImageShimmer 1.2s ease-in-out infinite;
+  z-index: 0;
+}
+
+@keyframes safeImageShimmer {
+  0% { background-position: 0% 0; }
+  100% { background-position: 180% 0; }
+}
+

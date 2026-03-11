@@ -29,13 +29,13 @@ describe("officer.controller", () => {
 
   it("blocks officer from reviewing issue outside own department", async () => {
     Issue.findById.mockResolvedValue({
-      _id: "issue-1",
+      _id: "507f1f77bcf86cd799439011",
       assignedDepartment: "dep-2",
       status: "reported",
     });
 
     const req = {
-      params: { issueId: "issue-1" },
+      params: { issueId: "507f1f77bcf86cd799439011" },
       user: { _id: "off-1", role: "officer", department: "dep-1" },
     };
     const res = mockRes();

@@ -1,10 +1,14 @@
 .issue-map-page {
-  min-height: calc(100vh - 58px);
+  width: 100%;
+  height: 100%;
+  min-height: 600px;
   padding: 24px;
 }
 
 .issue-map-layout {
-  min-height: calc(100vh - 106px);
+  width: 100%;
+  height: 100%;
+  min-height: 600px;
   display: flex;
   overflow: hidden;
 }
@@ -33,6 +37,39 @@
   font-family: var(--font-mono);
   font-size: 0.72rem;
   color: var(--color-primary-light);
+}
+
+.issue-map-mode {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.issue-map-mode-btn {
+  border: 1px solid var(--border-color);
+  border-radius: 10px;
+  background: var(--bg-surface);
+  color: var(--text-secondary);
+  padding: 10px 12px;
+  font-weight: 800;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  cursor: pointer;
+  transition: transform var(--transition-fast), border-color var(--transition-fast), background var(--transition-fast);
+}
+
+.issue-map-mode-btn:hover {
+  background: var(--bg-hover);
+  border-color: var(--border-bright);
+  transform: translateY(-1px);
+}
+
+.issue-map-mode-btn.is-active {
+  background: rgba(0, 200, 248, 0.14);
+  border-color: rgba(0, 200, 248, 0.35);
+  color: var(--text-primary);
 }
 
 .issue-map-filter-group {
@@ -111,13 +148,77 @@
 
 .issue-map-canvas {
   position: relative;
-  min-height: 520px;
+  width: 100%;
+  height: 100%;
+  min-height: 600px;
 }
 
 .issue-map-leaflet {
   height: 100%;
   width: 100%;
   z-index: 1;
+}
+
+.issue-map-leaflet .leaflet-container {
+  height: 100%;
+  width: 100%;
+}
+
+.issue-map-preview-card {
+  position: absolute;
+  right: 14px;
+  bottom: 14px;
+  width: min(340px, calc(100% - 28px));
+  border: 1px solid var(--border-color);
+  border-radius: 16px;
+  background: rgba(14, 24, 40, 0.92);
+  backdrop-filter: blur(10px);
+  box-shadow: var(--shadow-md);
+  padding: 12px;
+  z-index: 5;
+  display: grid;
+  gap: 10px;
+}
+
+.issue-map-preview-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.issue-map-preview-badge {
+  font-size: 11px;
+  font-family: var(--font-mono);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--color-primary-light);
+  border: 1px solid rgba(0, 200, 248, 0.28);
+  background: rgba(0, 200, 248, 0.10);
+  border-radius: 999px;
+  padding: 4px 8px;
+  white-space: nowrap;
+}
+
+.issue-map-preview-meta {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  color: var(--text-secondary);
+  font-size: 12px;
+  font-family: var(--font-mono);
+}
+
+.issue-map-preview-actions a {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 12px;
+  border: 1px solid rgba(0, 200, 248, 0.28);
+  background: rgba(0, 200, 248, 0.10);
+  color: var(--text-primary);
+  padding: 10px 12px;
+  font-weight: 800;
 }
 
 .issue-map-detail {

@@ -20,3 +20,10 @@ export const updateOfficerIssueStatus = async (issueId, status) => {
   const res = await api.patch(`/officer/issues/${issueId}/status`, { status });
   return getResponseData(res);
 };
+
+// Optional endpoint. If your backend supports it, this powers the worker dropdown in Officer Dashboard.
+// Expected response: Array of workers in officer's department (and optionally task-load fields).
+export const getOfficerWorkers = async () => {
+  const res = await api.get('/officer/workers');
+  return getResponseData(res) || [];
+};

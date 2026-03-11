@@ -123,6 +123,24 @@ const issueSchema = new mongoose.Schema(
       default: [],
     },
 
+    communityResolutionReport: {
+      text: {
+        type: String,
+        default: "",
+        trim: true,
+        maxlength: 2000,
+      },
+      submittedBy: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "User",
+        default: null,
+      },
+      submittedAt: {
+        type: Date,
+        default: null,
+      },
+    },
+
     verifiedByCitizen: {
       type: Boolean,
       default: false,

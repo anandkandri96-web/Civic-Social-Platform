@@ -1,7 +1,11 @@
+const mongoose = require("mongoose");
 const Issue = require("../models/issue");
 const Task = require("../models/task");
 const Vote = require("../models/vote");
 const User = require("../models/user");
+const Comment = require("../models/comment");
+const Notification = require("../models/notification");
+const ImageAsset = require("../models/imageAsset");
 const { apiResponse } = require("../utils/apiResponse");
 const { ISSUE_CATEGORIES, ISSUE_STATUS, ROLES } = require("../utils/constants");
 const { getOrCreateDepartmentByCategory, normalizeCategory } = require("../services/routing.service");
@@ -13,6 +17,17 @@ const TITLE_MAX = 120;
 const DESC_MAX = 2000;
 const VALID_STATUSES = new Set(Object.values(ISSUE_STATUS));
 const CITIZEN_EDITABLE_STATUSES = new Set([ISSUE_STATUS.REPORTED, ISSUE_STATUS.UNDER_REVIEW]);
+
+function extractImageAssetId(url) {
+  if (!url) return null;
+  const s = String(url);
+  const marker = "/api/images/";
+  const idx = s.indexOf(marker);
+  if (idx === -1) return null;
+  const tail = s.slice(idx + marker.length);
+  const id = tail.split(/[?#/]/)[0];
+  return id || null;
+}
 
 function parseCoords(lat, lng) {
   const latitude = Number(lat);
@@ -285,8 +300,17 @@ exports.getIssues = async (req, res) => {
       .populate("assignedDepartment", "_id name")
       .lean();
 
+    // When not using geo-near sorting (which is distance-based), allow priority-based sorting.
     if (!filter.location) {
-      query = query.sort({ createdAt: -1 });
+      const sortKey = String(req.query.sort || "priority").trim().toLowerCase();
+      if (sortKey === "newest") {
+        query = query.sort({ createdAt: -1 });
+      } else if (sortKey === "most_supported") {
+        query = query.sort({ voteCount: -1, createdAt: -1 });
+      } else {
+        // Default: priority first, then newest.
+        query = query.sort({ priorityScore: -1, createdAt: -1 });
+      }
     }
 
     let issues = await query;
@@ -296,6 +320,26 @@ exports.getIssues = async (req, res) => {
       const votedIds = await Vote.find({ user: req.user._id, issue: { $in: issueIds } }).select("issue").lean();
       const votedSet = new Set(votedIds.map((v) => String(v.issue)));
       issues = issues.map((i) => ({ ...i, userVoted: votedSet.has(String(i._id)) }));
+    }
+
+    // Attach worker progress images (stored on Task) so issue cards/lists can render them.
+    if (issues.length > 0) {
+      const issueIds = issues.map((i) => i._id);
+      const tasks = await Task.find({ issue: { $in: issueIds } })
+        .select("issue progressImages")
+        .lean();
+
+      const map = new Map();
+      for (const t of tasks) {
+        const key = String(t.issue);
+        const imgs = Array.isArray(t.progressImages) ? t.progressImages.filter(Boolean).slice(0, 10) : [];
+        if (!map.has(key)) map.set(key, imgs);
+      }
+
+      issues = issues.map((i) => ({
+        ...i,
+        workerProgressImages: map.get(String(i._id)) || [],
+      }));
     }
 
     return apiResponse(res, 200, "Issues retrieved successfully", issues);
@@ -341,7 +385,7 @@ exports.getIssue = async (req, res) => {
     const issue = await Issue.findById(req.params.id)
       .populate("reportedBy", "name email")
       .populate("assignedDepartment", "name")
-      .populate("assignedWorker", "name email")
+      .populate("assignedWorker", "name email workerId")
       .populate("volunteer", "name email");
 
     if (!issue) return apiResponse(res, 404, "Issue not found");
@@ -445,6 +489,10 @@ exports.closeIssue = async (req, res) => {
     const issue = await Issue.findById(req.params.id);
     if (!issue) return apiResponse(res, 404, "Issue not found");
 
+    if (issue.status !== ISSUE_STATUS.CITIZEN_VERIFIED) {
+      return apiResponse(res, 400, "Issue must be verified by citizen before closing");
+    }
+
     issue.status = ISSUE_STATUS.CLOSED;
     issue.closedAt = new Date();
     await issue.save();
@@ -495,13 +543,44 @@ exports.deleteIssue = async (req, res) => {
         return apiResponse(res, 403, "You can only delete your own issues");
       }
 
-      if (issue.status !== ISSUE_STATUS.REPORTED) {
-        return apiResponse(res, 400, "Issue cannot be deleted after workflow has started");
+      // Citizens can delete their own issue in early stage and after full closure.
+      if (![ISSUE_STATUS.REPORTED, ISSUE_STATUS.CLOSED].includes(issue.status)) {
+        return apiResponse(res, 400, "Issue can only be deleted when reported or closed");
       }
     }
 
-    await Issue.findByIdAndDelete(req.params.id);
-    await Vote.deleteMany({ issue: req.params.id });
+    const issueId = issue._id;
+
+    // Collect image assets for best-effort cleanup so we don't leave broken media around.
+    const [tasks, comments] = await Promise.all([
+      Task.find({ issue: issueId }).select("progressImages").lean(),
+      Comment.find({ issue: issueId }).select("images").lean(),
+    ]);
+
+    const candidateUrls = [
+      ...(Array.isArray(issue.images) ? issue.images : []),
+      ...(Array.isArray(issue.communityProof) ? issue.communityProof : []),
+      ...tasks.flatMap((t) => (Array.isArray(t?.progressImages) ? t.progressImages : [])),
+      ...comments.flatMap((c) => (Array.isArray(c?.images) ? c.images : [])),
+    ]
+      .map((u) => String(u || "").trim())
+      .filter(Boolean);
+
+    const assetIds = Array.from(
+      new Set(candidateUrls.map(extractImageAssetId).filter((id) => id && mongoose.Types.ObjectId.isValid(id)))
+    );
+
+    await Promise.all([
+      Issue.deleteOne({ _id: issueId }),
+      Vote.deleteMany({ issue: issueId }),
+      Comment.deleteMany({ issue: issueId }),
+      Task.deleteMany({ issue: issueId }),
+      Notification.deleteMany({ issue: issueId }),
+    ]);
+
+    if (assetIds.length > 0) {
+      await ImageAsset.deleteMany({ _id: { $in: assetIds } });
+    }
 
     return apiResponse(res, 200, "Issue deleted successfully");
   } catch (error) {

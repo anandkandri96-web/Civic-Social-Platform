@@ -9,6 +9,7 @@ export const ISSUE_STATUSES = {
   VOLUNTEER_CLAIMED: 'volunteer_claimed',
   COMMUNITY_FIX_IN_PROGRESS: 'community_fix_in_progress',
   RESOLVED_BY_COMMUNITY: 'resolved_by_community',
+  REJECTED: 'rejected',
 };
 
 export const ISSUE_STATUS_LABELS = {
@@ -22,4 +23,5 @@ export const ISSUE_STATUS_LABELS = {
   [ISSUE_STATUSES.VOLUNTEER_CLAIMED]: 'Volunteer Claimed',
   [ISSUE_STATUSES.COMMUNITY_FIX_IN_PROGRESS]: 'Community Fix in Progress',
   [ISSUE_STATUSES.RESOLVED_BY_COMMUNITY]: 'Resolved by Community',
+  [ISSUE_STATUSES.REJECTED]: 'Rejected',
 };

@@ -27,6 +27,7 @@ const {
   getDepartments,
   createDepartment,
 } = require("../controllers/admin.controller");
+const { getHeatmap } = require("../controllers/analytics.controller");
 
 router.get("/stats", protect, checkRole(["admin"]), getStats);
 router.get("/issues", protect, checkRole(["admin"]), getAllIssues);
@@ -39,5 +40,6 @@ router.patch("/users/:id/department", protect, checkRole(["admin"]), assignUserD
 router.delete("/users/:id", protect, checkRole(["admin"]), deleteUser);
 router.get("/departments", protect, checkRole(["admin"]), getDepartments);
 router.post("/departments", protect, checkRole(["admin"]), createDepartment);
+router.get("/analytics/heatmap", protect, checkRole(["admin", "officer"]), getHeatmap);
 
 module.exports = router;

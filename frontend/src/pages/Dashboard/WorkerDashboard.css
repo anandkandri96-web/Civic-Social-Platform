@@ -1,0 +1,72 @@
+.worker-dashboard {
+  background: transparent;
+}
+
+.worker-dashboard .dashboard-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 14px;
+  margin-bottom: 18px;
+}
+
+.worker-dashboard .dashboard-header h1 {
+  font-family: var(--font-heading);
+  font-size: 1.45rem;
+}
+
+.worker-dashboard .dashboard-header p {
+  margin-top: 5px;
+  color: var(--text-secondary);
+  font-size: 0.86rem;
+}
+
+.worker-dashboard__profile {
+  padding: 12px 14px;
+  display: grid;
+  gap: 8px;
+  min-width: min(340px, 100%);
+}
+
+.worker-dashboard__profile-kv {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: center;
+}
+
+.worker-dashboard__profile-kv span {
+  color: var(--text-secondary);
+  font-size: 0.7rem;
+  font-family: var(--font-mono);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.worker-dashboard__profile-kv strong {
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  color: var(--text-primary);
+}
+
+.worker-dashboard .error {
+  border: 1px solid rgba(255, 122, 53, 0.45);
+  background: rgba(255, 122, 53, 0.12);
+  border-radius: 10px;
+  padding: 12px 14px;
+  margin-bottom: 14px;
+  color: var(--text-primary);
+  font-size: 0.86rem;
+}
+
+.tasks-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 14px;
+}
+
+@media (max-width: 840px) {
+  .worker-dashboard .dashboard-header {
+    flex-direction: column;
+  }
+}

@@ -1,16 +1,21 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { assignOfficerWorker, getOfficerIssues, reviewOfficerIssue, updateOfficerIssueStatus } from '@api/officer.api.js';
+import { assignOfficerWorker, getOfficerIssues, getOfficerWorkers, reviewOfficerIssue, updateOfficerIssueStatus } from '@api/officer.api.js';
 import { getErrorMessage } from '@api/utils';
 import './RoleDashboard.css';
 import { canTransition } from '../../utils/statusFlow';
+import { useAuth } from '../../hooks/useAuth';
+import { getDepartmentName, getOfficerDisplayId, getUserId, getWorkerDisplayId } from '../../utils/userDisplay';
 
 const OfficerDashboard = () => {
+  const { user } = useAuth();
   const [issues, setIssues] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [workingId, setWorkingId] = useState('');
   const [workerInputs, setWorkerInputs] = useState({});
+  const [availableWorkers, setAvailableWorkers] = useState([]);
+  const [workerDirectoryError, setWorkerDirectoryError] = useState('');
 
   useEffect(() => {
     let mounted = true;
@@ -29,6 +34,29 @@ const OfficerDashboard = () => {
     };
 
     fetchIssues();
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    let mounted = true;
+
+    const fetchWorkers = async () => {
+      setWorkerDirectoryError('');
+      try {
+        const data = await getOfficerWorkers();
+        if (!mounted) return;
+        setAvailableWorkers(Array.isArray(data) ? data : []);
+      } catch (err) {
+        if (!mounted) return;
+        // Keep manual worker-id assignment as a fallback if the endpoint is unavailable.
+        setAvailableWorkers([]);
+        setWorkerDirectoryError(getErrorMessage(err));
+      }
+    };
+
+    fetchWorkers();
     return () => {
       mounted = false;
     };
@@ -62,6 +90,30 @@ const OfficerDashboard = () => {
     []
   );
 
+  const activeLoadByWorkerId = useMemo(() => {
+    const counts = new Map();
+    const activeStatuses = new Set(['assigned_to_department', 'work_in_progress']);
+    for (const issue of issues) {
+      if (!activeStatuses.has(String(issue?.status || '').toLowerCase())) continue;
+      const workerId = getUserId(issue?.assignedWorker);
+      if (!workerId) continue;
+      counts.set(workerId, (counts.get(workerId) || 0) + 1);
+    }
+    return counts;
+  }, [issues]);
+
+  const hasWorkerDirectory = Array.isArray(availableWorkers) && availableWorkers.length > 0;
+  const getWorkerOptionLabel = (worker) => {
+    const wid = getWorkerDisplayId(worker);
+    const name = worker?.name || '-';
+    const dept = getDepartmentName(worker) || '-';
+    const explicitLoad =
+      worker?.activeTasks ?? worker?.activeTaskCount ?? worker?.currentTaskLoad ?? worker?.currentLoad;
+    const computedLoad = worker?._id ? activeLoadByWorkerId.get(String(worker._id)) : undefined;
+    const load = typeof explicitLoad === 'number' ? explicitLoad : typeof computedLoad === 'number' ? computedLoad : 'N/A';
+    return `${wid} | ${name} | ${dept} | Active: ${load}`;
+  };
+
   return (
     <section className="role-dashboard page">
       <div className="container">
@@ -69,6 +121,20 @@ const OfficerDashboard = () => {
           <div>
             <h1>Officer Dashboard</h1>
             <p>Review department issues and move valid reports across the government resolution flow.</p>
+          </div>
+          <div className="role-dashboard__profile card">
+            <div className="role-dashboard__profile-kv">
+              <span>Officer ID</span>
+              <strong>{getOfficerDisplayId(user)}</strong>
+            </div>
+            <div className="role-dashboard__profile-kv">
+              <span>Name</span>
+              <strong>{user?.name || '-'}</strong>
+            </div>
+            <div className="role-dashboard__profile-kv">
+              <span>Department</span>
+              <strong>{getDepartmentName(user) || '-'}</strong>
+            </div>
           </div>
           <Link to="/dashboard/officer/analytics" className="role-dashboard__action">
             View Analytics
@@ -98,6 +164,12 @@ const OfficerDashboard = () => {
 
         <section className="card role-dashboard__panel">
           <h2>Department Queue</h2>
+          {!hasWorkerDirectory ? (
+            <p className="text-muted" style={{ marginBottom: 10 }}>
+              Worker directory unavailable. Enter a worker user ID to assign.
+              {workerDirectoryError ? ` (${workerDirectoryError})` : ''}
+            </p>
+          ) : null}
           {loading ? (
             <p className="text-muted">Loading...</p>
           ) : issues.length === 0 ? (
@@ -110,6 +182,7 @@ const OfficerDashboard = () => {
                   <th>Status</th>
                   <th>Category</th>
                   <th>Reporter</th>
+                  <th>Worker ID</th>
                   <th>Action</th>
                 </tr>
               </thead>
@@ -120,6 +193,7 @@ const OfficerDashboard = () => {
                     <td>{issue.status}</td>
                     <td>{issue.category}</td>
                     <td>{issue.reportedBy?.name || '-'}</td>
+                    <td>{getWorkerDisplayId(issue.assignedWorker)}</td>
                     <td>
                       <div className="role-dashboard__actions">
                         <button
@@ -129,14 +203,31 @@ const OfficerDashboard = () => {
                         >
                           Review
                         </button>
-                        <input
-                          type="text"
-                          placeholder="Worker ID"
-                          value={workerInputs[issue._id] ?? ''}
-                          onChange={(e) =>
-                            setWorkerInputs((prev) => ({ ...prev, [issue._id]: e.target.value }))
-                          }
-                        />
+                        {hasWorkerDirectory ? (
+                          <select
+                            value={workerInputs[issue._id] ?? ''}
+                            onChange={(e) =>
+                              setWorkerInputs((prev) => ({ ...prev, [issue._id]: e.target.value }))
+                            }
+                            disabled={workingId === issue._id}
+                          >
+                            <option value="">Select worker</option>
+                            {availableWorkers.map((worker) => (
+                              <option key={worker._id || worker.id || worker.email} value={worker._id || worker.id || ''}>
+                                {getWorkerOptionLabel(worker)}
+                              </option>
+                            ))}
+                          </select>
+                        ) : (
+                          <input
+                            type="text"
+                            placeholder="Worker ID"
+                            value={workerInputs[issue._id] ?? ''}
+                            onChange={(e) =>
+                              setWorkerInputs((prev) => ({ ...prev, [issue._id]: e.target.value }))
+                            }
+                          />
+                        )}
                         <button
                           type="button"
                           disabled={workingId === issue._id || !(workerInputs[issue._id] || '').trim()}
@@ -148,6 +239,28 @@ const OfficerDashboard = () => {
                         >
                           Assign
                         </button>
+                        {hasWorkerDirectory && (workerInputs[issue._id] || '').trim() ? (
+                          (() => {
+                            const selectedId = String(workerInputs[issue._id]).trim();
+                            const selected = availableWorkers.find((w) => String(w?._id ?? w?.id) === selectedId);
+                            if (!selected) return null;
+                            const explicitLoad =
+                              selected?.activeTasks ?? selected?.activeTaskCount ?? selected?.currentTaskLoad ?? selected?.currentLoad;
+                            const computedLoad = selected?._id ? activeLoadByWorkerId.get(String(selected._id)) : undefined;
+                            const load =
+                              typeof explicitLoad === 'number'
+                                ? explicitLoad
+                                : typeof computedLoad === 'number'
+                                  ? computedLoad
+                                  : 'N/A';
+                            return (
+                              <span className="text-muted" style={{ width: '100%' }}>
+                                Worker ID: {getWorkerDisplayId(selected)} | Name: {selected?.name || '-'} | Department:{' '}
+                                {getDepartmentName(selected) || '-'} | Active Tasks: {load}
+                              </span>
+                            );
+                          })()
+                        ) : null}
                         <select
                           defaultValue={issue.status}
                           disabled={workingId === issue._id}

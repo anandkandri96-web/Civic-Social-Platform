@@ -5,17 +5,20 @@
   --color-success: #00e5a0;
   --color-warning: #ff7a35;
   --color-danger: #ff4560;
+  --gradient-accent: linear-gradient(135deg, #00c8f8, #48dbff);
 
   --bg-main: #060d1a;
   --bg-surface: #0a1220;
   --bg-card: #0e1828;
+  --bg-hover: #152236;
 
   --text-primary: #dce8f5;
   --text-secondary: #7a92b0;
   --text-muted: #3d5068;
 
-  --border-color: #1a2840;
+  --border-color: #1c2b42;
   --border-bright: #243550;
+  --focus-ring: 0 0 0 3px rgba(0, 200, 248, 0.35);
 
   --space-xs: 4px;
   --space-sm: 8px;
@@ -34,6 +37,10 @@
   --font-base: 'DM Sans', 'Inter', system-ui, -apple-system, Segoe UI, sans-serif;
   --font-heading: 'Syne', 'Space Grotesk', 'Inter', sans-serif;
   --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+
+  --text-h1: 48px;
+  --text-h2: 36px;
+  --text-h3: 28px;
   --font-size-sm: 0.875rem;
   --font-size-md: 1rem;
   --font-size-lg: 1.125rem;

@@ -32,3 +32,6 @@ Thumbs.db
 /blob-report/
 /playwright/.cache/
 /playwright/.auth/
+
+# Local temp assets
+tmp_asset*.bin

@@ -102,6 +102,7 @@ exports.updateCommunityProgress = async (req, res) => {
 exports.submitCommunityResolution = async (req, res) => {
   try {
     const { issueId } = req.params;
+    const reportText = String(req.body?.reportText || "").trim();
     const proofFromBody = normalizeProofInput(req.body?.proof);
     const uploadedFiles = normalizeMulterFiles(req, ["proofImages"]);
     const proofFromFiles = uploadedFiles.length
@@ -118,11 +119,23 @@ exports.submitCommunityResolution = async (req, res) => {
       return apiResponse(res, 400, `Invalid transition from ${issue.status}`);
     }
 
+    if (!reportText) {
+      return apiResponse(res, 400, "Community resolution report is required");
+    }
+    if (reportText.length < 10) {
+      return apiResponse(res, 400, "Community resolution report must be at least 10 characters");
+    }
+
     const safeProof = [...new Set([...proofFromFiles, ...proofFromBody])];
     if (!safeProof.length) {
       return apiResponse(res, 400, "At least one proof item is required");
     }
     issue.communityProof = safeProof;
+    issue.communityResolutionReport = {
+      text: reportText,
+      submittedBy: req.user._id,
+      submittedAt: new Date(),
+    };
     issue.status = ISSUE_STATUS.RESOLVED_BY_COMMUNITY;
     issue.resolvedAt = new Date();
     await issue.save();

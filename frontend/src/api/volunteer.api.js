@@ -24,10 +24,14 @@ export const resolveVolunteerIssue = async (issueId, payload = []) => {
 
   const proof = Array.isArray(payload?.proof) ? payload.proof : [];
   const proofFiles = Array.isArray(payload?.proofFiles) ? payload.proofFiles : [];
+  const reportText = typeof payload?.reportText === 'string' ? payload.reportText : '';
 
   if (proofFiles.length > 0) {
     const formData = new FormData();
     proofFiles.forEach((file) => formData.append("proofImages", file));
+    if (reportText.trim()) {
+      formData.append("reportText", reportText.trim());
+    }
     if (proof.length > 0) {
       formData.append("proof", JSON.stringify(proof));
     }
@@ -37,6 +41,6 @@ export const resolveVolunteerIssue = async (issueId, payload = []) => {
     return getResponseData(res);
   }
 
-  const res = await api.patch(`/volunteer/issues/${issueId}/resolve`, { proof });
+  const res = await api.patch(`/volunteer/issues/${issueId}/resolve`, { proof, reportText: reportText.trim() });
   return getResponseData(res);
 };

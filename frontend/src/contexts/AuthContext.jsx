@@ -1,28 +1,29 @@
 import { useCallback, useEffect, useState } from "react";
 import * as authApi from "../api/auth.api";
-import { AuthContext } from './AuthContextBase';
+import { AuthContext } from "./AuthContextBase";
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  /**
-   * ✅ Single source of truth: /auth/me
-   */
+  // Single source of truth: /auth/me
   const fetchMe = useCallback(async () => {
     try {
-      const userData = await authApi.getMe(); // helper returns the inner data
+      const userData = await authApi.getMe();
+      const me = userData?.user ?? userData;
 
-      if (userData && userData.role) {
-        setUser({
-          id: userData._id || userData.id,
-          name: userData.name,
-          email: userData.email,
-          role: String(userData.role).toLowerCase(),
-        });
-      } else {
-        throw new Error("Invalid /me response");
-      }
+      if (!me || !me.role) throw new Error("Invalid /me response");
+
+      setUser({
+        id: me._id || me.id,
+        name: me.name,
+        email: me.email,
+        role: String(me.role).toLowerCase(),
+        department: me.department ?? null,
+        workerId: me.workerId ?? null,
+        officerId: me.officerId ?? null,
+        isApproved: typeof me.isApproved === "boolean" ? me.isApproved : undefined,
+      });
     } catch (error) {
       console.error("Auth fetchMe failed:", error);
       localStorage.removeItem("token");
@@ -30,28 +31,23 @@ export const AuthProvider = ({ children }) => {
     }
   }, []);
 
-  /**
-   * 🔄 Rehydrate on app load
-   */
+  // Rehydrate on app load
   useEffect(() => {
     const initAuth = async () => {
       const token = localStorage.getItem("token");
-
       if (!token) {
         setLoading(false);
         return;
       }
 
-      await fetchMe(); // ✅ admin role resolved here
+      await fetchMe();
       setLoading(false);
     };
 
     initAuth();
   }, [fetchMe]);
 
-  /**
-   * 🔐 Login
-   */
+  // Login
   const login = useCallback(
     async (credentials) => {
       const data = await authApi.login(credentials);
@@ -59,7 +55,7 @@ export const AuthProvider = ({ children }) => {
 
       if (token) {
         localStorage.setItem("token", token);
-        await fetchMe(); // refresh user
+        await fetchMe();
       }
 
       return data;
@@ -67,9 +63,7 @@ export const AuthProvider = ({ children }) => {
     [fetchMe]
   );
 
-  /**
-   * 🚪 Logout
-   */
+  // Logout
   const logout = useCallback(() => {
     localStorage.removeItem("token");
     localStorage.removeItem("user");
@@ -94,3 +88,4 @@ export const AuthProvider = ({ children }) => {
     </AuthContext.Provider>
   );
 };
+

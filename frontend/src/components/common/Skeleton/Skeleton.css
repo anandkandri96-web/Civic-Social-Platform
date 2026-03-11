@@ -1,0 +1,22 @@
+.skeleton {
+  position: relative;
+  overflow: hidden;
+  background: rgba(21, 34, 54, 0.9);
+  border: 1px solid var(--border-color);
+}
+
+.skeleton::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  transform: translateX(-100%);
+  background: linear-gradient(90deg, transparent, rgba(72, 219, 255, 0.14), transparent);
+  animation: skeleton-shimmer 1.2s ease-in-out infinite;
+}
+
+@keyframes skeleton-shimmer {
+  to {
+    transform: translateX(100%);
+  }
+}
+

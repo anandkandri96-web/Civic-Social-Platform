@@ -1,0 +1,122 @@
+.issues-page {
+  padding-top: 0;
+}
+
+.issues-header {
+  margin-bottom: var(--space-lg);
+}
+
+.issues-header h1 {
+  font-family: var(--font-heading);
+  font-size: clamp(1.7rem, 2vw, 2.1rem);
+  margin-bottom: var(--space-xs);
+}
+
+.issues-header p {
+  color: var(--text-secondary);
+}
+
+.issues-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-md);
+  margin-bottom: var(--space-lg);
+}
+
+.issues-search-pill {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 12px;
+  margin-bottom: var(--space-md);
+  border: 1px solid rgba(0, 200, 248, 0.28);
+  background: rgba(0, 200, 248, 0.08);
+  border-radius: 14px;
+  color: var(--text-secondary);
+  font-family: var(--font-mono);
+  font-size: 12px;
+}
+
+.issues-search-pill button {
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  background: var(--bg-surface);
+  color: var(--text-primary);
+  padding: 8px 10px;
+  font-weight: 800;
+  font-size: 12px;
+}
+
+.issues-filters {
+  display: flex;
+  gap: var(--space-sm);
+  flex-wrap: wrap;
+}
+
+.issues-filter-select {
+  padding: 9px 12px;
+  font-size: 0.82rem;
+  color: var(--text-primary);
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  min-width: 190px;
+}
+
+.issues-filter-select:focus {
+  outline: none;
+  border-color: var(--color-primary);
+}
+
+.issues-create-link,
+.issues-empty-cta {
+  padding: 10px 16px;
+  background: var(--color-primary);
+  color: #001118;
+  font-size: 0.8rem;
+  border-radius: var(--radius-sm);
+  font-weight: 700;
+  box-shadow: 0 0 16px rgba(0, 200, 248, 0.22);
+}
+
+.issues-error {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  padding: 12px var(--space-md);
+  margin-bottom: var(--space-md);
+  background: rgba(255, 69, 96, 0.15);
+  color: #ff8295;
+  border-radius: var(--radius-sm);
+  border: 1px solid rgba(255, 69, 96, 0.35);
+}
+
+.issues-empty {
+  grid-column: 1 / -1;
+  text-align: center;
+  padding: 56px var(--space-md);
+  border-style: dashed;
+}
+
+.issues-empty-icon {
+  font-size: 2rem;
+  margin-bottom: var(--space-sm);
+}
+
+.issues-empty h3 {
+  margin-bottom: var(--space-xs);
+}
+
+.issues-empty p {
+  color: var(--text-secondary);
+  margin-bottom: var(--space-md);
+}
+
+.issues-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: var(--space-lg);
+}

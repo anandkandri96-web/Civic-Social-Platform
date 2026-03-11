@@ -1,8 +1,10 @@
 const Issue = require("../models/issue");
+const Task = require("../models/task");
 const User = require("../models/user");
 const Department = require("../models/department");
 const { apiResponse } = require("../utils/apiResponse");
 const { ROLES } = require("../utils/constants");
+const { generateNextOfficerId, generateNextWorkerId } = require("../services/serialId.service");
 
 exports.getStats = async (_req, res) => {
   try {
@@ -50,17 +52,37 @@ exports.getAllIssues = async (req, res) => {
 
     const skip = (Number(page) - 1) * Number(limit);
 
-    const [issues, total] = await Promise.all([
+    const [issuesRaw, total] = await Promise.all([
       Issue.find(filter)
         .populate("reportedBy", "name email role")
         .populate("assignedDepartment", "name")
-        .populate("assignedWorker", "name email")
+        .populate("assignedWorker", "name email workerId")
         .populate("volunteer", "name email")
         .sort(sort)
         .skip(skip)
-        .limit(Number(limit)),
+        .limit(Number(limit))
+        .lean(),
       Issue.countDocuments(filter),
     ]);
+
+    const issues = Array.isArray(issuesRaw) ? issuesRaw : [];
+    if (issues.length > 0) {
+      const issueIds = issues.map((i) => i._id);
+      const tasks = await Task.find({ issue: { $in: issueIds } })
+        .select("issue progressImages")
+        .lean();
+
+      const map = new Map();
+      for (const t of tasks) {
+        const key = String(t.issue);
+        const imgs = Array.isArray(t.progressImages) ? t.progressImages.filter(Boolean).slice(0, 10) : [];
+        if (!map.has(key)) map.set(key, imgs);
+      }
+
+      for (const issue of issues) {
+        issue.workerProgressImages = map.get(String(issue._id)) || [];
+      }
+    }
 
     return apiResponse(res, 200, "Issues retrieved", {
       data: issues,
@@ -91,7 +113,7 @@ exports.getUsers = async (req, res) => {
 
     const [users, total] = await Promise.all([
       User.find(filter)
-        .select("_id name email role isActive isApproved department createdAt")
+        .select("_id name email role isActive isApproved department createdAt workerId officerId")
         .populate("department", "_id name")
         .sort({ createdAt: -1 })
         .skip(skip)
@@ -151,6 +173,32 @@ exports.createUser = async (req, res) => {
       department: department ? department._id : null,
     });
 
+    // Assign serial IDs for staff roles.
+    if (nextRole === ROLES.WORKER && !user.workerId) {
+      for (let i = 0; i < 5; i += 1) {
+        try {
+          user.workerId = await generateNextWorkerId();
+          await user.save();
+          break;
+        } catch (err) {
+          if (err?.code === 11000) continue;
+          throw err;
+        }
+      }
+    }
+    if (nextRole === ROLES.OFFICER && !user.officerId) {
+      for (let i = 0; i < 5; i += 1) {
+        try {
+          user.officerId = await generateNextOfficerId();
+          await user.save();
+          break;
+        } catch (err) {
+          if (err?.code === 11000) continue;
+          throw err;
+        }
+      }
+    }
+
     return apiResponse(res, 201, "User created", {
       _id: user._id,
       name: user.name,
@@ -159,6 +207,8 @@ exports.createUser = async (req, res) => {
       isActive: user.isActive,
       isApproved: user.isApproved,
       department: user.department,
+      workerId: user.workerId,
+      officerId: user.officerId,
     });
   } catch (error) {
     console.error("Create user error:", error);
@@ -182,6 +232,29 @@ exports.updateUserRole = async (req, res) => {
     if ([ROLES.OFFICER, ROLES.WORKER].includes(nextRole) && !user.department) {
       return apiResponse(res, 400, "Assign department before setting officer/worker role");
     }
+
+    if (nextRole === ROLES.WORKER && !user.workerId) {
+      for (let i = 0; i < 5; i += 1) {
+        try {
+          user.workerId = await generateNextWorkerId();
+          break;
+        } catch (err) {
+          if (err?.code === 11000) continue;
+          throw err;
+        }
+      }
+    }
+    if (nextRole === ROLES.OFFICER && !user.officerId) {
+      for (let i = 0; i < 5; i += 1) {
+        try {
+          user.officerId = await generateNextOfficerId();
+          break;
+        } catch (err) {
+          if (err?.code === 11000) continue;
+          throw err;
+        }
+      }
+    }
     await user.save();
 
     return apiResponse(res, 200, "User role updated", {
@@ -192,6 +265,8 @@ exports.updateUserRole = async (req, res) => {
       isActive: user.isActive,
       isApproved: user.isApproved,
       department: user.department,
+      workerId: user.workerId,
+      officerId: user.officerId,
     });
   } catch (error) {
     console.error("Update user role error:", error);

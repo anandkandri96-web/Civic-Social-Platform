@@ -1,0 +1,252 @@
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { Link, NavLink, useLocation, useNavigate } from 'react-router-dom';
+import { useAuth } from '../../../hooks/useAuth';
+import { useRole } from '../../../hooks/useRole';
+import { getNotifications } from '@api/notifications.api.js';
+import NotificationPanel from '../../notifications/NotificationPanel/NotificationPanel';
+import './Header.css';
+
+const ICONS = {
+  bell: (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <path
+        d="M18 8a6 6 0 10-12 0c0 7-3 7-3 7h18s-3 0-3-7"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <path
+        d="M13.73 21a2 2 0 01-3.46 0"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+      />
+    </svg>
+  ),
+  search: (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <path d="M21 21l-4.35-4.35" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+      <circle cx="11" cy="11" r="7" stroke="currentColor" strokeWidth="1.5" />
+    </svg>
+  ),
+};
+
+const Header = () => {
+  const { user, isAuthenticated, logout } = useAuth();
+  const { isCitizen, isAdmin, dashboardPath } = useRole();
+
+  const [searchTerm, setSearchTerm] = useState('');
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [avatarOpen, setAvatarOpen] = useState(false);
+  const [notificationsOpen, setNotificationsOpen] = useState(false);
+  const [unreadCount, setUnreadCount] = useState(0);
+
+  const headerRef = useRef(null);
+  const location = useLocation();
+  const navigate = useNavigate();
+
+  const brandTarget = isAuthenticated ? dashboardPath : '/';
+  const avatarLetter = (user?.name || user?.email || 'U').charAt(0).toUpperCase();
+
+  useEffect(() => {
+    // Closing transient UI on route change is intentional.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setMenuOpen(false);
+    setAvatarOpen(false);
+    setNotificationsOpen(false);
+  }, [location.pathname]);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const fetchUnread = async () => {
+      if (!isAuthenticated) {
+        if (!cancelled) setUnreadCount(0);
+        return;
+      }
+
+      try {
+        const { items = [] } = await getNotifications({ unreadOnly: true, limit: 50 });
+        if (cancelled) return;
+        const unread = items.filter((n) => !n.read).length;
+        setUnreadCount(unread);
+      } catch {
+        if (!cancelled) setUnreadCount(0);
+      }
+    };
+
+    fetchUnread();
+    return () => {
+      cancelled = true;
+    };
+  }, [isAuthenticated]);
+
+  const navLinks = useMemo(() => {
+    const issuesTarget = isAdmin ? '/admin/manage-issues' : '/issues';
+    const mapTarget = isAuthenticated ? '/dashboard/map' : '/map';
+    const dashboardTarget = isAuthenticated ? dashboardPath : '/login';
+
+    return [
+      { to: issuesTarget, label: 'Issues' },
+      { to: mapTarget, label: 'Map' },
+      { to: dashboardTarget, label: 'Dashboard' },
+      { to: '/workflow', label: 'Workflow' },
+    ];
+  }, [dashboardPath, isAdmin, isAuthenticated]);
+
+  const handleSearchSubmit = (event) => {
+    event.preventDefault();
+    const query = searchTerm.trim();
+    navigate(query ? `/issues?search=${encodeURIComponent(query)}` : '/issues');
+    setMenuOpen(false);
+  };
+
+  useEffect(() => {
+    if (!menuOpen && !avatarOpen && !notificationsOpen) return undefined;
+
+    const onKeyDown = (e) => {
+      if (e.key !== 'Escape') return;
+      setMenuOpen(false);
+      setAvatarOpen(false);
+      setNotificationsOpen(false);
+    };
+
+    const onPointerDown = (e) => {
+      const root = headerRef.current;
+      if (!root) return;
+      if (root.contains(e.target)) return;
+      setMenuOpen(false);
+      setAvatarOpen(false);
+      setNotificationsOpen(false);
+    };
+
+    document.addEventListener('keydown', onKeyDown);
+    document.addEventListener('pointerdown', onPointerDown);
+    return () => {
+      document.removeEventListener('keydown', onKeyDown);
+      document.removeEventListener('pointerdown', onPointerDown);
+    };
+  }, [menuOpen, avatarOpen, notificationsOpen]);
+
+  return (
+    <header className="app-header" ref={headerRef}>
+      <div className="app-header__left">
+        <Link to={brandTarget} className="app-header__brand" aria-label="Social Civic Platform home">
+          <span className="app-header__brand-mark">CP</span>
+          <span className="app-header__brand-text">Social Civic Platform</span>
+        </Link>
+
+        <form className="app-header__search" onSubmit={handleSearchSubmit} role="search">
+          <span className="app-header__search-icon">{ICONS.search}</span>
+          <input
+            type="search"
+            placeholder="Search issues"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            aria-label="Search civic issues"
+          />
+        </form>
+      </div>
+
+      <nav className={`app-header__nav${menuOpen ? ' is-open' : ''}`} aria-label="Primary">
+        {navLinks.map((link) => (
+          <NavLink
+            key={link.to}
+            to={link.to}
+            className={({ isActive }) => `app-header__nav-link${isActive ? ' is-active' : ''}`}
+            end={link.to === '/dashboard' || link.to === '/admin'}
+          >
+            {link.label}
+          </NavLink>
+        ))}
+      </nav>
+
+      <div className="app-header__right">
+        <button
+          className="app-header__menu-toggle"
+          type="button"
+          aria-label={menuOpen ? 'Close navigation menu' : 'Open navigation menu'}
+          aria-expanded={menuOpen}
+          onClick={() => setMenuOpen((prev) => !prev)}
+        >
+          Menu
+        </button>
+
+        <div className="app-header__notif">
+          <button
+            type="button"
+            className="icon-button"
+            onClick={() => {
+              setNotificationsOpen((prev) => !prev);
+              setUnreadCount(0);
+            }}
+            aria-label="Notifications"
+            aria-expanded={notificationsOpen}
+          >
+            {ICONS.bell}
+            {unreadCount > 0 && <span className="app-header__notif-badge">{unreadCount}</span>}
+          </button>
+          <NotificationPanel isOpen={notificationsOpen} onClose={() => setNotificationsOpen(false)} />
+        </div>
+
+        {isAuthenticated ? (
+          <>
+            {isCitizen && (
+              <Link to="/issues/create" className="app-header__report">
+                Report Issue
+              </Link>
+            )}
+
+            <div className="app-header__avatar">
+              <button
+                type="button"
+                className="app-header__avatar-btn"
+                onClick={() => setAvatarOpen((prev) => !prev)}
+                aria-label="User menu"
+                aria-expanded={avatarOpen}
+              >
+                {avatarLetter}
+              </button>
+              {avatarOpen && (
+                <div className="app-header__avatar-menu" role="menu" aria-label="User menu">
+                  <Link to="/profile" className="app-header__avatar-item" role="menuitem">
+                    Profile
+                  </Link>
+                  <Link to="/dashboard" className="app-header__avatar-item" role="menuitem">
+                    My Issues
+                  </Link>
+                  <Link to="/notifications" className="app-header__avatar-item" role="menuitem">
+                    Notifications
+                  </Link>
+                  <button
+                    type="button"
+                    className="app-header__avatar-item"
+                    onClick={() => {
+                      logout();
+                      setAvatarOpen(false);
+                    }}
+                    role="menuitem"
+                  >
+                    Logout
+                  </button>
+                </div>
+              )}
+            </div>
+          </>
+        ) : (
+          <div className="app-header__auth">
+            <Link to="/login" className="app-header__link">
+              Login
+            </Link>
+            <Link to="/register" className="app-header__report">
+              Get Started
+            </Link>
+          </div>
+        )}
+      </div>
+    </header>
+  );
+};
+
+export default Header;

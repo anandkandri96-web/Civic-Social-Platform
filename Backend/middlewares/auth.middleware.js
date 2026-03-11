@@ -20,7 +20,7 @@ exports.protect = async (req, res, next) => {
     const token = authHeader.split(" ")[1];
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
-    const user = await User.findById(decoded.id).select("_id name email role isActive isApproved department");
+    const user = await User.findById(decoded.id).select("_id name email role isActive isApproved department workerId officerId");
 
     if (!user) {
       return apiResponse(res, 401, "User not found");
@@ -48,7 +48,7 @@ exports.optionalAuth = async (req, res, next) => {
 
     const token = authHeader.split(" ")[1];
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    const user = await User.findById(decoded.id).select("_id name email role isActive isApproved department");
+    const user = await User.findById(decoded.id).select("_id name email role isActive isApproved department workerId officerId");
 
     if (user && user.isActive && (!APPROVAL_ROLES.has(normalizeRole(user.role)) || user.isApproved)) {
       user.role = normalizeRole(user.role);

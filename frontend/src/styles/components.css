@@ -1,0 +1,82 @@
+/* Shared component primitives (keeps feature CSS smaller and consistent). */
+
+.icon-button {
+  position: relative;
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  border: 1px solid var(--border-color);
+  background: var(--bg-surface);
+  color: var(--text-primary);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform var(--transition-fast), border-color var(--transition-fast), background var(--transition-fast);
+}
+
+.icon-button:hover {
+  background: var(--bg-hover);
+  border-color: var(--border-bright);
+  transform: translateY(-1px);
+}
+
+.icon-button:active {
+  transform: translateY(0px);
+}
+
+.badge-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: 1px solid var(--border-color);
+  background: rgba(0, 200, 248, 0.08);
+  color: var(--text-primary);
+  border-radius: 999px;
+  padding: 4px 10px;
+  font-size: 12px;
+  font-family: var(--font-mono);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.badge-pill--success {
+  background: rgba(0, 229, 160, 0.12);
+  border-color: rgba(0, 229, 160, 0.28);
+  color: var(--color-success);
+}
+
+.badge-pill--warning {
+  background: rgba(255, 122, 53, 0.12);
+  border-color: rgba(255, 122, 53, 0.28);
+  color: var(--color-warning);
+}
+
+.badge-pill--danger {
+  background: rgba(255, 69, 96, 0.12);
+  border-color: rgba(255, 69, 96, 0.28);
+  color: var(--color-danger);
+}
+
+.skeleton {
+  position: relative;
+  overflow: hidden;
+  background: rgba(21, 34, 54, 0.9);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+}
+
+.skeleton::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  transform: translateX(-100%);
+  background: linear-gradient(90deg, transparent, rgba(72, 219, 255, 0.14), transparent);
+  animation: skeleton-shimmer 1.2s ease-in-out infinite;
+}
+
+@keyframes skeleton-shimmer {
+  to {
+    transform: translateX(100%);
+  }
+}
+

@@ -3,6 +3,7 @@ const { protect, checkRole } = require("../middlewares/auth.middleware");
 const { ROLES } = require("../utils/constants");
 const {
   getDepartmentIssues,
+  getDepartmentWorkers,
   reviewIssue,
   assignWorker,
   updateOfficerStatus,
@@ -11,6 +12,7 @@ const {
 router.use(protect, checkRole([ROLES.OFFICER, ROLES.ADMIN]));
 
 router.get("/issues", getDepartmentIssues);
+router.get("/workers", getDepartmentWorkers);
 router.patch("/issues/:issueId/review", reviewIssue);
 router.patch("/issues/:issueId/assign-worker", assignWorker);
 router.patch("/issues/:issueId/status", updateOfficerStatus);

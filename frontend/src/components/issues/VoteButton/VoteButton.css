@@ -1,0 +1,185 @@
+.vote-button-wrapper {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  font-family: var(--font-mono, ui-monospace, SFMono-Regular, Menlo, Consolas, monospace);
+}
+
+.vote-button-wrapper .vote-count {
+  color: var(--text-secondary, #7a92b0);
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.vote-sign-in {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 34px;
+  padding: 8px 12px;
+  border-radius: 999px;
+  border: 1px solid rgba(0, 200, 248, 0.22);
+  background: rgba(0, 200, 248, 0.08);
+  color: var(--text-primary, #dce8f5);
+  font-weight: 800;
+  font-family: var(--font-mono, ui-monospace, SFMono-Regular, Menlo, Consolas, monospace);
+  font-size: 12px;
+  line-height: 1;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  transition: transform var(--transition-fast), box-shadow var(--transition-fast), background var(--transition-fast), border-color var(--transition-fast);
+}
+
+.vote-sign-in:hover {
+  background: rgba(0, 200, 248, 0.12);
+  border-color: rgba(0, 200, 248, 0.35);
+  box-shadow: 0 10px 24px rgba(0, 200, 248, 0.10);
+}
+
+.vote-sign-in:active {
+  transform: translateY(1px);
+}
+
+.vote-sign-in:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring, 0 0 0 3px rgba(0, 200, 248, 0.35));
+}
+
+.vote-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 34px;
+  padding: 8px 12px;
+  font-size: 12px;
+  font-weight: 900;
+  font-family: var(--font-mono, ui-monospace, SFMono-Regular, Menlo, Consolas, monospace);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-primary, #dce8f5);
+  background: rgba(10, 18, 32, 0.85);
+  border: 1px solid rgba(0, 200, 248, 0.22);
+  border-radius: 999px;
+  cursor: pointer;
+  box-shadow: 0 12px 26px rgba(0, 0, 0, 0.18);
+  position: relative;
+  overflow: hidden;
+  transition: transform var(--transition-fast), background var(--transition-fast), border-color var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+.vote-button:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring, 0 0 0 3px rgba(0, 200, 248, 0.35));
+}
+
+.vote-button:disabled,
+.vote-button.loading {
+  opacity: 0.7;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.vote-button::before {
+  content: "";
+  position: absolute;
+  inset: -1px;
+  background:
+    radial-gradient(140px 90px at 18% 22%, rgba(72, 219, 255, 0.22), transparent 60%),
+    radial-gradient(180px 120px at 82% 78%, rgba(0, 229, 160, 0.12), transparent 62%);
+  opacity: 0.65;
+  pointer-events: none;
+}
+
+.vote-button:hover:not(:disabled) {
+  transform: translateY(-1px);
+  background: rgba(21, 34, 54, 0.9);
+  border-color: rgba(0, 200, 248, 0.35);
+  box-shadow: 0 16px 36px rgba(0, 0, 0, 0.26);
+}
+
+.vote-button:active:not(:disabled) {
+  transform: translateY(0px);
+}
+
+.vote-button.voted {
+  background: rgba(0, 229, 160, 0.12);
+  border-color: rgba(0, 229, 160, 0.35);
+  color: var(--color-success, #00e5a0);
+  box-shadow: 0 16px 36px rgba(0, 229, 160, 0.08);
+}
+
+.vote-button.voted:hover:not(:disabled) {
+  background: rgba(0, 229, 160, 0.16);
+  border-color: rgba(0, 229, 160, 0.45);
+}
+
+.vote-icon {
+  line-height: 1;
+  position: relative;
+  z-index: 1;
+}
+
+.vote-count-num {
+  min-width: 2.2em;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2px 8px;
+  border-radius: 999px;
+  border: 1px solid rgba(122, 146, 176, 0.28);
+  background: rgba(122, 146, 176, 0.12);
+  color: var(--text-primary, #dce8f5);
+  transition: transform 0.18s ease;
+  transform-origin: center;
+  position: relative;
+  z-index: 1;
+}
+
+.vote-button.voted .vote-count-num {
+  border-color: rgba(0, 229, 160, 0.28);
+  background: rgba(0, 229, 160, 0.12);
+  color: var(--color-success, #00e5a0);
+}
+
+.vote-count-num.is-bump {
+  transform: scale(1.12);
+}
+
+.vote-button.loading::after {
+  content: "";
+  width: 14px;
+  height: 14px;
+  border-radius: 999px;
+  border: 2px solid rgba(220, 232, 245, 0.25);
+  border-top-color: rgba(220, 232, 245, 0.9);
+  position: relative;
+  z-index: 1;
+  margin-left: 2px;
+  animation: vote-spin 0.7s linear infinite;
+}
+
+@keyframes vote-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@supports (backdrop-filter: blur(10px)) {
+  .vote-button {
+    backdrop-filter: blur(10px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .vote-button,
+  .vote-sign-in,
+  .vote-count-num {
+    transition: none !important;
+  }
+
+  .vote-button.loading::after {
+    animation: none !important;
+  }
+}

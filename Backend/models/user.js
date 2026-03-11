@@ -53,6 +53,30 @@ const userSchema = new mongoose.Schema(
       default: true,
       index: true,
     },
+
+    // Serial IDs for staff roles. These are assigned by the system/admin to enable human-friendly references.
+    // Examples: W-001, O-001
+    workerId: {
+      type: String,
+      trim: true,
+      uppercase: true,
+      unique: true,
+      sparse: true,
+      index: true,
+      match: [/^W-\d{3,}$/, "workerId must match W-001 format"],
+      default: null,
+    },
+
+    officerId: {
+      type: String,
+      trim: true,
+      uppercase: true,
+      unique: true,
+      sparse: true,
+      index: true,
+      match: [/^O-\d{3,}$/, "officerId must match O-001 format"],
+      default: null,
+    },
   },
   { timestamps: true }
 );
