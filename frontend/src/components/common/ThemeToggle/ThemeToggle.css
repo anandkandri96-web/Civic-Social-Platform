@@ -1,0 +1,41 @@
+.theme-toggle {
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius-button);
+  border: 1px solid var(--border-color);
+  background: var(--bg-surface);
+  color: var(--text-primary);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+
+.theme-toggle:hover {
+  background: var(--bg-hover);
+  border-color: var(--border-bright);
+  transform: translateY(-1px);
+}
+
+.theme-toggle:active {
+  transform: translateY(0px);
+}
+
+.theme-toggle__emoji {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+  font-size: 1.5rem;
+}
+
+.theme-toggle--header {
+  border-color: rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.15);
+}
+
+.theme-toggle--header:hover {
+  background: rgba(255, 255, 255, 0.25);
+  border-color: rgba(255, 255, 255, 0.3);
+}

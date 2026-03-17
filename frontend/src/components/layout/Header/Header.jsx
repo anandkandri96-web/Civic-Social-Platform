@@ -4,6 +4,7 @@ import { useAuth } from '../../../hooks/useAuth';
 import { useRole } from '../../../hooks/useRole';
 import { getNotifications } from '@api/notifications.api.js';
 import NotificationPanel from '../../notifications/NotificationPanel/NotificationPanel';
+import ThemeToggle from '../../common/ThemeToggle/ThemeToggle';
 import './Header.css';
 
 const ICONS = {
@@ -34,7 +35,7 @@ const ICONS = {
 
 const Header = () => {
   const { user, isAuthenticated, logout } = useAuth();
-  const { isCitizen, isAdmin, dashboardPath } = useRole();
+  const { isCitizen, isAdmin, isOfficer, isWorker, dashboardPath } = useRole();
 
   const [searchTerm, setSearchTerm] = useState('');
   const [menuOpen, setMenuOpen] = useState(false);
@@ -133,7 +134,16 @@ const Header = () => {
     <header className="app-header" ref={headerRef}>
       <div className="app-header__left">
         <Link to={brandTarget} className="app-header__brand" aria-label="Social Civic Platform home">
-          <span className="app-header__brand-mark">CP</span>
+          <span className="app-header__brand-mark">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="1.5" />
+              <path
+                d="M2 12h20M12 2a15.3 15.3 0 010 20M12 2a15.3 15.3 0 000 20"
+                stroke="currentColor"
+                strokeWidth="1.5"
+              />
+            </svg>
+          </span>
           <span className="app-header__brand-text">Social Civic Platform</span>
         </Link>
 
@@ -149,18 +159,30 @@ const Header = () => {
         </form>
       </div>
 
-      <nav className={`app-header__nav${menuOpen ? ' is-open' : ''}`} aria-label="Primary">
-        {navLinks.map((link) => (
-          <NavLink
-            key={link.to}
-            to={link.to}
-            className={({ isActive }) => `app-header__nav-link${isActive ? ' is-active' : ''}`}
-            end={link.to === '/dashboard' || link.to === '/admin'}
-          >
-            {link.label}
-          </NavLink>
-        ))}
-      </nav>
+      <div className="app-header__center">
+        <nav className={`app-header__nav${menuOpen ? ' is-open' : ''}`} aria-label="Primary">
+          {navLinks.map((link) => (
+            <NavLink
+              key={link.to}
+              to={link.to}
+              className={({ isActive }) => `app-header__nav-link${isActive ? ' is-active' : ''}`}
+              end={link.to === '/dashboard' || link.to === '/admin'}
+            >
+              {link.label}
+            </NavLink>
+          ))}
+          {isAdmin && (
+            <>
+              <NavLink to="/admin/analytics" className={({ isActive }) => `app-header__nav-link${isActive ? ' is-active' : ''}`}>
+                View Analytics
+              </NavLink>
+              <NavLink to="/admin/users" className={({ isActive }) => `app-header__nav-link${isActive ? ' is-active' : ''}`}>
+                Manage Users
+              </NavLink>
+            </>
+          )}
+        </nav>
+      </div>
 
       <div className="app-header__right">
         <button
@@ -173,7 +195,7 @@ const Header = () => {
           Menu
         </button>
 
-        <div className="app-header__notif">
+        <div className="notification">
           <button
             type="button"
             className="icon-button"
@@ -185,14 +207,16 @@ const Header = () => {
             aria-expanded={notificationsOpen}
           >
             {ICONS.bell}
-            {unreadCount > 0 && <span className="app-header__notif-badge">{unreadCount}</span>}
+            {unreadCount > 0 && <span className="notification-badge">{unreadCount}</span>}
           </button>
           <NotificationPanel isOpen={notificationsOpen} onClose={() => setNotificationsOpen(false)} />
         </div>
 
+        <ThemeToggle className="theme-toggle--header" />
+
         {isAuthenticated ? (
           <>
-            {isCitizen && (
+            {isCitizen && !isAdmin && (
               <Link to="/issues/create" className="app-header__report">
                 Report Issue
               </Link>
@@ -213,9 +237,11 @@ const Header = () => {
                   <Link to="/profile" className="app-header__avatar-item" role="menuitem">
                     Profile
                   </Link>
-                  <Link to="/dashboard" className="app-header__avatar-item" role="menuitem">
-                    My Issues
-                  </Link>
+                  {!isAdmin && !isOfficer && !isWorker && (
+                    <Link to="/dashboard" className="app-header__avatar-item" role="menuitem">
+                      My Issues
+                    </Link>
+                  )}
                   <Link to="/notifications" className="app-header__avatar-item" role="menuitem">
                     Notifications
                   </Link>

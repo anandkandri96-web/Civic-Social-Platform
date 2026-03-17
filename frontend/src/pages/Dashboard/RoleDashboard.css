@@ -7,7 +7,7 @@
   justify-content: space-between;
   align-items: flex-start;
   gap: 16px;
-  margin-bottom: 18px;
+  margin-bottom: 16px;
 }
 
 .role-dashboard__header h1 {
@@ -17,14 +17,14 @@
 }
 
 .role-dashboard__header p {
-  margin-top: 6px;
+  margin-top: 8px;
   color: var(--text-secondary);
   font-size: 0.86rem;
 }
 
 .role-dashboard__action {
   border: 1px solid var(--border-color);
-  border-radius: 8px;
+  border-radius: var(--radius-button);
   padding: 8px 12px;
   color: var(--color-primary-light);
   font-size: 0.72rem;
@@ -35,19 +35,19 @@
 
 .role-dashboard__action:hover {
   border-color: var(--border-bright);
-  background: rgba(0, 200, 248, 0.1);
+  background: rgba(var(--color-brand-rgb), 0.08);
 }
 
 .role-dashboard__grid {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
   gap: 12px;
   margin-bottom: 16px;
 }
 
 .role-dashboard__stat {
   padding: 16px;
-  border-radius: 10px;
+  border-radius: var(--radius-card);
   border-top: 3px solid var(--color-primary);
 }
 
@@ -83,7 +83,7 @@
 
 .role-dashboard__table th,
 .role-dashboard__table td {
-  padding: 10px 9px;
+  padding: 12px;
   border-bottom: 1px solid var(--border-color);
   text-align: left;
   font-size: 0.8rem;
@@ -100,7 +100,7 @@
 
 .role-dashboard__actions {
   display: flex;
-  gap: 6px;
+  gap: 8px;
   flex-wrap: wrap;
 }
 
@@ -108,11 +108,11 @@
 .role-dashboard__actions select,
 .role-dashboard__actions input {
   border: 1px solid var(--border-color);
-  border-radius: 7px;
+  border-radius: var(--radius-button);
   background: var(--bg-surface);
   color: var(--text-primary);
   font-size: 0.7rem;
-  padding: 6px 8px;
+  padding: 8px;
 }
 
 .role-dashboard__actions button {
@@ -127,8 +127,8 @@
 .role-dashboard__profile {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 10px;
-  padding: 12px 14px;
+  gap: 12px;
+  padding: 12px 16px;
   min-width: 320px;
 }
 
@@ -143,19 +143,13 @@
 
 .role-dashboard__profile-kv strong {
   display: block;
-  margin-top: 6px;
+  margin-top: 8px;
   font-family: var(--font-mono);
   color: var(--color-primary-light);
   font-size: 0.9rem;
 }
 
-@media (max-width: 1100px) {
-  .role-dashboard__grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-}
-
-@media (max-width: 760px) {
+@media (max-width: 768px) {
   .role-dashboard__header {
     flex-direction: column;
   }
@@ -166,7 +160,4 @@
     grid-template-columns: 1fr;
   }
 
-  .role-dashboard__grid {
-    grid-template-columns: 1fr;
-  }
 }

@@ -1,13 +1,6 @@
 .auth-back-home {
-  display: inline-flex;
-  align-items: center;
-  margin-bottom: 14px;
-  color: #475569;
-}
-
-.auth-back-home::before {
-  content: "←";
-  margin-right: 6px;
+  margin-bottom: 16px;
+  color: var(--text-secondary);
 }
 
 .auth-shell-title {
@@ -23,5 +16,5 @@
 }
 
 .auth-shell-footer {
-  margin-top: 18px;
+  margin-top: 16px;
 }

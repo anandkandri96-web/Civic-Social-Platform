@@ -17,6 +17,8 @@ const Register = () => {
 
   const [error, setError] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+
   const EMAIL_RE = /^\S+@\S+\.\S+$/;
 
   const handleChange = (e) => {
@@ -36,32 +38,40 @@ const Register = () => {
       const name = userData.name.trim();
       const email = userData.email.trim().toLowerCase();
       const password = String(userData.password || '');
+      const role = String(userData.role || 'citizen').toLowerCase();
+
+      // ✅ Validation
       if (name.length < 2 || name.length > 60) {
         setError('Name must be 2-60 characters');
         return;
       }
+
       if (!EMAIL_RE.test(email)) {
         setError('Please enter a valid email address');
         return;
       }
+
       if (password.length < 6 || password.length > 128) {
         setError('Password must be 6-128 characters');
         return;
       }
-      const role = String(userData.role || 'citizen').toLowerCase();
-      if (!['citizen', 'volunteer'].includes(role)) {
+
+      if (!['citizen', 'volunteer', 'officer', 'worker'].includes(role)) {
         setError('Invalid role selected');
         return;
       }
 
+      // ✅ API Call
       await register({
-        ...userData,
         name,
         email,
         password,
         role,
       });
+
+      // ✅ Redirect to login after success
       navigate('/login', { replace: true });
+
     } catch (err) {
       setError(getErrorMessage(err));
     } finally {
@@ -72,6 +82,7 @@ const Register = () => {
   return (
     <div className="register-page page">
       <Link to="/" className="auth-back-home">Back to home</Link>
+
       <div className="register-card card">
         <h1 className="register-title">Join Social Civic Platform</h1>
         <p className="register-subtitle">
@@ -81,6 +92,8 @@ const Register = () => {
         {error && <div className="register-error">{error}</div>}
 
         <form onSubmit={handleSubmit} className="register-form">
+
+          {/* NAME */}
           <div className="register-field">
             <label>Full Name</label>
             <input
@@ -93,6 +106,7 @@ const Register = () => {
             />
           </div>
 
+          {/* EMAIL */}
           <div className="register-field">
             <label>Email</label>
             <input
@@ -105,20 +119,30 @@ const Register = () => {
             />
           </div>
 
-          <div className="register-field">
+          {/* PASSWORD */}
+          <div className="register-field register-field--password">
             <label>Password</label>
             <input
-              type="password"
+              type={showPassword ? 'text' : 'password'}
               name="password"
-              placeholder="******"
+              placeholder="••••••••"
               value={userData.password}
               onChange={handleChange}
               required
               minLength={6}
             />
+            <button
+              type="button"
+              className="password-toggle"
+              onClick={() => setShowPassword((prev) => !prev)}
+              aria-label={showPassword ? 'Hide password' : 'Show password'}
+            >
+              {showPassword ? 'Hide' : 'Show'}
+            </button>
           </div>
 
-          <div className="register-field">
+          {/* ROLE */}
+          <div className="register-field register-field--select">
             <label>Role</label>
             <select
               name="role"
@@ -126,16 +150,21 @@ const Register = () => {
               onChange={handleChange}
               required
             >
-              <option value="citizen">Citizen</option>
-              <option value="volunteer">Volunteer</option>
+              <option value="citizen">👤 Citizen</option>
+              <option value="volunteer">🤝 Volunteer</option>
+              <option value="officer">🛡️ Officer</option>
+              <option value="worker">🔧 Worker</option>
             </select>
           </div>
 
-          <Button type="submit" disabled={submitting} className="full-width">
+          {/* BUTTON */}
+          <Button type="submit" disabled={submitting} className="full-width register-btn">
             {submitting ? 'Creating Account...' : 'Create Account'}
           </Button>
+
         </form>
 
+        {/* FOOTER */}
         <div className="register-footer">
           <span>Already have an account? </span>
           <Link to="/login">Sign in</Link>

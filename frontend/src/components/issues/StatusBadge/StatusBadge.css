@@ -1,31 +1,32 @@
 .status-badge {
-  position: absolute;
-  top: 12px;
-  right: 12px;
-  font-size: 10px;
-  font-weight: 600;
-  padding: 4px 9px;
+  height: 24px;
+  padding: 0 10px;
   border-radius: 999px;
-  letter-spacing: 0.06em;
-  font-family: var(--font-mono);
-  text-transform: uppercase;
-  border: 1px solid transparent;
+  font-size: var(--font-size-caption);
+  font-weight: 500;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
-.status-pending {
-  color: var(--color-warning);
-  background: rgba(255, 122, 53, 0.14);
-  border-color: rgba(255, 122, 53, 0.34);
+/* EXACT COLORS */
+
+.status-warning {
+  background: #FFF4E5;
+  color: #B26A00;
 }
 
-.status-progress {
-  color: var(--color-primary-light);
-  background: rgba(0, 200, 248, 0.14);
-  border-color: rgba(0, 200, 248, 0.34);
+.status-info {
+  background: #E6F4FF;
+  color: #0B6BCB;
 }
 
-.status-resolved {
-  color: var(--color-success);
-  background: rgba(0, 229, 160, 0.14);
-  border-color: rgba(0, 229, 160, 0.34);
+.status-success {
+  background: #E6F9F0;
+  color: #1A7F37;
+}
+
+.status-danger {
+  background: #FDECEC;
+  color: #B42318;
 }

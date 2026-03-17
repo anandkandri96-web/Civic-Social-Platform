@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { getAdminUsers, getAllIssuesAdmin } from '@api/admin.api';
 import { getErrorMessage } from '@api/utils';
 import Skeleton from '../../components/common/Skeleton/Skeleton';
+import DashboardCardSkeleton from '../../components/common/Skeleton/DashboardCardSkeleton';
 import PageHeader from '../../components/common/PageHeader/PageHeader';
 import { getActiveLabel, getDepartmentName, getOfficerDisplayId, getWorkerDisplayId } from '../../utils/userDisplay';
 import './AdminDashboard.css';
@@ -223,7 +224,7 @@ const AdminDashboard = () => {
           </div>
           <div className="admin-stats-grid">
             {Array.from({ length: 4 }).map((_, i) => (
-              <Skeleton key={i} height={96} />
+              <DashboardCardSkeleton key={i} />
             ))}
           </div>
           <div className="admin-dashboard-panels" style={{ marginTop: 12 }}>
@@ -241,16 +242,6 @@ const AdminDashboard = () => {
         <PageHeader
           title="Admin Dashboard"
           subtitle="System health and issue trends at a glance."
-          action={
-            <div className="admin-dashboard-actions">
-              <Link className="admin-dashboard-link" to="/admin/analytics">
-                View Analytics
-              </Link>
-              <Link className="admin-dashboard-link" to="/admin/users">
-                Manage Users
-              </Link>
-            </div>
-          }
         />
 
         {error && <div className="issues-error">{error}</div>}
@@ -262,32 +253,40 @@ const AdminDashboard = () => {
           </article>
           <article className="admin-stat-card card">
             <span>Pending</span>
-            <h2 className="status-warning">{stats.pending}</h2>
+            <h2>{stats.pending}</h2>
           </article>
           <article className="admin-stat-card card">
             <span>Assigned</span>
-            <h2 className="status-primary">{stats.assigned}</h2>
+            <h2>{stats.assigned}</h2>
           </article>
           <article className="admin-stat-card card">
             <span>Resolved</span>
-            <h2 className="status-success">{stats.resolved}</h2>
+            <h2>{stats.resolved}</h2>
           </article>
         </div>
 
         <div className="admin-dashboard-panels">
           <section className="card admin-panel">
             <h3>Issue Status Distribution</h3>
-            <div className="admin-chart">
-              <div className="admin-bar-wrapper">
-                <div className="admin-bar pending" style={{ height: getBarHeight(stats.pending) }} />
+            <div className="admin-chart-wrap">
+              <div className="admin-chart">
+                <div className="admin-bar-wrapper">
+                  <span className="admin-bar-value">{stats.pending}</span>
+                  <div className="admin-bar pending" style={{ height: getBarHeight(stats.pending) }} />
+                </div>
+                <div className="admin-bar-wrapper">
+                  <span className="admin-bar-value">{stats.assigned}</span>
+                  <div className="admin-bar assigned" style={{ height: getBarHeight(stats.assigned) }} />
+                </div>
+                <div className="admin-bar-wrapper">
+                  <span className="admin-bar-value">{stats.resolved}</span>
+                  <div className="admin-bar resolved" style={{ height: getBarHeight(stats.resolved) }} />
+                </div>
+              </div>
+              <div className="admin-chart-baseline" />
+              <div className="admin-chart-labels">
                 <span>Pending</span>
-              </div>
-              <div className="admin-bar-wrapper">
-                <div className="admin-bar assigned" style={{ height: getBarHeight(stats.assigned) }} />
                 <span>Assigned</span>
-              </div>
-              <div className="admin-bar-wrapper">
-                <div className="admin-bar resolved" style={{ height: getBarHeight(stats.resolved) }} />
                 <span>Resolved</span>
               </div>
             </div>
@@ -332,7 +331,7 @@ const AdminDashboard = () => {
               <p className="admin-note">Loading officers...</p>
             </div>
           ) : (
-            <div className="card admin-panel admin-table-wrap">
+            <div className="card admin-panel admin-table-wrap table-wrapper">
               <table className="admin-table">
                 <thead>
                   <tr>
@@ -414,7 +413,7 @@ const AdminDashboard = () => {
               <p className="admin-note">Loading workers...</p>
             </div>
           ) : (
-            <div className="card admin-panel admin-table-wrap">
+            <div className="card admin-panel admin-table-wrap table-wrapper">
               <table className="admin-table">
                 <thead>
                   <tr>

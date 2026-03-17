@@ -93,6 +93,23 @@ const Analytics = () => {
     return `${Number(coords[1]).toFixed(4)}, ${Number(coords[0]).toFixed(4)}`;
   };
 
+  const chartTheme = useMemo(() => {
+    if (typeof window === 'undefined') {
+      return {
+        successRgb: '135, 168, 63',
+        textSecondary: '#35585e',
+        gridColor: 'rgba(16, 24, 40, 0.08)',
+      };
+    }
+
+    const css = getComputedStyle(document.documentElement);
+    const read = (name, fallback) => css.getPropertyValue(name).trim() || fallback;
+    const successRgb = read('--color-success-rgb', '135, 168, 63');
+    const textSecondary = read('--text-secondary', '#35585e');
+    const gridColor = 'rgba(16, 24, 40, 0.08)';
+    return { successRgb, textSecondary, gridColor };
+  }, []);
+
   if (loading) return <Loader fullScreen />;
 
   const deptChart = (() => {
@@ -114,8 +131,8 @@ const Analytics = () => {
           {
             label: 'Resolved issues',
             data,
-            backgroundColor: 'rgba(0, 229, 160, 0.35)',
-            borderColor: 'rgba(0, 229, 160, 0.7)',
+            backgroundColor: `rgba(${chartTheme.successRgb}, 0.35)`,
+            borderColor: `rgba(${chartTheme.successRgb}, 0.7)`,
             borderWidth: 1,
             borderRadius: 8,
           },
@@ -130,13 +147,13 @@ const Analytics = () => {
         },
         scales: {
           x: {
-            ticks: { color: '#9fb0cc', font: { size: 11 } },
+            ticks: { color: chartTheme.textSecondary, font: { size: 11 } },
             grid: { display: false },
           },
           y: {
             beginAtZero: true,
-            ticks: { color: '#9fb0cc', font: { size: 11 }, precision: 0 },
-            grid: { color: 'rgba(255,255,255,0.06)' },
+            ticks: { color: chartTheme.textSecondary, font: { size: 11 }, precision: 0 },
+            grid: { color: chartTheme.gridColor },
           },
         },
       },

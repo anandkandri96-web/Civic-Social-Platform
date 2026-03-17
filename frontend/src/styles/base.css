@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=DM+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap');
 
 *,
 *::before,
@@ -20,16 +20,35 @@ body {
   font-family: var(--font-base);
   font-size: var(--font-size-md);
   line-height: 1.5;
-  background: radial-gradient(circle at top right, rgba(0, 200, 248, 0.08), transparent 35%), var(--bg-main);
+  background: radial-gradient(circle at top right, rgba(var(--color-brand-rgb), 0.12), transparent 40%), var(--bg-main);
   color: var(--text-primary);
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
 }
 
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-family: var(--font-base);
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+h1 {
+  font-size: var(--font-size-h1);
+}
+
+h2 {
+  font-size: var(--font-size-h2);
+}
+
 *:focus-visible {
   outline: none;
   box-shadow: var(--focus-ring);
-  border-radius: 10px;
+  border-radius: var(--radius-input);
 }
 
 a {
@@ -66,8 +85,8 @@ button {
 }
 
 ::selection {
-  background: rgba(0, 200, 248, 0.45);
-  color: #fff;
+  background: rgba(var(--color-highlight-rgb), 0.75);
+  color: var(--text-primary);
 }
 
 ::-webkit-scrollbar {
@@ -85,7 +104,7 @@ button {
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: var(--color-primary);
+  background: var(--color-brand);
 }
 
 @media (prefers-reduced-motion: reduce) {

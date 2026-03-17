@@ -6,6 +6,7 @@ import { getIssues } from '@api/issues.api';
 import { getErrorMessage } from '@api/utils';
 import IssueCard from '../../components/issues/IssueCard/IssueCard';
 import Skeleton from '../../components/common/Skeleton/Skeleton';
+import IssueCardSkeleton from '../../components/common/Skeleton/IssueCardSkeleton';
 import './UserDashboard.css';
 
 const UserDashboard = () => {
@@ -67,7 +68,7 @@ const UserDashboard = () => {
         {loading ? (
           <div className="dashboard-skeleton-grid">
             {Array.from({ length: 6 }).map((_, i) => (
-              <Skeleton key={i} height={220} />
+              <IssueCardSkeleton key={i} />
             ))}
           </div>
         ) : issues.length === 0 ? (

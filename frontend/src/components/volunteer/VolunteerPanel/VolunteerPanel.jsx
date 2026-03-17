@@ -3,11 +3,13 @@ import { Link } from 'react-router-dom';
 import { claimVolunteerIssue, updateVolunteerProgress } from '@api/volunteer.api.js';
 import { getErrorMessage } from '@api/utils';
 import { useRole } from '../../../hooks/useRole';
+import { useToast } from '../../../contexts/ToastContext';
 import './VolunteerPanel.css';
 
 const VolunteerPanel = ({ issue, onIssueUpdate }) => {
   const { isVolunteer } = useRole();
   const [loading, setLoading] = useState(false);
+  const { showToast } = useToast();
 
   if (!isVolunteer) return null;
   if (!issue?._id) return null;
@@ -18,7 +20,7 @@ const VolunteerPanel = ({ issue, onIssueUpdate }) => {
       const updated = await claimVolunteerIssue(issue._id);
       onIssueUpdate(updated);
     } catch (err) {
-      alert(getErrorMessage(err));
+      showToast(getErrorMessage(err), { tone: 'error' });
     } finally {
       setLoading(false);
     }
@@ -30,7 +32,7 @@ const VolunteerPanel = ({ issue, onIssueUpdate }) => {
       const updated = await updateVolunteerProgress(issue._id);
       onIssueUpdate(updated);
     } catch (err) {
-      alert(getErrorMessage(err));
+      showToast(getErrorMessage(err), { tone: 'error' });
     } finally {
       setLoading(false);
     }

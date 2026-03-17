@@ -1,76 +1,133 @@
+/* =========================
+   PAGE
+========================= */
 .profile-page {
   display: grid;
-  gap: 14px;
+  gap: 20px;
 }
 
+/* =========================
+   HEADER
+========================= */
 .profile-header {
-  padding: 18px;
+  padding: 20px;
   display: flex;
   align-items: center;
-  gap: 14px;
-  border-top: 3px solid var(--profile-accent);
+  gap: 18px;
+
+  border-radius: 16px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+
+  position: relative;
+  overflow: hidden;
 }
 
+.profile-header::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(
+    circle at top right,
+    color-mix(in srgb, var(--profile-accent) 18%, transparent),
+    transparent 60%
+  );
+}
+
+/* =========================
+   AVATAR
+========================= */
 .profile-avatar {
-  width: 62px;
-  height: 62px;
+  width: 72px;
+  height: 72px;
   border-radius: 50%;
-  background: color-mix(in srgb, var(--profile-accent) 18%, transparent);
-  border: 1px solid color-mix(in srgb, var(--profile-accent) 50%, transparent);
-  color: var(--profile-accent);
-  font-family: var(--font-mono);
-  font-size: 1rem;
-  font-weight: 700;
-  display: inline-flex;
+
+  background: color-mix(in srgb, var(--profile-accent) 20%, transparent);
+  border: 2px solid color-mix(in srgb, var(--profile-accent) 60%, transparent);
+
+  display: flex;
   align-items: center;
   justify-content: center;
+
+  font-weight: 700;
+  font-size: 1.1rem;
 }
 
+.profile-avatar__img {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+/* =========================
+   TEXT
+========================= */
 .profile-header h1 {
-  font-size: 1.2rem;
+  font-size: 1.4rem;
   font-family: var(--font-heading);
+  font-weight: 600;
 }
 
 .profile-header p {
-  margin-top: 3px;
-  font-size: 0.9rem;
+  margin-top: 4px;
+  font-size: 0.95rem;
 }
 
 .profile-header small {
   color: var(--text-secondary);
-  font-size: 0.78rem;
+  font-size: 0.8rem;
 }
 
+/* =========================
+   GRID
+========================= */
 .profile-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 12px;
+  gap: 16px;
 }
 
+/* =========================
+   CARD PANEL
+========================= */
 .profile-panel {
-  padding: 16px;
+  padding: 18px;
+  border-radius: 14px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  transition: all 0.25s ease;
+}
+
+.profile-panel:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 10px 25px rgba(0,0,0,0.06);
 }
 
 .profile-panel h2 {
-  margin-bottom: 10px;
-  font-size: 0.95rem;
+  margin-bottom: 14px;
+  font-size: 1rem;
   font-family: var(--font-heading);
+  font-weight: 600;
 }
 
+/* =========================
+   LIST
+========================= */
 .profile-list {
   display: grid;
-  gap: 8px;
+  gap: 10px;
 }
 
 .profile-list > div {
   display: grid;
-  gap: 3px;
+  gap: 4px;
   border-bottom: 1px solid var(--border-color);
-  padding-bottom: 8px;
+  padding-bottom: 10px;
 }
 
 .profile-list span {
-  font-size: 0.66rem;
+  font-size: 0.68rem;
   text-transform: uppercase;
   letter-spacing: 0.08em;
   font-family: var(--font-mono);
@@ -78,11 +135,63 @@
 }
 
 .profile-list strong {
-  font-size: 0.85rem;
-  color: var(--text-primary);
+  font-size: 0.9rem;
 }
 
-@media (max-width: 900px) {
+/* =========================
+   PASSWORD FORM
+========================= */
+.profile-password-form {
+  display: grid;
+  gap: 10px;
+}
+
+.profile-password-form input {
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid var(--border-color);
+  background: var(--bg-surface);
+  color: var(--text-primary);
+  font-size: 0.85rem;
+}
+
+.profile-password-form input:focus {
+  outline: none;
+  border-color: var(--profile-accent);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--profile-accent) 20%, transparent);
+}
+
+.profile-password-form button {
+  margin-top: 6px;
+  padding: 10px;
+  border-radius: 10px;
+  border: none;
+  background: var(--profile-accent);
+  color: white;
+  font-weight: 600;
+  cursor: pointer;
+  transition: 0.2s ease;
+}
+
+.profile-password-form button:hover {
+  transform: translateY(-1px);
+  opacity: 0.9;
+}
+
+.profile-error {
+  color: var(--color-danger);
+  font-size: 0.8rem;
+}
+
+.profile-success {
+  color: var(--color-success);
+  font-size: 0.8rem;
+}
+
+/* =========================
+   RESPONSIVE
+========================= */
+@media (max-width: 1024px) {
   .profile-grid {
     grid-template-columns: 1fr;
   }

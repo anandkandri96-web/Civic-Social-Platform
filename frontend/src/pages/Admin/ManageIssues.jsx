@@ -6,6 +6,7 @@ import Loader from '../../components/common/Loader/Loader';
 import PageHeader from '../../components/common/PageHeader/PageHeader';
 import { ISSUE_STATUSES } from '../../utils/constants';
 import { canTransition } from '../../utils/statusFlow';
+import { useToast } from '../../contexts/ToastContext';
 import './ManageIssues.css';
 
 const ManageIssues = () => {
@@ -13,6 +14,7 @@ const ManageIssues = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [updatingId, setUpdatingId] = useState(null);
+  const { showToast } = useToast();
 
   useEffect(() => {
     let mounted = true;
@@ -42,7 +44,7 @@ const ManageIssues = () => {
       const updated = await updateIssueStatusAdmin(issueId, status);
       setIssues((prev) => prev.map((i) => (i._id === issueId ? { ...i, status: updated.status } : i)));
     } catch (err) {
-      alert(getErrorMessage(err));
+      showToast(getErrorMessage(err), { tone: 'error' });
     } finally {
       setUpdatingId(null);
     }

@@ -1,10 +1,10 @@
 .issue-status-select {
   min-width: 130px;
-  border: 1px solid #cbd5e1;
-  border-radius: 8px;
-  background: #fff;
-  color: #334155;
-  padding: 7px 10px;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-input);
+  background: var(--bg-surface);
+  color: var(--text-primary);
+  padding: var(--space-2) var(--space-3);
 }
 
 .issue-status-select:disabled {

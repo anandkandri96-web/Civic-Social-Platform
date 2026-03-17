@@ -1,22 +1,25 @@
 .page {
-  min-height: calc(100vh - 58px);
+  min-height: calc(100vh - 64px);
   padding: var(--space-xl) 0;
+  padding-top: 64px;
 }
 
 .container {
-  width: min(1240px, 100% - 2 * var(--space-lg));
+  max-width: 1500px;
   margin: 0 auto;
+  padding: 0 var(--space-5);
 }
 
 .section {
-  margin-bottom: var(--space-xl);
+  margin-bottom: 32px;
 }
 
 .card {
-  background: linear-gradient(180deg, rgba(14, 24, 40, 0.95), rgba(10, 18, 32, 0.96));
+  background: var(--bg-card);
   border: 1px solid var(--border-color);
-  border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-sm);
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-card);
+  padding: var(--space-4);
 }
 
 .grid {

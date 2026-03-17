@@ -16,17 +16,7 @@
   padding: 24px;
 }
 
-.dashboard-main .page {
-  min-height: auto;
-  padding: 0;
-}
-
-.dashboard-main .container {
-  width: 100%;
-  margin: 0;
-}
-
-@media (max-width: 980px) {
+@media (max-width: 1024px) {
   .dashboard-main {
     padding: 16px;
   }

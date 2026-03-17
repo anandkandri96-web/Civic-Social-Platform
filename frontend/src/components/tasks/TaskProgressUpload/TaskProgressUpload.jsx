@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { uploadTaskProgress, updateTaskStatus } from '@api/task.api.js';
 import { getErrorMessage } from '@api/utils';
+import { useToast } from '../../../contexts/ToastContext';
 import './TaskProgressUpload.css';
 
 const TaskProgressUpload = ({ task, onUpdate }) => {
@@ -9,6 +10,7 @@ const TaskProgressUpload = ({ task, onUpdate }) => {
   const [error, setError] = useState('');
   const MAX_IMAGES = 5;
   const canComplete = ['accepted', 'in_progress'].includes(String(task?.status || '').toLowerCase());
+  const { showToast } = useToast();
 
   const handleUploadProgress = async () => {
     if (images.length === 0) return;
@@ -21,7 +23,7 @@ const TaskProgressUpload = ({ task, onUpdate }) => {
     } catch (err) {
       const msg = getErrorMessage(err);
       setError(msg);
-      alert(msg);
+      showToast(msg, { tone: 'error' });
     } finally {
       setLoading(false);
     }
@@ -33,7 +35,7 @@ const TaskProgressUpload = ({ task, onUpdate }) => {
       const updated = await updateTaskStatus(task._id, 'completed');
       onUpdate(updated);
     } catch (err) {
-      alert(getErrorMessage(err));
+      showToast(getErrorMessage(err), { tone: 'error' });
     } finally {
       setLoading(false);
     }

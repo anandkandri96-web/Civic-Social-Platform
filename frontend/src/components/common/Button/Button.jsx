@@ -15,6 +15,7 @@ const Button = ({
     `button--${variant}`,
     `button--${size}`,
     disabled || loading ? 'button--disabled' : '',
+    loading ? 'button--loading' : '',
     className,
   ]
     .filter(Boolean)
@@ -26,8 +27,10 @@ const Button = ({
       onClick={onClick}
       disabled={disabled || loading}
       className={classes}
+      aria-busy={loading}
     >
-      {loading ? 'Loading...' : children}
+      <span className="button__label">{children}</span>
+      {loading && <span className="button__spinner" aria-hidden="true" />}
     </button>
   );
 };

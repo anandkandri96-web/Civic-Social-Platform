@@ -3,9 +3,15 @@ import { Link } from "react-router-dom";
 import { useAuth } from "../../hooks/useAuth";
 import { useRole } from "../../hooks/useRole";
 import { getIssues } from "@api/issues.api";
+import { mapBackendStatus, statusConfig } from "@/utils/statusConfig";
 import VoteButton from "../../components/issues/VoteButton/VoteButton";
 import IssueLeafletMap from "../../components/map/IssueLeafletMap";
 import SafeImage from "../../components/common/SafeImage/SafeImage";
+import ThemeToggle from "../../components/common/ThemeToggle/ThemeToggle";
+import citizenIcon from "../../assets/citizen icon.png";
+import officerIcon from "../../assets/officer icon.png";
+import volunteerIcon from "../../assets/volunteer icon.png";
+import workerIcon from "../../assets/worker icon.png";
 import "./Home.css";
 
 const CATEGORY_LABELS = {
@@ -18,43 +24,32 @@ const CATEGORY_LABELS = {
 };
 
 const CATEGORY_COLORS = {
-  Roads: "#f59e0b",
-  Electricity: "#38b6ff",
-  Garbage: "#10b981",
-  Drainage: "#14c6df",
-  Other: "#a78bfa",
-};
-
-const STATUS_LABELS = {
-  open: "Open",
-  pending: "Open",
-  assigned: "In Progress",
-  "in-progress": "In Progress",
-  inprogress: "In Progress",
-  resolved: "Resolved",
-  closed: "Resolved",
-  critical: "Critical",
+  Roads: "#F2B933",
+  Electricity: "#2F8398",
+  Garbage: "#87A83F",
+  Drainage: "#C0C91E",
+  Other: "#F27C54",
 };
 
 const HOW_IT_WORKS = [
   {
     step: "01",
     title: "Report",
-    color: "#38b6ff",
+    color: "#2F8398",
     description:
       "Submit civic issues with location and context. Reports are routed to responsible departments.",
   },
   {
     step: "02",
     title: "Vote",
-    color: "#a78bfa",
+    color: "#C0C91E",
     description:
       "Community support raises urgency so officials can prioritize what matters most.",
   },
   {
     step: "03",
     title: "Resolve",
-    color: "#10b981",
+    color: "#F27C54",
     description:
       "Track updates from acknowledgement to completion with transparent progress.",
   },
@@ -68,15 +63,6 @@ const GLOBE_FRAME_URLS = Object.entries(
 )
   .sort(([a], [b]) => a.localeCompare(b))
   .map(([, url]) => url);
-
-function normalizeStatus(status) {
-  const key = String(status || "pending").trim().toLowerCase();
-  if (key.includes("critical")) return "critical";
-  if (key.includes("resolve") || key.includes("close")) return "resolved";
-  if (key.includes("assign") || key.includes("progress")) return "in-progress";
-  if (key.includes("open") || key.includes("pending")) return "open";
-  return "open";
-}
 
 function formatRelativeDate(dateInput) {
   if (!dateInput) return "Recently";
@@ -115,7 +101,8 @@ function getLocation(issue) {
 function normalizeIssue(issue) {
   const rawCategory = String(issue.category || "other").toLowerCase();
   const category = CATEGORY_LABELS[rawCategory] || rawCategory || "Other";
-  const status = normalizeStatus(issue.status);
+  const status = mapBackendStatus(issue.status);
+  const config = statusConfig[status] || {};
   const votes = issue.voteCount ?? issue.votes ?? 0;
 
   return {
@@ -124,7 +111,8 @@ function normalizeIssue(issue) {
     title: issue.title || "Untitled issue",
     category,
     status,
-    statusLabel: STATUS_LABELS[status] || "Open",
+    statusLabel: config.label || "Reported",
+    statusColor: config.color || "warning",
     votes,
     comments: issue.commentCount ?? issue.commentsCount ?? 0,
     location: getLocation(issue),
@@ -321,8 +309,6 @@ function HomeHeader({
   isLoggedIn,
   isAdmin,
   dashboardPath,
-  theme,
-  onToggleTheme,
   onLogout,
 }) {
   const [scrolled, setScrolled] = useState(false);
@@ -338,11 +324,11 @@ function HomeHeader({
       <div className="header__inner container">
         <Link to="/" className="header__logo">
           <span className="header__logo-icon">
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
-              <circle cx="12" cy="12" r="10" stroke="#38b6ff" strokeWidth="1.5" />
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="1.5" />
               <path
                 d="M2 12h20M12 2a15.3 15.3 0 010 20M12 2a15.3 15.3 0 000 20"
-                stroke="#38b6ff"
+                stroke="currentColor"
                 strokeWidth="1.5"
               />
             </svg>
@@ -409,14 +395,9 @@ function HomeHeader({
           )}
         </nav>
 
-        <button
-          type="button"
-          className="header__theme-toggle"
-          onClick={onToggleTheme}
-          aria-label={`Switch to ${theme === "dark" ? "light" : "dark"} theme`}
-        >
-          {theme === "dark" ? "Light" : "Dark"}
-        </button>
+        <div className="header__actions">
+          <ThemeToggle className="theme-toggle--header" />
+        </div>
       </div>
     </header>
   );
@@ -424,43 +405,15 @@ function HomeHeader({
 
 function HeroSection({ isLoggedIn, isAdmin, enableGlobe }) {
   const heroRef = useRef(null);
-  const overlayRef = useRef(null);
-  const scrollRafRef = useRef(0);
-
-  useEffect(() => {
-    const onScroll = () => {
-      if (scrollRafRef.current) cancelAnimationFrame(scrollRafRef.current);
-      scrollRafRef.current = requestAnimationFrame(() => {
-        const hero = heroRef.current;
-        const overlay = overlayRef.current;
-        if (!hero || !overlay) return;
-
-        const rect = hero.getBoundingClientRect();
-        const travel = Math.max(rect.height - window.innerHeight, 1);
-        const t = Math.min(Math.max(-rect.top / travel, 0), 1);
-        const fade = Math.max(0, 1 - t * 1.35);
-
-        overlay.style.opacity = `${fade}`;
-        overlay.style.transform = `translateY(${t * -30}px)`;
-      });
-    };
-
-    onScroll();
-    window.addEventListener("scroll", onScroll, { passive: true });
-    return () => {
-      window.removeEventListener("scroll", onScroll);
-      if (scrollRafRef.current) cancelAnimationFrame(scrollRafRef.current);
-    };
-  }, []);
 
   return (
     <section className={`hero ${enableGlobe ? '' : 'hero--compact'}`.trim()} id="hero" ref={heroRef}>
       <div className="hero__grid" aria-hidden="true" />
 
-      <div className="hero__overlay" ref={overlayRef}>
+      <div className="hero__overlay">
         <span className="hero__eyebrow">
           <span className="hero__eyebrow-dot" />
-          City Community Problem Heatmap
+          Social Civic Platform
         </span>
 
         <h1 className="hero__headline">
@@ -659,8 +612,8 @@ function PriorityIssuesSection({
                 )}
               </div>
             )
-            : filteredIssues.map((issue) => {
-              const catColor = CATEGORY_COLORS[issue.category] || "#38b6ff";
+            : filteredIssues.map((issue, index) => {
+              const catColor = CATEGORY_COLORS[issue.category] || "#2F8398";
               const submittedImages = Array.isArray(issue?.raw?.images)
                 ? issue.raw.images.map((img) => String(img || "").trim()).filter(Boolean)
                 : [];
@@ -674,8 +627,9 @@ function PriorityIssuesSection({
               const rawStatus = String(issue?.raw?.status || "").toLowerCase();
               const isResolvedFlow = ["resolved", "resolved_by_community", "citizen_verified", "closed"].includes(rawStatus);
               const coverImage = isResolvedFlow && afterImages[0] ? afterImages[0] : submittedImages[0];
+              
               return (
-                <div className="issue-card" key={issue.id}>
+                <div className="issue-card" key={issue.id} style={{ "--cat-color": catColor }}>
                   <div className="issue-card__media" aria-label="Issue photo">
                     <SafeImage
                       src={coverImage}
@@ -685,47 +639,49 @@ function PriorityIssuesSection({
                     />
                   </div>
 
-                  <div className="issue-card__top">
-                    <span className="issue-card__category" style={{ "--cat-color": catColor }}>
-                      {issue.category}
-                    </span>
-                    <span className={`issue-card__status issue-card__status--${issue.status}`}>
-                      {issue.statusLabel}
-                    </span>
-                  </div>
+                  <div className="issue-card__content">
+                    <div className="issue-card__top">
+                      <span className="issue-card__category" style={{ "--cat-color": catColor }}>
+                        {issue.category}
+                      </span>
+                      <span className={`issue-card__status status-${issue.statusColor || "warning"}`}>
+                        {issue.statusLabel}
+                      </span>
+                    </div>
 
-                  <Link to={`/issues/${issue.id}`} className="issue-card__title-link">
-                    <h3 className="issue-card__title">{issue.title}</h3>
-                  </Link>
+                    <Link to={`/issues/${issue.id}`} className="issue-card__title-link">
+                      <h3 className="issue-card__title">{issue.title}</h3>
+                    </Link>
 
-                  <div className="issue-card__meta">
-                    <span className="issue-card__location">
-                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                        <path d="M21 10c0 7-9 13-9 13S3 17 3 10a9 9 0 1118 0z" />
-                        <circle cx="12" cy="10" r="3" />
-                      </svg>
-                      {issue.location}
-                    </span>
-                    <span className="issue-card__time">{issue.reportedAt}</span>
-                  </div>
+                    <div className="issue-card__meta">
+                      <span className="issue-card__location">
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                          <path d="M21 10c0 7-9 13-9 13S3 17 3 10a9 9 0 1118 0z" />
+                          <circle cx="12" cy="10" r="3" />
+                        </svg>
+                        {issue.location}
+                      </span>
+                      <span className="issue-card__time">{issue.reportedAt}</span>
+                    </div>
 
-                  <div className="issue-card__footer">
-                    {!isAdmin && (
-                      <div className="issue-card__vote">
-                        <VoteButton
-                          issueId={issue.id}
-                          voteCount={issue.votes}
-                          userVoted={issue.userVoted}
-                          onVote={(result) => onVote(issue.id, result)}
-                        />
-                      </div>
-                    )}
-                    <span className="issue-card__comments">
-                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                        <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z" />
-                      </svg>
-                      {issue.comments}
-                    </span>
+                    <div className="issue-card__footer">
+                      {!isAdmin && (
+                        <div className="issue-card__vote">
+                          <VoteButton
+                            issueId={issue.id}
+                            voteCount={issue.votes}
+                            userVoted={issue.userVoted}
+                            onVote={(result) => onVote(issue.id, result)}
+                          />
+                        </div>
+                      )}
+                      <span className="issue-card__comments">
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                          <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z" />
+                        </svg>
+                        {issue.comments}
+                      </span>
+                    </div>
                   </div>
                 </div>
               );
@@ -751,10 +707,10 @@ function MapPreviewSection({ mapIssues = [] }) {
 
             <div className="map-legend">
               {[
-                { color: "#ef4444", label: "Critical Density" },
-                { color: "#f59e0b", label: "High Concentration" },
-                { color: "#38b6ff", label: "Medium Activity" },
-                { color: "#10b981", label: "Low Activity" },
+                { color: "#F27C54", label: "Critical Density" },
+                { color: "#F2B933", label: "High Concentration" },
+                { color: "#2F8398", label: "Medium Activity" },
+                { color: "#87A83F", label: "Low Activity" },
               ].map((item) => (
                 <div className="map-legend__item" key={item.label}>
                   <span className="map-legend__dot" style={{ background: item.color }} />
@@ -801,10 +757,10 @@ function MapPreviewSection({ mapIssues = [] }) {
 
 function WhoAreYouSection() {
   const roles = [
-    { icon: 'CT', title: 'Citizen', text: 'Report local civic issues and track resolution progress in real time.', glow: '#00c8f8' },
-    { icon: 'VO', title: 'Volunteer', text: 'Support neighborhood fixes with verification, community mobilization, and field work.', glow: '#00e5a0' },
-    { icon: 'OF', title: 'Department Officer', text: 'Prioritize, assign, and monitor incoming issues with transparent public updates.', glow: '#ffd166' },
-    { icon: 'WK', title: 'Field Worker', text: 'Execute assigned tasks on ground and upload progress with completion evidence.', glow: '#ff7a35' },
+    { icon: citizenIcon, title: 'Citizen', text: 'Report local civic issues and track resolution progress in real time.', glow: '#2F8398' },
+    { icon: volunteerIcon, title: 'Volunteer', text: 'Support neighborhood fixes with verification, community mobilization, and field work.', glow: '#87A83F' },
+    { icon: officerIcon, title: 'Department Officer', text: 'Prioritize, assign, and monitor incoming issues with transparent public updates.', glow: '#C0C91E' },
+    { icon: workerIcon, title: 'Field Worker', text: 'Execute assigned tasks on ground and upload progress with completion evidence.', glow: '#F27C54' },
   ];
 
   return (
@@ -820,11 +776,17 @@ function WhoAreYouSection() {
 
         <div className="roles-grid">
           {roles.map((role) => (
-            <article key={role.title} className="roles-card" style={{ "--role-glow": role.glow }}>
-              <span className="roles-card__icon">{role.icon}</span>
+            <Link
+              key={role.title}
+              to="/register"
+              className="roles-card"
+              style={{ "--role-glow": role.glow }}
+              aria-label={`Register as ${role.title}`}
+            >
+              <img className="icon-avatar roles-card__icon" src={role.icon} alt={`${role.title} icon`} />
               <h3>{role.title}</h3>
               <p>{role.text}</p>
-            </article>
+            </Link>
           ))}
         </div>
       </div>
@@ -841,8 +803,8 @@ function Footer() {
         <div className="footer__brand">
           <Link to="/" className="footer__logo">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-              <circle cx="12" cy="12" r="10" stroke="#38b6ff" strokeWidth="1.5" />
-              <path d="M2 12h20M12 2a15.3 15.3 0 010 20M12 2a15.3 15.3 0 000 20" stroke="#38b6ff" strokeWidth="1.5" />
+              <circle cx="12" cy="12" r="10" stroke="#2F8398" strokeWidth="1.5" />
+              <path d="M2 12h20M12 2a15.3 15.3 0 010 20M12 2a15.3 15.3 0 000 20" stroke="#2F8398" strokeWidth="1.5" />
             </svg>
             <span>Social Civic Platform</span>
           </Link>
@@ -887,7 +849,7 @@ function Footer() {
 
       <div className="footer__bottom">
         <div className="container footer__bottom-inner">
-          <span className="footer__copy">Copyright {year} Social Civic Platform. All rights reserved.</span>
+          <span className="footer__copy">© {year} Social Civic Platform</span>
           <div className="footer__status">
             <span className="footer__status-dot" />
             All systems operational
@@ -902,19 +864,9 @@ const Home = () => {
   const { user, logout } = useAuth();
   const { isAdmin, dashboardPath } = useRole();
 
-  const [theme, setTheme] = useState(() => {
-    if (typeof window === "undefined") return "dark";
-    const stored = window.localStorage.getItem("civic-theme");
-    return stored === "light" ? "light" : "dark";
-  });
   const [issues, setIssues] = useState([]);
   const [issuesLoading, setIssuesLoading] = useState(true);
   const [filter, setFilter] = useState("all");
-
-  useEffect(() => {
-    document.documentElement.setAttribute("data-theme", theme);
-    window.localStorage.setItem("civic-theme", theme);
-  }, [theme]);
 
   useEffect(() => {
     let mounted = true;
@@ -989,14 +941,13 @@ const Home = () => {
         isLoggedIn={isLoggedIn}
         isAdmin={isAdmin}
         dashboardPath={dashboardPath}
-        theme={theme}
-        onToggleTheme={() => setTheme((prev) => (prev === "dark" ? "light" : "dark"))}
         onLogout={logout}
       />
 
       <main>
         <HeroSection isLoggedIn={isLoggedIn} isAdmin={isAdmin} enableGlobe={!isLoggedIn} />
         <HowItWorksSection />
+        <MapPreviewSection mapIssues={mapPreviewIssues} />
         <PriorityIssuesSection
           issues={issues}
           loading={issuesLoading}
@@ -1005,7 +956,6 @@ const Home = () => {
           onVote={handleVoteUpdate}
           isAdmin={isAdmin}
         />
-        <MapPreviewSection mapIssues={mapPreviewIssues} />
         <WhoAreYouSection />
       </main>
 

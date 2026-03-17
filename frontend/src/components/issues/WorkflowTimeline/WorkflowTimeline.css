@@ -1,8 +1,8 @@
 .workflow-timeline {
   border: 1px solid var(--border-color);
-  border-radius: 16px;
+  border-radius: var(--radius-card);
   background: var(--bg-card);
-  padding: 14px;
+  padding: 16px;
 }
 
 .workflow-timeline__title {
@@ -16,13 +16,13 @@
   padding: 0;
   margin: 0;
   display: grid;
-  gap: 10px;
+  gap: 12px;
 }
 
 .workflow-timeline__item {
   display: grid;
   grid-template-columns: 24px 1fr;
-  gap: 10px;
+  gap: 12px;
   align-items: flex-start;
   color: var(--text-secondary);
 }
@@ -30,7 +30,7 @@
 .workflow-timeline__marker {
   height: 24px;
   width: 24px;
-  border-radius: 10px;
+  border-radius: var(--radius-button);
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -52,8 +52,8 @@
 }
 
 .workflow-timeline__item.is-done .workflow-timeline__marker {
-  background: rgba(0, 229, 160, 0.12);
-  border-color: rgba(0, 229, 160, 0.28);
+  background: rgba(var(--color-success-rgb), 0.12);
+  border-color: rgba(var(--color-success-rgb), 0.28);
   color: var(--color-success);
 }
 
@@ -62,17 +62,17 @@
 }
 
 .workflow-timeline__item.is-current .workflow-timeline__marker {
-  background: rgba(0, 200, 248, 0.12);
-  border-color: rgba(0, 200, 248, 0.35);
+  background: rgba(var(--color-brand-rgb), 0.12);
+  border-color: rgba(var(--color-brand-rgb), 0.35);
   color: var(--color-primary-light);
-  box-shadow: 0 0 0 3px rgba(0, 200, 248, 0.14);
+  box-shadow: 0 0 0 3px rgba(var(--color-brand-rgb), 0.14);
 }
 
 .workflow-timeline__item.is-current.is-done .workflow-timeline__marker {
-  background: rgba(0, 229, 160, 0.12);
-  border-color: rgba(0, 229, 160, 0.28);
+  background: rgba(var(--color-success-rgb), 0.12);
+  border-color: rgba(var(--color-success-rgb), 0.28);
   color: var(--color-success);
-  box-shadow: 0 0 0 3px rgba(0, 229, 160, 0.14);
+  box-shadow: 0 0 0 3px rgba(var(--color-success-rgb), 0.14);
 }
 
 .workflow-timeline__label {

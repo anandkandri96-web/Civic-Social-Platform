@@ -1,4 +1,4 @@
-﻿import { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link, Navigate } from 'react-router-dom';
 import { useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
@@ -8,6 +8,7 @@ import { useRole } from '../../hooks/useRole';
 import { ISSUE_STATUSES, ISSUE_STATUS_LABELS } from '../../constants/issueStatus';
 import IssueCard from '../../components/issues/IssueCard/IssueCard';
 import Skeleton from '../../components/common/Skeleton/Skeleton';
+import IssueCardSkeleton from '../../components/common/Skeleton/IssueCardSkeleton';
 import './IssueList.css';
 
 const CATEGORIES = [
@@ -91,7 +92,7 @@ const IssueList = () => {
           </div>
           <div className="issues-grid">
             {Array.from({ length: 9 }).map((_, i) => (
-              <Skeleton key={i} height={220} />
+              <IssueCardSkeleton key={i} />
             ))}
           </div>
         </div>
@@ -173,7 +174,7 @@ const IssueList = () => {
         {loading ? (
           <div className="issues-grid">
             {Array.from({ length: 9 }).map((_, i) => (
-              <Skeleton key={i} height={220} />
+              <IssueCardSkeleton key={i} />
             ))}
           </div>
         ) : (
@@ -194,24 +195,41 @@ const IssueList = () => {
                 )}
               </div>
             ) : (
-              issues.map((issue) => (
-                <IssueCard
-                  key={issue._id}
-                  issue={issue}
-                  onVote={(result) => {
-                    setIssues((prev) =>
-                      prev.map((i) =>
-                        i._id === issue._id
-                          ? { ...i, voteCount: result.voteCount, userVoted: result.voted }
-                          : i
-                      )
-                    );
-                  }}
-                  onDeleted={(deletedId) => {
-                    setIssues((prev) => prev.filter((i) => i._id !== deletedId));
-                  }}
-                />
-              ))
+              issues.map((issue, index) => {
+                // Dynamic card size logic based on issue data
+                const voteCount = issue.voteCount ?? issue.votes ?? 0;
+                const commentCount = issue.commentCount ?? issue.commentsCount ?? (Array.isArray(issue.comments) ? issue.comments.length : 0);
+                
+                const isWide = index % 5 === 0 && voteCount >= 10;
+                const isTall = index % 7 === 0 && commentCount >= 3;
+                const isLarge = index % 11 === 0 && voteCount >= 20;
+                
+                const cardClasses = [
+                  isLarge ? "issue-card-large" : "",
+                  !isLarge && isWide ? "issue-card-wide" : "",
+                  !isLarge && !isWide && isTall ? "issue-card-tall" : ""
+                ].filter(Boolean).join(" ");
+                
+                return (
+                  <div key={issue._id} className={cardClasses}>
+                    <IssueCard
+                      issue={issue}
+                      onVote={(result) => {
+                        setIssues((prev) =>
+                          prev.map((i) =>
+                            i._id === issue._id
+                              ? { ...i, voteCount: result.voteCount, userVoted: result.voted }
+                              : i
+                          )
+                        );
+                      }}
+                      onDeleted={(deletedId) => {
+                        setIssues((prev) => prev.filter((i) => i._id !== deletedId));
+                      }}
+                    />
+                  </div>
+                );
+              })
             )}
           </div>
         )}

@@ -1,10 +1,11 @@
+@import "../components/issues/StatusBadge/StatusBadge.css";
 /* Shared component primitives (keeps feature CSS smaller and consistent). */
 
 .icon-button {
   position: relative;
   width: 40px;
   height: 40px;
-  border-radius: 12px;
+  border-radius: var(--radius-button);
   border: 1px solid var(--border-color);
   background: var(--bg-surface);
   color: var(--text-primary);
@@ -24,45 +25,66 @@
   transform: translateY(0px);
 }
 
+.icon-avatar {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  object-fit: cover;
+  flex: 0 0 auto;
+  display: block;
+}
+
+.auth-back-home {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.auth-back-home::before {
+  content: "←";
+}
+
 .badge-pill {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
   border: 1px solid var(--border-color);
-  background: rgba(0, 200, 248, 0.08);
+  background: rgba(var(--color-brand-rgb), 0.10);
   color: var(--text-primary);
   border-radius: 999px;
-  padding: 4px 10px;
-  font-size: 12px;
+  height: 24px;
+  padding: 0 10px;
+  font-size: var(--font-size-caption);
   font-family: var(--font-mono);
   letter-spacing: 0.04em;
   text-transform: uppercase;
 }
 
 .badge-pill--success {
-  background: rgba(0, 229, 160, 0.12);
-  border-color: rgba(0, 229, 160, 0.28);
+  background: rgba(var(--color-success-rgb), 0.12);
+  border-color: rgba(var(--color-success-rgb), 0.28);
   color: var(--color-success);
 }
 
 .badge-pill--warning {
-  background: rgba(255, 122, 53, 0.12);
-  border-color: rgba(255, 122, 53, 0.28);
+  background: rgba(var(--color-warning-rgb), 0.18);
+  border-color: rgba(var(--color-warning-rgb), 0.35);
   color: var(--color-warning);
 }
 
 .badge-pill--danger {
-  background: rgba(255, 69, 96, 0.12);
-  border-color: rgba(255, 69, 96, 0.28);
+  background: rgba(var(--color-danger-rgb), 0.18);
+  border-color: rgba(var(--color-danger-rgb), 0.35);
   color: var(--color-danger);
 }
+
 
 .skeleton {
   position: relative;
   overflow: hidden;
-  background: rgba(21, 34, 54, 0.9);
+  background: rgba(16, 24, 40, 0.06);
   border: 1px solid var(--border-color);
-  border-radius: 12px;
+  border-radius: var(--radius-card);
 }
 
 .skeleton::after {
@@ -70,7 +92,7 @@
   position: absolute;
   inset: 0;
   transform: translateX(-100%);
-  background: linear-gradient(90deg, transparent, rgba(72, 219, 255, 0.14), transparent);
+  background: linear-gradient(90deg, transparent, rgba(var(--color-brand-rgb), 0.12), transparent);
   animation: skeleton-shimmer 1.2s ease-in-out infinite;
 }
 

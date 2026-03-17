@@ -1,5 +1,5 @@
 .state-card {
-  border-radius: 14px;
+  border-radius: var(--radius-card);
   border: 1px solid var(--border-color);
   background: var(--bg-card);
   padding: 24px;
@@ -16,15 +16,15 @@
 }
 
 .state-card-icon {
-  margin-bottom: 10px;
+  margin-bottom: 12px;
   font-size: 1.3rem;
 }
 
 .state-card-action {
-  margin-top: 14px;
+  margin-top: 16px;
 }
 
 .state-card-error {
-  border-color: rgba(255, 69, 96, 0.35);
-  background: rgba(255, 69, 96, 0.12);
+  border-color: rgba(var(--color-danger-rgb), 0.45);
+  background: rgba(var(--color-danger-rgb), 0.12);
 }

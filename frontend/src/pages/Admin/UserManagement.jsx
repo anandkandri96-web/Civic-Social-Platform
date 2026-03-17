@@ -11,6 +11,8 @@ import {
 } from '@api/admin.api';
 import { getErrorMessage } from '@api/utils';
 import Loader from '../../components/common/Loader/Loader';
+import { useToast } from '../../contexts/ToastContext';
+import { useModal } from '../../contexts/ModalContext';
 import './UserManagement.css';
 
 const ROLE_OPTIONS = ['citizen', 'volunteer', 'officer', 'worker', 'admin'];
@@ -22,6 +24,8 @@ const UserManagement = () => {
   const [error, setError] = useState('');
   const [working, setWorking] = useState('');
   const [newDepartmentName, setNewDepartmentName] = useState('');
+  const { showToast } = useToast();
+  const { confirm } = useModal();
 
   useEffect(() => {
     let mounted = true;
@@ -71,7 +75,7 @@ const UserManagement = () => {
       const updated = await action();
       if (updated?._id) patchUser(updated);
     } catch (err) {
-      alert(getErrorMessage(err));
+      showToast(getErrorMessage(err), { tone: 'error' });
     } finally {
       setWorking('');
     }
@@ -87,20 +91,26 @@ const UserManagement = () => {
       setDepartments((prev) => [...prev, created].sort((a, b) => a.name.localeCompare(b.name)));
       setNewDepartmentName('');
     } catch (err) {
-      alert(getErrorMessage(err));
+      showToast(getErrorMessage(err), { tone: 'error' });
     } finally {
       setWorking('');
     }
   };
 
   const handleDeleteUser = async (userId) => {
-    if (!window.confirm('Delete this user?')) return;
+    const approved = await confirm({
+      title: 'Delete user',
+      message: 'Delete this user?',
+      confirmLabel: 'Delete',
+      tone: 'danger',
+    });
+    if (!approved) return;
     setWorking(userId);
     try {
       await deleteUserAdmin(userId);
       setUsers((prev) => prev.filter((u) => u._id !== userId));
     } catch (err) {
-      alert(getErrorMessage(err));
+      showToast(getErrorMessage(err), { tone: 'error' });
     } finally {
       setWorking('');
     }
@@ -131,7 +141,7 @@ const UserManagement = () => {
 
         {error && <div className="issues-error">{error}</div>}
 
-        <section className="card user-table-wrap">
+        <section className="card user-table-wrap table-wrapper">
           <table className="user-table">
             <thead>
               <tr>

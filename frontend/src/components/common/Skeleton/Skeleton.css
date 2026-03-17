@@ -1,8 +1,14 @@
 .skeleton {
   position: relative;
   overflow: hidden;
-  background: rgba(21, 34, 54, 0.9);
+  background: rgba(16, 24, 40, 0.06);
   border: 1px solid var(--border-color);
+}
+
+.issue-card-skeleton,
+.dashboard-card-skeleton {
+  display: grid;
+  gap: var(--space-3);
 }
 
 .skeleton::after {
@@ -10,7 +16,7 @@
   position: absolute;
   inset: 0;
   transform: translateX(-100%);
-  background: linear-gradient(90deg, transparent, rgba(72, 219, 255, 0.14), transparent);
+  background: linear-gradient(90deg, transparent, rgba(var(--color-brand-rgb), 0.12), transparent);
   animation: skeleton-shimmer 1.2s ease-in-out infinite;
 }
 
@@ -19,4 +25,3 @@
     transform: translateX(100%);
   }
 }
-

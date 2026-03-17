@@ -72,7 +72,7 @@ const Login = () => {
 
   return (
     <div className="login-page page">
-      <Link to="/" className="auth-back-home">← Back to home</Link>
+      <Link to="/" className="auth-back-home">Back to home</Link>
 
       <div className="login-card card">
         <h1 className="login-brand">Social Civic Platform</h1>

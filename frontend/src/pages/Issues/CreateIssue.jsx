@@ -148,7 +148,7 @@ const CreateIssue = () => {
   return (
     <section className="report-wizard-page">
       <div className="report-wizard-head">
-        <Link to="/issues" className="report-back-link">? Back to Issues</Link>
+        <Link to="/issues" className="report-back-link">← Back to Issues</Link>
         <span>Step {step} of 4</span>
       </div>
 
@@ -193,7 +193,7 @@ const CreateIssue = () => {
 
         {step === 2 && (
           <div className="report-panel">
-            <h2>Pin Location</h2>
+            <h2>🗺️ Pin Location</h2>
             <p>Click the map area to set exact coordinates.</p>
             <div
               className="report-map-picker"
@@ -211,7 +211,7 @@ const CreateIssue = () => {
               }}
             >
               <div className="report-map-grid" />
-              <span className="report-map-pin" style={{ left: `${pin.x}%`, top: `${pin.y}%` }}>+</span>
+              <span className="report-map-pin" style={{ left: `${pin.x}%`, top: `${pin.y}%` }}>📍</span>
             </div>
 
             <div className="report-location-row">
@@ -231,7 +231,7 @@ const CreateIssue = () => {
                 inputMode="decimal"
                 aria-label="Longitude"
               />
-              <button type="button" onClick={handleUseMyLocation}>Use my location</button>
+              <button type="button" onClick={handleUseMyLocation}>📍 Use my location</button>
             </div>
 
             <input
@@ -309,7 +309,7 @@ const CreateIssue = () => {
 
         <div className="report-actions">
           <button type="button" disabled={step === 1 || submitting} onClick={() => setStep((prev) => prev - 1)}>
-            ? Back
+            ← Back
           </button>
           {step < 4 ? (
             <button
@@ -321,11 +321,11 @@ const CreateIssue = () => {
                 setStep((prev) => prev + 1);
               }}
             >
-              Continue ?
+              Continue →
             </button>
           ) : (
             <button type="button" className="primary" disabled={submitting} onClick={handleSubmit}>
-              {submitting ? 'Submitting...' : '? Submit Issue'}
+              {submitting ? 'Submitting...' : '📝 Submit Issue'}
             </button>
           )}
         </div>

@@ -1,72 +1,211 @@
+/* =========================
+   DASHBOARD ROOT
+========================= */
 .worker-dashboard {
-  background: transparent;
+  display: grid;
+  gap: 24px;
 }
 
+/* =========================
+   HEADER (REFINED)
+========================= */
 .worker-dashboard .dashboard-header {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  gap: 14px;
-  margin-bottom: 18px;
+  gap: 24px;
 }
 
 .worker-dashboard .dashboard-header h1 {
   font-family: var(--font-heading);
-  font-size: 1.45rem;
+  font-size: 1.7rem;
+  font-weight: 600;
+  letter-spacing: -0.025em;
+  line-height: 1.2;
 }
 
 .worker-dashboard .dashboard-header p {
-  margin-top: 5px;
+  margin-top: 6px;
   color: var(--text-secondary);
-  font-size: 0.86rem;
+  font-size: 0.92rem;
+  max-width: 48ch;
 }
 
+/* =========================
+   PROFILE CARD (PREMIUM)
+========================= */
 .worker-dashboard__profile {
-  padding: 12px 14px;
+  padding: 18px 20px;
   display: grid;
-  gap: 8px;
-  min-width: min(340px, 100%);
+  gap: 12px;
+
+  min-width: min(360px, 100%);
+
+  background: var(--bg-card);
+  border-radius: 18px;
+
+  border: 1px solid color-mix(in srgb, var(--border-color) 85%, transparent);
+
+  position: relative;
+  overflow: hidden;
+
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
 }
 
+/* soft top accent line */
+.worker-dashboard__profile::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 3px;
+  background: linear-gradient(
+    to right,
+    var(--color-primary),
+    color-mix(in srgb, var(--color-primary) 40%, white)
+  );
+  opacity: 0.8;
+}
+
+/* subtle light bloom */
+.worker-dashboard__profile::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(
+    circle at 85% 15%,
+    color-mix(in srgb, var(--color-primary) 10%, transparent),
+    transparent 65%
+  );
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.worker-dashboard__profile:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 12px 30px rgba(0,0,0,0.07);
+}
+
+.worker-dashboard__profile:hover::after {
+  opacity: 1;
+}
+
+/* =========================
+   PROFILE KV (CLEAN)
+========================= */
 .worker-dashboard__profile-kv {
   display: flex;
   justify-content: space-between;
-  gap: 12px;
   align-items: center;
+
+  padding: 6px 0;
+}
+
+.worker-dashboard__profile-kv:not(:last-child) {
+  border-bottom: 1px solid color-mix(in srgb, var(--border-color) 70%, transparent);
 }
 
 .worker-dashboard__profile-kv span {
-  color: var(--text-secondary);
-  font-size: 0.7rem;
+  font-size: 0.68rem;
   font-family: var(--font-mono);
   text-transform: uppercase;
-  letter-spacing: 0.06em;
+  letter-spacing: 0.09em;
+  color: var(--text-secondary);
 }
 
 .worker-dashboard__profile-kv strong {
-  font-family: var(--font-mono);
-  font-size: 0.78rem;
+  font-size: 0.85rem;
+  font-weight: 500;
   color: var(--text-primary);
 }
 
+/* =========================
+   ERROR (REFINED ALERT)
+========================= */
 .worker-dashboard .error {
-  border: 1px solid rgba(255, 122, 53, 0.45);
-  background: rgba(255, 122, 53, 0.12);
-  border-radius: 10px;
-  padding: 12px 14px;
-  margin-bottom: 14px;
-  color: var(--text-primary);
-  font-size: 0.86rem;
+  padding: 14px 16px;
+  border-radius: 14px;
+
+  background: linear-gradient(
+    135deg,
+    color-mix(in srgb, var(--color-danger) 12%, transparent),
+    color-mix(in srgb, var(--color-danger) 6%, transparent)
+  );
+
+  border: 1px solid color-mix(in srgb, var(--color-danger) 40%, transparent);
+
+  font-size: 0.9rem;
+  line-height: 1.5;
+
+  display: flex;
+  align-items: center;
+  gap: 10px;
 }
 
+/* =========================
+   TASK GRID (BREATHING SPACE)
+========================= */
 .tasks-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-  gap: 14px;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 20px;
 }
 
-@media (max-width: 840px) {
+/* =========================
+   TASK CARD (REFINED)
+========================= */
+.task-card {
+  padding: 18px;
+  border-radius: 18px;
+
+  background: var(--bg-card);
+  border: 1px solid color-mix(in srgb, var(--border-color) 85%, transparent);
+
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
+}
+
+.task-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 14px 34px rgba(0,0,0,0.08);
+}
+
+/* subtle inner divider for structure */
+.task-card > *:not(:last-child) {
+  padding-bottom: 8px;
+  border-bottom: 1px solid color-mix(in srgb, var(--border-color) 70%, transparent);
+}
+
+/* =========================
+   RESPONSIVE (POLISHED)
+========================= */
+@media (max-width: 1024px) {
   .worker-dashboard .dashboard-header {
     flex-direction: column;
+    align-items: stretch;
+    gap: 16px;
+  }
+
+  .worker-dashboard__profile {
+    width: 100%;
+  }
+}
+
+@media (max-width: 600px) {
+  .worker-dashboard {
+    gap: 18px;
+  }
+
+  .worker-dashboard .dashboard-header h1 {
+    font-size: 1.35rem;
+  }
+
+  .tasks-grid {
+    grid-template-columns: 1fr;
+    gap: 16px;
   }
 }

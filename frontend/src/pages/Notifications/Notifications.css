@@ -2,7 +2,7 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 14px;
+  margin-bottom: 16px;
 }
 
 .notifications-header h1 {
@@ -17,30 +17,30 @@
   border: 1px solid var(--border-color);
   background: var(--bg-surface);
   color: var(--text-primary);
-  border-radius: 8px;
-  padding: 8px 10px;
+  border-radius: var(--radius-button);
+  padding: 8px 12px;
 }
 
 .notifications-list {
   display: grid;
-  gap: 10px;
+  gap: 12px;
 }
 
 .notifications-item {
   display: flex;
   justify-content: space-between;
-  gap: 10px;
+  gap: 12px;
   padding: 12px;
 }
 
 .notifications-item h3 {
   font-size: 0.96rem;
-  margin-bottom: 6px;
+  margin-bottom: 8px;
 }
 
 .notifications-item p {
   color: var(--text-secondary);
-  margin-bottom: 6px;
+  margin-bottom: 8px;
 }
 
 .notifications-item small {
@@ -59,11 +59,10 @@
   border: 1px solid var(--border-color);
   background: var(--bg-surface);
   color: var(--text-primary);
-  border-radius: 8px;
-  padding: 6px 10px;
+  border-radius: var(--radius-button);
+  padding: 8px 12px;
 }
 
 .notifications-empty {
   padding: 16px;
 }
-

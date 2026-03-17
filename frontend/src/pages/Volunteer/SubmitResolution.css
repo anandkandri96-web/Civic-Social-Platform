@@ -18,7 +18,7 @@
 .submit-resolution__status {
   border: 1px solid var(--border-color);
   border-radius: 999px;
-  padding: 6px 10px;
+  padding: 8px 12px;
   font-size: 0.72rem;
   font-family: var(--font-mono);
   color: var(--text-secondary);
@@ -29,21 +29,22 @@
 .submit-resolution__notice {
   border: 1px solid rgba(255, 122, 53, 0.45);
   background: rgba(255, 122, 53, 0.12);
-  border-radius: 10px;
-  padding: 10px 12px;
-  margin: 10px 0 12px;
+  border-radius: var(--radius-card);
+  padding: 12px;
+  margin: 12px 0;
 }
 
 .submit-resolution__error {
-  border: 1px solid rgba(255, 69, 96, 0.45);
-  background: rgba(255, 69, 96, 0.12);
-  border-radius: 10px;
-  padding: 10px 12px;
-  margin: 10px 0 12px;
+  border: 1px solid rgba(var(--color-danger-rgb), 0.45);
+  background: var(--color-danger);
+  color: var(--text-on-accent);
+  border-radius: var(--radius-card);
+  padding: 12px;
+  margin: 12px 0;
 }
 
 .submit-resolution__section {
-  margin-top: 14px;
+  margin-top: 16px;
   display: grid;
   gap: 8px;
 }
@@ -58,8 +59,8 @@
   border: 1px solid var(--border-color);
   background: var(--bg-surface);
   color: var(--text-primary);
-  border-radius: 10px;
-  padding: 10px;
+  border-radius: var(--radius-input);
+  padding: 12px;
 }
 
 .submit-resolution__grid {
@@ -70,7 +71,7 @@
 
 .submit-resolution__grid a {
   border: 1px solid var(--border-color);
-  border-radius: 10px;
+  border-radius: var(--radius-card);
   overflow: hidden;
   display: block;
   background: var(--bg-surface);
@@ -94,8 +95,8 @@
   border: 1px solid var(--border-color);
   background: var(--color-primary);
   color: #061021;
-  border-radius: 10px;
-  padding: 9px 14px;
+  border-radius: var(--radius-button);
+  padding: 8px 16px;
   font-size: 0.82rem;
   font-weight: 800;
   cursor: pointer;

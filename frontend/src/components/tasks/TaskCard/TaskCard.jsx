@@ -2,10 +2,12 @@ import { useState } from 'react';
 import { updateTaskStatus } from '@api/task.api.js';
 import { getErrorMessage } from '@api/utils';
 import SafeImage from '../../common/SafeImage/SafeImage';
+import { useToast } from '../../../contexts/ToastContext';
 import './TaskCard.css';
 
 const TaskCard = ({ task, onUpdate, children, workerId }) => {
   const [accepting, setAccepting] = useState(false);
+  const { showToast } = useToast();
 
   const handleAccept = async () => {
     setAccepting(true);
@@ -13,7 +15,7 @@ const TaskCard = ({ task, onUpdate, children, workerId }) => {
       const updated = await updateTaskStatus(task._id, 'accepted');
       onUpdate?.(updated);
     } catch (err) {
-      alert(getErrorMessage(err));
+      showToast(getErrorMessage(err), { tone: 'error' });
     } finally {
       setAccepting(false);
     }

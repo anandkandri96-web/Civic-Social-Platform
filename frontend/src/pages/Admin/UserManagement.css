@@ -1,36 +1,82 @@
+/* =========================
+   HEADER
+========================= */
 .user-management-header {
   display: flex;
   justify-content: space-between;
-  gap: 12px;
-  margin-bottom: 14px;
+  align-items: flex-start;
+  gap: 16px;
+  margin-bottom: 20px;
 }
 
 .user-management-header h1 {
   font-family: var(--font-heading);
+  font-size: 1.4rem;
+  font-weight: 600;
 }
 
 .user-management-header p {
   color: var(--text-secondary);
+  font-size: 0.9rem;
+  margin-top: 4px;
 }
 
+/* =========================
+   CREATE DEPARTMENT
+========================= */
 .dept-create {
   display: flex;
-  gap: 8px;
+  align-items: center;
+  gap: 10px;
 }
 
-.dept-create input,
-.dept-create button {
+.dept-create input {
   border: 1px solid var(--border-color);
-  border-radius: 8px;
+  border-radius: var(--radius-input);
   background: var(--bg-surface);
   color: var(--text-primary);
-  padding: 8px 10px;
+  padding: 10px 14px;
+  font-size: 0.85rem;
+  transition: all 0.2s ease;
 }
 
+.dept-create input:focus {
+  outline: none;
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--color-primary) 20%, transparent);
+}
+
+.dept-create button {
+  border: none;
+  border-radius: var(--radius-input);
+  background: var(--color-primary);
+  color: #fff;
+  padding: 10px 16px;
+  font-size: 0.85rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.dept-create button:hover {
+  opacity: 0.9;
+  transform: translateY(-1px);
+}
+
+/* =========================
+   TABLE WRAPPER (CARD STYLE)
+========================= */
 .user-table-wrap {
-  padding: 10px;
+  padding: 16px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  overflow: hidden;
 }
 
+/* =========================
+   TABLE
+========================= */
 .user-table {
   width: 100%;
   border-collapse: collapse;
@@ -40,36 +86,129 @@
 .user-table td {
   border-bottom: 1px solid var(--border-color);
   text-align: left;
-  padding: 8px;
-  font-size: 0.8rem;
+  padding: 12px 10px;
+  font-size: 0.85rem;
 }
 
+.user-table tbody tr {
+  transition: background 0.2s ease;
+}
+
+.user-table tbody tr:hover {
+  background: color-mix(in srgb, var(--bg-surface) 85%, var(--color-primary));
+}
+
+/* =========================
+   TABLE HEADER
+========================= */
 .user-table th {
   color: var(--text-secondary);
   font-family: var(--font-mono);
   text-transform: uppercase;
-  font-size: 0.66rem;
+  font-size: 0.7rem;
   letter-spacing: 0.08em;
+  background: color-mix(in srgb, var(--bg-surface) 92%, black);
 }
 
-.user-table select,
-.user-table button {
+/* =========================
+   DROPDOWN (CUSTOM SELECT)
+========================= */
+.user-table select {
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+
   border: 1px solid var(--border-color);
-  border-radius: 8px;
+  border-radius: var(--radius-input);
   background: var(--bg-surface);
   color: var(--text-primary);
-  padding: 5px 8px;
-  font-size: 0.74rem;
+
+  padding: 8px 36px 8px 12px;
+  font-size: 0.8rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+
+  background-image: url("data:image/svg+xml;utf8,<svg fill='%23aaa' height='20' viewBox='0 0 20 20' width='20' xmlns='http://www.w3.org/2000/svg'><path d='M5.5 7.5l4.5 5 4.5-5z'/></svg>");
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+  background-size: 14px;
 }
 
+.user-table select:hover {
+  border-color: var(--color-primary);
+}
+
+.user-table select:focus {
+  outline: none;
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--color-primary) 20%, transparent);
+}
+
+.user-table select:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* OPTION (limited styling support) */
+select option {
+  background: var(--bg-surface);
+  color: var(--text-primary);
+}
+
+/* =========================
+   TABLE BUTTONS
+========================= */
+.user-table button {
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-input);
+  background: var(--bg-surface);
+  color: var(--text-primary);
+  padding: 6px 10px;
+  font-size: 0.75rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.user-table button:hover {
+  transform: translateY(-1px);
+  border-color: var(--color-primary);
+}
+
+/* =========================
+   DANGER BUTTON
+========================= */
 .user-table .danger {
-  border-color: color-mix(in srgb, var(--color-danger) 55%, var(--border-color));
+  border-color: color-mix(in srgb, var(--color-danger) 60%, var(--border-color));
   color: var(--color-danger);
+  background: color-mix(in srgb, var(--color-danger) 10%, transparent);
 }
 
-@media (max-width: 960px) {
+.user-table .danger:hover {
+  background: color-mix(in srgb, var(--color-danger) 20%, transparent);
+}
+
+/* =========================
+   GLOBAL SELECT FIX
+========================= */
+select {
+  font-family: inherit;
+}
+
+/* =========================
+   RESPONSIVE
+========================= */
+@media (max-width: 1024px) {
   .user-management-header {
     flex-direction: column;
+    align-items: stretch;
+  }
+
+  .dept-create {
+    width: 100%;
+  }
+
+  .dept-create input {
+    flex: 1;
   }
 
   .user-table-wrap {
@@ -81,3 +220,14 @@
   }
 }
 
+@media (max-width: 600px) {
+  .user-management-header h1 {
+    font-size: 1.2rem;
+  }
+
+  .user-table th,
+  .user-table td {
+    padding: 10px 8px;
+    font-size: 0.75rem;
+  }
+}

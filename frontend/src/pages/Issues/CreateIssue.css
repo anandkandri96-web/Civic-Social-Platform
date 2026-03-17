@@ -7,7 +7,7 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 18px;
+  margin-bottom: 16px;
   color: var(--text-secondary);
   font-family: var(--font-mono);
   font-size: 0.72rem;
@@ -22,8 +22,8 @@
 .report-stepper {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  gap: 10px;
-  margin-bottom: 18px;
+  gap: 12px;
+  margin-bottom: 16px;
 }
 
 .report-step-item {
@@ -31,10 +31,10 @@
 }
 
 .report-step-dot {
-  width: 30px;
-  height: 30px;
+  width: 32px;
+  height: 32px;
   border-radius: 50%;
-  margin: 0 auto 6px;
+  margin: 0 auto 8px;
   border: 2px solid var(--border-color);
   color: var(--text-secondary);
   display: inline-flex;
@@ -47,7 +47,7 @@
 .report-step-dot.is-active,
 .report-step-dot.is-done {
   border-color: var(--color-primary);
-  background: rgba(0, 200, 248, 0.15);
+  background: rgba(var(--color-brand-rgb), 0.12);
   color: var(--color-primary-light);
 }
 
@@ -64,17 +64,17 @@
 }
 
 .create-issue-error {
-  margin-bottom: 14px;
-  padding: 10px 12px;
-  border-radius: 8px;
-  border: 1px solid rgba(255, 69, 96, 0.35);
-  background: rgba(255, 69, 96, 0.15);
-  color: #ff8da0;
+  margin-bottom: 16px;
+  padding: 12px;
+  border-radius: var(--radius-card);
+  border: 1px solid rgba(var(--color-danger-rgb), 0.45);
+  background: var(--color-danger);
+  color: var(--text-on-accent);
   font-size: 0.85rem;
 }
 
 .report-panel h2 {
-  margin-bottom: 6px;
+  margin-bottom: 8px;
   font-family: var(--font-heading);
 }
 
@@ -89,28 +89,28 @@
 .report-panel select {
   width: 100%;
   border: 1px solid var(--border-color);
-  border-radius: 8px;
+  border-radius: var(--radius-input);
   background: var(--bg-surface);
   color: var(--text-primary);
-  padding: 10px 12px;
-  margin-bottom: 10px;
+  padding: 12px;
+  margin-bottom: 12px;
 }
 
 .report-category-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 10px;
+  gap: 12px;
 }
 
 .report-category {
   border: 1px solid var(--border-color);
-  border-radius: 10px;
+  border-radius: var(--radius-card);
   background: var(--bg-surface);
   color: var(--text-secondary);
-  padding: 14px;
+  padding: 16px;
   display: grid;
   justify-items: center;
-  gap: 6px;
+  gap: 8px;
   cursor: pointer;
 }
 
@@ -121,15 +121,15 @@
 
 .report-category.is-active {
   border-color: var(--color-primary);
-  background: rgba(0, 200, 248, 0.14);
+  background: rgba(var(--color-brand-rgb), 0.12);
 }
 
 .report-map-picker {
   position: relative;
   height: 230px;
-  margin-bottom: 10px;
+  margin-bottom: 12px;
   border: 1px solid var(--border-color);
-  border-radius: 10px;
+  border-radius: var(--radius-card);
   overflow: hidden;
   background: #071324;
   cursor: crosshair;
@@ -138,14 +138,14 @@
 .report-map-grid {
   position: absolute;
   inset: 0;
-  background-image: linear-gradient(rgba(0, 200, 248, 0.1) 1px, transparent 1px), linear-gradient(90deg, rgba(0, 200, 248, 0.1) 1px, transparent 1px);
-  background-size: 30px 30px;
+  background-image: linear-gradient(rgba(var(--color-brand-rgb), 0.08) 1px, transparent 1px), linear-gradient(90deg, rgba(var(--color-brand-rgb), 0.08) 1px, transparent 1px);
+  background-size: 32px 32px;
 }
 
 .report-map-pin {
   position: absolute;
   transform: translate(-50%, -100%);
-  filter: drop-shadow(0 0 10px rgba(0, 200, 248, 0.6));
+  filter: drop-shadow(var(--shadow-card));
   pointer-events: none;
 }
 
@@ -157,10 +157,10 @@
 
 .report-location-row button {
   border: 1px solid var(--border-color);
-  border-radius: 8px;
+  border-radius: var(--radius-button);
   background: var(--bg-card);
   color: var(--text-primary);
-  padding: 10px;
+  padding: 12px;
   white-space: nowrap;
   cursor: pointer;
 }
@@ -168,7 +168,7 @@
 .report-severity-row {
   display: grid;
   grid-template-columns: auto 1fr;
-  gap: 10px;
+  gap: 12px;
   align-items: center;
 }
 
@@ -186,15 +186,15 @@
 
 .report-review-list {
   border: 1px solid var(--border-color);
-  border-radius: 10px;
-  background: rgba(0, 200, 248, 0.06);
+  border-radius: var(--radius-card);
+  background: rgba(var(--color-brand-rgb), 0.06);
 }
 
 .report-review-list > div {
   display: grid;
   grid-template-columns: 140px 1fr;
-  gap: 10px;
-  padding: 11px 14px;
+  gap: 12px;
+  padding: 12px 16px;
   border-bottom: 1px solid var(--border-color);
 }
 
@@ -217,16 +217,16 @@
 .report-actions {
   display: flex;
   justify-content: space-between;
-  gap: 10px;
+  gap: 12px;
   margin-top: 16px;
 }
 
 .report-actions button {
   border: 1px solid var(--border-color);
-  border-radius: 8px;
+  border-radius: var(--radius-button);
   background: var(--bg-surface);
   color: var(--text-primary);
-  padding: 10px 14px;
+  padding: 12px 16px;
   cursor: pointer;
 }
 
@@ -242,7 +242,7 @@
   cursor: not-allowed;
 }
 
-@media (max-width: 700px) {
+@media (max-width: 768px) {
   .report-category-grid {
     grid-template-columns: repeat(2, 1fr);
   }

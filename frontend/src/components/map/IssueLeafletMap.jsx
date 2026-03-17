@@ -2,13 +2,7 @@ import { useEffect } from 'react';
 import { CircleMarker, MapContainer, Popup, TileLayer, useMap } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 
-const PRIORITY_COLORS = {
-  5: '#ff4560',
-  4: '#ff7a35',
-  3: '#ffd166',
-  2: '#00c8f8',
-  1: '#00e5a0',
-};
+const HEATMAP_COLOR = '#F27C54';
 
 const DEFAULT_CENTER = [12.7096, 77.6958];
 
@@ -72,15 +66,16 @@ const IssueLeafletMap = ({
 
       {data.map((point, index) => {
         const intensity = Math.max(0, Math.min(1, Number(point.weight || 1) / 10)); // Normalize to 0-1
-        const color = `rgba(255, 0, 0, ${intensity})`; // Red with opacity
+        const opacity = Math.min(0.9, 0.25 + intensity);
         return (
           <CircleMarker
             key={point.id || index}
             center={[point.lat, point.lng]}
             pathOptions={{
-              color,
-              fillColor: color,
-              fillOpacity: intensity,
+              color: HEATMAP_COLOR,
+              fillColor: HEATMAP_COLOR,
+              opacity,
+              fillOpacity: Math.min(0.85, intensity),
               weight: 1,
             }}
             radius={Math.max(5, Number(point.weight || 1))}

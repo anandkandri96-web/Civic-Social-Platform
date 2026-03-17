@@ -5,22 +5,11 @@ import { useAuth } from '../../../hooks/useAuth';
 import { useRole } from '../../../hooks/useRole';
 import { deleteIssue } from '@api/issues.api.js';
 import { getErrorMessage } from '@api/utils';
-import { ISSUE_STATUS_LABELS } from '../../../constants/issueStatus';
+import { mapBackendStatus, statusConfig } from '@/utils/statusConfig';
 import SafeImage from '../../common/SafeImage/SafeImage';
+import { useToast } from '../../../contexts/ToastContext';
+import { useModal } from '../../../contexts/ModalContext';
 import './IssueCard.css';
-
-const STATUS_CLASS = {
-  reported: 'open',
-  under_review: 'in-progress',
-  assigned_to_department: 'in-progress',
-  work_in_progress: 'in-progress',
-  resolved: 'resolved',
-  resolved_by_community: 'resolved',
-  closed: 'resolved',
-  citizen_verified: 'resolved',
-  volunteer_claimed: 'in-progress',
-  community_fix_in_progress: 'in-progress',
-};
 
 function formatLocation(location, locationText) {
   const manual = locationText && String(locationText).trim();
@@ -52,6 +41,8 @@ const IssueCard = ({ issue, onVote, onDeleted }) => {
   const { isAdmin } = useRole();
   const [deleting, setDeleting] = useState(false);
   const navigate = useNavigate();
+  const { showToast } = useToast();
+  const { confirm } = useModal();
 
   if (!issue) return null;
 
@@ -86,23 +77,41 @@ const IssueCard = ({ issue, onVote, onDeleted }) => {
 
   const handleDelete = async () => {
     if (!canDelete || deleting) return;
-    if (!window.confirm('Delete this issue? This cannot be undone.')) return;
+    const approved = await confirm({
+      title: 'Delete issue',
+      message: 'Delete this issue? This cannot be undone.',
+      confirmLabel: 'Delete',
+      tone: 'danger',
+    });
+    if (!approved) return;
     setDeleting(true);
     try {
       await deleteIssue(issue._id);
       onDeleted?.(issue._id);
     } catch (err) {
-      alert(getErrorMessage(err));
+      showToast(getErrorMessage(err), { tone: 'error' });
     } finally {
       setDeleting(false);
     }
   };
 
-  const statusKey = STATUS_CLASS[String(issue.status || '').toLowerCase()] || 'open';
+  const normalizedStatus = mapBackendStatus(issue?.status);
+  const config = statusConfig[normalizedStatus] || {};
+  const badgeClass = config.color ? `status-${config.color}` : 'status-warning';
   const isVerified =
     issue?.verified === true ||
     issue?.verifiedByCitizen === true ||
     String(issue?.status || '').toLowerCase() === 'citizen_verified';
+
+  // Category color mapping for glow effect
+  const categoryColors = {
+    'Roads': '#F2B933',
+    'Electricity': '#2F8398',
+    'Garbage': '#87A83F',
+    'Drainage': '#C0C91E',
+    'Other': '#F27C54'
+  };
+  const categoryColor = categoryColors[issue.category] || categoryColors['Other'];
 
   return (
     <article
@@ -110,6 +119,7 @@ const IssueCard = ({ issue, onVote, onDeleted }) => {
       role="link"
       tabIndex={0}
       aria-label={`Open issue: ${issue.title}`}
+      style={{ '--cat-color': categoryColor }}
       onClick={() => navigate(`/issues/${issue._id}`)}
       onKeyDown={(e) => {
         if (e.key === 'Enter') navigate(`/issues/${issue._id}`);
@@ -131,8 +141,8 @@ const IssueCard = ({ issue, onVote, onDeleted }) => {
           <span className="issue-card__category-text">{issue.category || 'Other'}</span>
         </span>
         <div className="issue-card__badges">
-          <span className={`badge-pill badge-pill--${statusKey === 'resolved' ? 'success' : statusKey === 'in-progress' ? 'warning' : 'warning'}`}>
-            {ISSUE_STATUS_LABELS[issue.status] || issue.status}
+          <span className={`badge-pill ${badgeClass}`}>
+            {config.label || issue.status}
           </span>
           {isVerified ? (
             <span className="badge-pill badge-pill--success" aria-label="Verified by citizen">

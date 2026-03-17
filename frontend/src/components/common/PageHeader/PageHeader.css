@@ -3,7 +3,7 @@
   align-items: flex-start;
   justify-content: space-between;
   gap: 16px;
-  margin-bottom: 20px;
+  margin-bottom: 24px;
 }
 
 .page-header h1 {
@@ -14,7 +14,7 @@
 }
 
 .page-header p {
-  margin: 6px 0 0;
+  margin: 8px 0 0;
   color: var(--text-secondary);
 }
 

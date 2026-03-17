@@ -1,0 +1,134 @@
+.toast-viewport {
+  position: fixed;
+  right: var(--space-5);
+  bottom: var(--space-5);
+  display: grid;
+  gap: var(--space-2);
+  z-index: 2000;
+}
+
+.toast {
+  width: 280px;
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-color);
+  background: var(--bg-card);
+  color: var(--text-primary);
+  box-shadow: var(--shadow-card);
+  display: grid;
+  gap: var(--space-2);
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+
+.toast__message {
+  font-size: 0.85rem;
+  line-height: 1.4;
+}
+
+.toast__close {
+  border: 0;
+  background: transparent;
+  color: var(--text-muted);
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  padding: 0;
+  cursor: pointer;
+  justify-self: start;
+}
+
+.toast--error {
+  background: rgba(var(--color-danger-rgb), 0.12);
+  border-color: rgba(var(--color-danger-rgb), 0.35);
+  color: var(--color-danger);
+}
+
+.toast--success {
+  background: rgba(var(--color-success-rgb), 0.12);
+  border-color: rgba(var(--color-success-rgb), 0.35);
+  color: var(--color-success);
+}
+
+.toast--info {
+  background: rgba(var(--color-brand-rgb), 0.12);
+  border-color: rgba(var(--color-brand-rgb), 0.35);
+  color: var(--text-primary);
+}
+
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(6, 16, 32, 0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-5);
+  z-index: 2100;
+}
+
+.modal {
+  width: min(420px, 100%);
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-card);
+  padding: var(--space-4);
+  display: grid;
+  gap: var(--space-3);
+  transition: all 0.2s ease;
+}
+
+.modal__title {
+  margin: 0;
+  font-family: var(--font-heading);
+  font-size: 1.1rem;
+}
+
+.modal__message {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: 0.92rem;
+}
+
+.modal__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-2);
+}
+
+.modal__btn {
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-button);
+  background: var(--bg-surface);
+  color: var(--text-primary);
+  padding: 0 var(--space-4);
+  height: 40px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.modal__btn--primary {
+  background: var(--color-primary);
+  border-color: var(--color-primary);
+  color: var(--text-on-accent);
+}
+
+.modal__btn--danger {
+  background: var(--color-danger);
+  border-color: var(--color-danger);
+  color: var(--text-on-accent);
+}
+
+.modal__btn--ghost {
+  background: transparent;
+}
+
+@media (max-width: 640px) {
+  .toast-viewport {
+    right: var(--space-4);
+    bottom: var(--space-4);
+  }
+}

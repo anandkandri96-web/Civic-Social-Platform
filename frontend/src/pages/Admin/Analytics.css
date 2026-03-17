@@ -1,43 +1,92 @@
+/* =========================
+   ADMIN TITLE
+========================= */
 .admin-title {
   font-family: var(--font-heading);
-  font-size: clamp(1.7rem, 2vw, 2.2rem);
+  font-size: clamp(1.8rem, 2vw, 2.4rem);
+  font-weight: 600;
   margin-bottom: var(--space-lg);
+  letter-spacing: -0.02em;
 }
 
+/* =========================
+   STATS GRID
+========================= */
 .stats-grid {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
   gap: var(--space-md);
   margin-bottom: var(--space-lg);
 }
 
+/* =========================
+   STAT CARD
+========================= */
 .stat-card {
   padding: var(--space-md);
+  border-radius: 16px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-color);
   border-top: 3px solid var(--color-primary);
+  transition: all 0.25s ease;
+  position: relative;
+  overflow: hidden;
 }
 
+.stat-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 10px 25px rgba(0,0,0,0.08);
+}
+
+/* subtle glow accent */
+.stat-card::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at top right,
+    color-mix(in srgb, var(--color-primary) 15%, transparent),
+    transparent 60%);
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+
+.stat-card:hover::after {
+  opacity: 1;
+}
+
+/* =========================
+   STAT HEADER
+========================= */
 .stat-header {
   display: flex;
   justify-content: space-between;
+  align-items: center;
   color: var(--text-secondary);
   margin-bottom: var(--space-sm);
   font-family: var(--font-mono);
-  font-size: 0.72rem;
+  font-size: 0.7rem;
   text-transform: uppercase;
   letter-spacing: 0.08em;
 }
 
 .icon {
-  opacity: 0.7;
+  opacity: 0.8;
+  font-size: 1.1rem;
 }
 
+/* =========================
+   COLOR VARIANTS
+========================= */
 .orange { color: var(--color-warning); }
 .blue { color: var(--color-primary-light); }
 .green { color: var(--color-success); }
 
+/* =========================
+   PANELS GRID
+========================= */
 .admin-panels {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
   gap: var(--space-md);
 }
 
@@ -45,15 +94,31 @@
   margin-top: var(--space-md);
 }
 
+/* =========================
+   PANEL (CARD STYLE)
+========================= */
 .panel {
   padding: var(--space-md);
+  border-radius: 16px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-color);
+  transition: all 0.25s ease;
+}
+
+.panel:hover {
+  box-shadow: 0 8px 20px rgba(0,0,0,0.06);
 }
 
 .panel h3 {
   margin-bottom: var(--space-md);
   font-family: var(--font-heading);
+  font-size: 1rem;
+  font-weight: 600;
 }
 
+/* =========================
+   BAR CHART
+========================= */
 .chart {
   display: flex;
   align-items: flex-end;
@@ -67,21 +132,53 @@
   gap: var(--space-sm);
   justify-items: center;
   color: var(--text-secondary);
-  font-size: 0.72rem;
+  font-size: 0.7rem;
   font-family: var(--font-mono);
   text-transform: uppercase;
 }
 
+/* animated bars */
 .bar {
   width: 100%;
   border-radius: var(--radius-sm);
   height: 16%;
+  transition: all 0.4s ease;
+  position: relative;
 }
 
-.bar.pending { background: color-mix(in srgb, var(--color-warning) 70%, transparent); }
-.bar.progress { background: color-mix(in srgb, var(--color-primary) 70%, transparent); }
-.bar.resolved { background: color-mix(in srgb, var(--color-success) 70%, transparent); }
+.bar:hover {
+  transform: scaleY(1.08);
+  filter: brightness(1.1);
+}
 
+/* gradient bars */
+.bar.pending {
+  background: linear-gradient(
+    to top,
+    color-mix(in srgb, var(--color-warning) 80%, transparent),
+    color-mix(in srgb, var(--color-warning) 40%, white)
+  );
+}
+
+.bar.progress {
+  background: linear-gradient(
+    to top,
+    color-mix(in srgb, var(--color-primary) 80%, transparent),
+    color-mix(in srgb, var(--color-primary) 40%, white)
+  );
+}
+
+.bar.resolved {
+  background: linear-gradient(
+    to top,
+    color-mix(in srgb, var(--color-success) 80%, transparent),
+    color-mix(in srgb, var(--color-success) 40%, white)
+  );
+}
+
+/* =========================
+   METRIC LIST
+========================= */
 .metric-list {
   list-style: none;
   display: grid;
@@ -91,31 +188,60 @@
 .metric-list li {
   display: flex;
   justify-content: space-between;
+  align-items: center;
   gap: var(--space-sm);
   border-bottom: 1px solid var(--border-color);
   padding-bottom: var(--space-sm);
-  font-size: 0.84rem;
+  font-size: 0.85rem;
+  transition: all 0.2s ease;
+}
+
+.metric-list li:hover {
+  background: color-mix(in srgb, var(--bg-surface) 90%, var(--color-primary));
+  padding-left: 6px;
+  border-radius: 6px;
 }
 
 .metric-list span {
   color: var(--text-secondary);
 }
 
+/* =========================
+   ANALYTICS CHART
+========================= */
 .analytics-bar-chart {
   height: 240px;
+  border-radius: 12px;
+  background: linear-gradient(
+    to top,
+    color-mix(in srgb, var(--bg-surface) 85%, black),
+    transparent
+  );
+  padding: 10px;
 }
 
+/* =========================
+   NOTE TEXT
+========================= */
 .analytics-note {
   color: var(--text-secondary);
   font-size: 0.85rem;
+  margin-top: var(--space-sm);
 }
 
-@media (max-width: 1000px) {
-  .stats-grid {
-    grid-template-columns: repeat(2, 1fr);
+/* =========================
+   RESPONSIVE
+========================= */
+@media (max-width: 768px) {
+  .admin-title {
+    font-size: 1.5rem;
   }
 
-  .admin-panels {
-    grid-template-columns: 1fr;
+  .chart {
+    height: 150px;
+  }
+
+  .panel h3 {
+    font-size: 0.9rem;
   }
 }

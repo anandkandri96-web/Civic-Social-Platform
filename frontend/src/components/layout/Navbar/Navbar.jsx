@@ -52,7 +52,6 @@ const Navbar = () => {
           {isAuthenticated && <Link to="/profile">Profile</Link>}
           {isAuthenticated && <Link to="/notifications">Notifications</Link>}
           {isAdmin && <Link to={panelPath}>Admin Panel</Link>}
-          {isAdmin && <Link to="/admin/users">Users</Link>}
         </nav>
       </div>
 

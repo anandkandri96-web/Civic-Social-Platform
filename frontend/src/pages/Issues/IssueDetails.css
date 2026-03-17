@@ -4,45 +4,44 @@
 
 .issue-details-grid {
   display: grid;
-  grid-template-columns: 1.4fr 0.6fr;
+  grid-template-columns: 2fr 0.6fr;
   gap: var(--space-lg);
   align-items: start;
 }
 
-.issue-details-left {
+.issue-cards-container {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 16px;
+}
+
+.issue-details-card {
+  position: relative;
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-card);
   overflow: hidden;
 }
 
-.issue-details-body {
-  padding: var(--space-lg);
-}
-
-.issue-details-right {
-  display: grid;
-  gap: var(--space-md);
-}
-
-.back-link {
-  display: inline-block;
-  margin-bottom: var(--space-md);
-  color: var(--color-primary-light);
-  font-weight: 600;
-}
-
-.issue-image-wrapper {
+.issue-details-card .issue-details-image {
   position: relative;
   background: linear-gradient(180deg, rgba(22, 32, 53, 0.7), rgba(10, 18, 32, 0.9));
-  height: 260px;
+  height: 400px;
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
-.issue-image-wrapper img,
-.issue-image-wrapper .safe-image {
+.issue-details-card .issue-details-image img,
+.issue-details-card .issue-details-image .safe-image {
   width: 100%;
   height: 100%;
   object-fit: cover;
+}
+
+.issue-details-card .issue-details-body {
+  padding: var(--space-lg);
 }
 
 .image-placeholder {
@@ -64,10 +63,10 @@
 }
 
 .tag {
-  background: rgba(0, 200, 248, 0.12);
-  border: 1px solid rgba(0, 200, 248, 0.35);
+  background: rgba(var(--color-brand-rgb), 0.12);
+  border: 1px solid rgba(var(--color-brand-rgb), 0.35);
   color: var(--color-primary-light);
-  padding: 4px 10px;
+  padding: 4px 12px;
   border-radius: 999px;
   font-size: 0.7rem;
   font-family: var(--font-mono);
@@ -83,9 +82,9 @@
 .tag.verified {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  background: rgba(0, 229, 160, 0.12);
-  border: 1px solid rgba(0, 229, 160, 0.28);
+  gap: 8px;
+  background: rgba(var(--color-primary-rgb), 0.12);
+  border: 1px solid rgba(var(--color-primary-rgb), 0.28);
   color: var(--color-success);
 }
 
@@ -111,7 +110,7 @@
 }
 
 .issue-description h3 {
-  margin-bottom: 6px;
+  margin-bottom: 8px;
   font-family: var(--font-heading);
 }
 
@@ -125,7 +124,7 @@
 }
 
 .issue-images-section h3 {
-  margin-bottom: 10px;
+  margin-bottom: 12px;
   font-family: var(--font-heading);
 }
 
@@ -134,7 +133,7 @@
 }
 
 .issue-resolution-report h3 {
-  margin-bottom: 6px;
+  margin-bottom: 8px;
   font-family: var(--font-heading);
 }
 
@@ -151,7 +150,7 @@
 
 .issue-image-grid a {
   border: 1px solid var(--border-color);
-  border-radius: 10px;
+  border-radius: var(--radius-card);
   overflow: hidden;
   display: block;
   background: var(--bg-surface);
@@ -170,16 +169,16 @@
 }
 
 .issue-map-preview h3 {
-  margin-bottom: 10px;
+  margin-bottom: 12px;
   font-family: var(--font-heading);
 }
 
 .issue-map-preview__canvas {
   border: 1px solid var(--border-color);
-  border-radius: 14px;
+  border-radius: var(--radius-card);
   overflow: hidden;
   background: var(--bg-surface);
-  height: 240px;
+  height: 400px;
 }
 
 .issue-map-preview__leaflet {
@@ -194,16 +193,27 @@
 .issue-delete-error {
   color: var(--color-danger);
   font-size: var(--font-size-sm);
-  margin-bottom: 6px;
+  margin-bottom: 8px;
 }
 
 .issue-delete-btn {
-  padding: 8px 14px;
+  padding: var(--space-2) var(--space-4);
   font-size: var(--font-size-sm);
-  color: #fff;
-  background: var(--color-danger);
-  border-radius: var(--radius-sm);
+  color: var(--text-on-accent);
+  background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+  border: 2px solid #dc3545;
+  border-radius: var(--radius-button);
   cursor: pointer;
+  font-weight: 600;
+  box-shadow: 0 4px 12px rgba(220, 53, 69, 0.3);
+  transition: all 0.2s ease;
+}
+
+.issue-delete-btn:hover {
+  background: linear-gradient(135deg, #c82333 0%, #bd2130 100%);
+  border-color: #bd2130;
+  box-shadow: 0 6px 16px rgba(220, 53, 69, 0.4);
+  transform: translateY(-1px);
 }
 
 .issue-delete-btn:disabled {
@@ -224,8 +234,8 @@
   border: 1px solid var(--border-color);
   background: var(--bg-surface);
   color: var(--text-primary);
-  border-radius: 8px;
-  padding: 7px 10px;
+  border-radius: var(--radius-button);
+  padding: 8px 12px;
   font-size: 0.78rem;
 }
 
@@ -252,9 +262,9 @@
   gap: 12px;
   align-items: center;
   border: 1px solid var(--border-color);
-  border-radius: 12px;
-  background: rgba(0, 200, 248, 0.08);
-  padding: 10px 12px;
+  border-radius: var(--radius-card);
+  background: rgba(var(--color-brand-rgb), 0.08);
+  padding: 12px 16px;
   color: var(--text-secondary);
   font-size: 0.84rem;
 }
@@ -263,8 +273,8 @@
   border: 1px solid var(--border-color);
   background: var(--bg-surface);
   color: var(--text-primary);
-  border-radius: 10px;
-  padding: 6px 10px;
+  border-radius: var(--radius-button);
+  padding: 8px 12px;
   font-size: 0.78rem;
 }
 
@@ -273,15 +283,15 @@
   border: 1px solid var(--border-color);
   background: var(--bg-surface);
   color: var(--text-primary);
-  border-radius: 10px;
-  padding: 10px;
+  border-radius: var(--radius-input);
+  padding: 12px;
 }
 
 .issue-comment-footer {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  gap: 10px;
+  gap: 12px;
 }
 
 .issue-comment-footer small {
@@ -297,20 +307,20 @@
 
 .issue-comment-item {
   border: 1px solid var(--border-color);
-  border-radius: 14px;
+  border-radius: var(--radius-card);
   background: var(--bg-surface);
   padding: 12px;
   display: grid;
   grid-template-columns: 38px 1fr;
-  gap: 10px;
+  gap: 12px;
 }
 
 .issue-comment-avatar {
   width: 38px;
   height: 38px;
-  border-radius: 14px;
-  border: 1px solid rgba(0, 200, 248, 0.22);
-  background: rgba(0, 200, 248, 0.10);
+  border-radius: var(--radius-card);
+  border: 1px solid rgba(var(--color-brand-rgb), 0.22);
+  background: rgba(var(--color-brand-rgb), 0.10);
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -341,22 +351,34 @@
 
 .issue-comment-actions {
   display: flex;
-  gap: 6px;
+  gap: 8px;
   flex-wrap: wrap;
 }
 
 .issue-comment-actions button.is-liked {
-  border-color: rgba(0, 229, 160, 0.35);
-  background: rgba(0, 229, 160, 0.12);
+  border-color: rgba(var(--color-primary-rgb), 0.35);
+  background: rgba(var(--color-primary-rgb), 0.12);
   color: var(--color-success);
 }
 
+.issue-details-right {
+  display: grid;
+  gap: var(--space-md);
+}
+
+.back-link {
+  display: inline-block;
+  margin-bottom: var(--space-md);
+  color: var(--color-primary-light);
+  font-weight: 600;
+}
+
 .issue-side-card {
-  padding: 14px;
+  padding: 16px;
 }
 
 .issue-side-card h3 {
-  margin-bottom: 10px;
+  margin-bottom: 12px;
   font-family: var(--font-heading);
   font-size: 1rem;
 }
@@ -365,7 +387,7 @@
   display: flex;
   justify-content: space-between;
   gap: 12px;
-  padding: 10px 0;
+  padding: 12px 0;
   border-bottom: 1px solid var(--border-color);
 }
 
@@ -381,8 +403,159 @@
   letter-spacing: 0.06em;
 }
 
+/* Card styles for the new card structure */
+.issue-card {
+  border-radius: 12px;
+  padding: 20px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  box-shadow: var(--shadow-card);
+  overflow: hidden;
+  margin-top: var(--space-md);
+}
+
+.issue-resolution-card {
+  border-radius: 12px;
+  padding: 0;
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  box-shadow: var(--shadow-card);
+  overflow: hidden;
+}
+
+.issue-resolution-card .resolution-image {
+  position: relative;
+  background: linear-gradient(180deg, rgba(22, 32, 53, 0.7), rgba(10, 18, 32, 0.9));
+  height: 400px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.issue-resolution-card .resolution-image img,
+.issue-resolution-card .resolution-image .safe-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.issue-resolution-card .resolution-body {
+  padding: var(--space-lg);
+}
+
+.resolution-comments {
+  margin-top: var(--space-md);
+  border-top: 1px solid var(--border-color);
+  padding-top: var(--space-md);
+}
+
+.resolution-comments h3 {
+  margin-bottom: var(--space-sm);
+  font-family: var(--font-heading);
+}
+
+.workflow-timeline-container {
+  min-height: 500px;
+  padding: 16px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-card);
+}
+
+.issue-resolution-card h2 {
+  font-family: var(--font-heading);
+  font-size: 1.4rem;
+  margin: 0 0 16px 0;
+  color: var(--text-primary);
+}
+
+.resolution-status h3,
+.assignments-section h3,
+.resolution-images h3,
+.resolution-actions h3 {
+  font-size: 0.9rem;
+  font-weight: 600;
+  margin: 0 0 8px 0;
+  color: var(--text-primary);
+}
+
+.assignment-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 6px 0;
+  border-bottom: 1px solid var(--border-color);
+  font-size: 0.85rem;
+}
+
+.assignment-item:last-child {
+  border-bottom: none;
+}
+
+.assignment-item span {
+  color: var(--text-secondary);
+}
+
+.resolution-image-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(60px, 1fr));
+  gap: 6px;
+}
+
+.resolution-image-grid a {
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  overflow: hidden;
+  display: block;
+}
+
+.action-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.action-buttons button {
+  padding: 6px 12px;
+  font-size: 0.8rem;
+  border: 1px solid var(--border-color);
+  background: var(--bg-surface);
+  color: var(--text-primary);
+  border-radius: var(--radius-button);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.action-buttons button:hover {
+  background: var(--color-primary);
+  color: var(--text-on-accent);
+  border-color: var(--color-primary);
+}
+
+.action-buttons .delete-btn {
+  background: var(--color-danger);
+  color: var(--text-on-accent);
+  border-color: var(--color-danger);
+}
+
+@media (max-width: 1200px) {
+  .issue-details-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .issue-cards-container {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+}
+
 @media (max-width: 768px) {
   .issue-details-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .issue-cards-container {
     grid-template-columns: 1fr;
   }
 }

@@ -6,6 +6,7 @@ import './RoleDashboard.css';
 import { canTransition } from '../../utils/statusFlow';
 import { useAuth } from '../../hooks/useAuth';
 import { getDepartmentName, getOfficerDisplayId, getUserId, getWorkerDisplayId } from '../../utils/userDisplay';
+import { useToast } from '../../contexts/ToastContext';
 
 const OfficerDashboard = () => {
   const { user } = useAuth();
@@ -16,6 +17,7 @@ const OfficerDashboard = () => {
   const [workerInputs, setWorkerInputs] = useState({});
   const [availableWorkers, setAvailableWorkers] = useState([]);
   const [workerDirectoryError, setWorkerDirectoryError] = useState('');
+  const { showToast } = useToast();
 
   useEffect(() => {
     let mounted = true;
@@ -72,7 +74,7 @@ const OfficerDashboard = () => {
       const updated = await action();
       patchIssue(updated);
     } catch (err) {
-      alert(getErrorMessage(err));
+      showToast(getErrorMessage(err), { tone: 'error' });
     } finally {
       setWorkingId('');
     }
@@ -175,11 +177,12 @@ const OfficerDashboard = () => {
           ) : issues.length === 0 ? (
             <p className="text-muted">No issues assigned to your department.</p>
           ) : (
-            <table className="role-dashboard__table">
-              <thead>
-                <tr>
-                  <th>Issue</th>
-                  <th>Status</th>
+            <div className="table-wrapper">
+              <table className="role-dashboard__table">
+                <thead>
+                  <tr>
+                    <th>Issue</th>
+                    <th>Status</th>
                   <th>Category</th>
                   <th>Reporter</th>
                   <th>Worker ID</th>
@@ -280,8 +283,9 @@ const OfficerDashboard = () => {
                     </td>
                   </tr>
                 ))}
-              </tbody>
-            </table>
+                </tbody>
+              </table>
+            </div>
           )}
         </section>
       </div>

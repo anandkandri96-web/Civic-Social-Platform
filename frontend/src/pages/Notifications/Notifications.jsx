@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { getNotifications, markAllNotificationsRead, markNotificationRead } from '@api/notifications.api.js';
 import { getErrorMessage } from '@api/utils';
 import Loader from '../../components/common/Loader/Loader';
+import { useToast } from '../../contexts/ToastContext';
 import './Notifications.css';
 
 const Notifications = () => {
@@ -10,6 +11,7 @@ const Notifications = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [working, setWorking] = useState('');
+  const { showToast } = useToast();
 
   useEffect(() => {
     let mounted = true;
@@ -42,7 +44,7 @@ const Notifications = () => {
       setItems((prev) => prev.map((it) => (it._id === id ? updated : it)));
       setMeta((prev) => ({ ...prev, unreadCount: Math.max(0, Number(prev.unreadCount || 0) - 1) }));
     } catch (err) {
-      alert(getErrorMessage(err));
+      showToast(getErrorMessage(err), { tone: 'error' });
     } finally {
       setWorking('');
     }
@@ -55,7 +57,7 @@ const Notifications = () => {
       setItems((prev) => prev.map((it) => ({ ...it, read: true })));
       setMeta((prev) => ({ ...prev, unreadCount: 0 }));
     } catch (err) {
-      alert(getErrorMessage(err));
+      showToast(getErrorMessage(err), { tone: 'error' });
     } finally {
       setWorking('');
     }

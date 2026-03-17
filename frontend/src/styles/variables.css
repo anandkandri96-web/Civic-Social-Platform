@@ -1,51 +1,101 @@
 :root {
-  --color-primary: #00c8f8;
-  --color-primary-light: #48dbff;
-  --color-secondary: #00e5a0;
-  --color-success: #00e5a0;
-  --color-warning: #ff7a35;
-  --color-danger: #ff4560;
-  --gradient-accent: linear-gradient(135deg, #00c8f8, #48dbff);
+  /* COLORS */
+  --color-primary: #2F8398;
+  --color-success: #87A83F;
+  --color-warning: #F2B933;
+  --color-danger: #F27C54;
+  --color-info: #C0C91E;
 
-  --bg-main: #060d1a;
-  --bg-surface: #0a1220;
-  --bg-card: #0e1828;
-  --bg-hover: #152236;
+  --bg-page: #f9fafb;
+  --bg-surface: #ffffff;
 
-  --text-primary: #dce8f5;
-  --text-secondary: #7a92b0;
-  --text-muted: #3d5068;
+  --text-primary: #111827;
+  --text-secondary: #6b7280;
 
-  --border-color: #1c2b42;
-  --border-bright: #243550;
-  --focus-ring: 0 0 0 3px rgba(0, 200, 248, 0.35);
+  --border-color: #e5e7eb;
 
-  --space-xs: 4px;
-  --space-sm: 8px;
-  --space-md: 16px;
-  --space-lg: 24px;
-  --space-xl: 32px;
+  /* SPACING */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
 
-  --radius-sm: 7px;
-  --radius-md: 10px;
-  --radius-lg: 12px;
+  /* TYPOGRAPHY */
+  --font-size-h1: 28px;
+  --font-size-h2: 22px;
+  --font-size-body: 14px;
+  --font-size-caption: 12px;
 
-  --shadow-sm: 0 10px 24px rgba(0, 0, 0, 0.25);
-  --shadow-md: 0 16px 40px rgba(0, 0, 0, 0.35);
-  --shadow-lg: 0 30px 70px rgba(0, 0, 0, 0.45);
+  /* RADIUS */
+  --radius-sm: 6px;
+  --radius-md: 8px;
+  --radius-lg: 10px;
 
-  --font-base: 'DM Sans', 'Inter', system-ui, -apple-system, Segoe UI, sans-serif;
-  --font-heading: 'Syne', 'Space Grotesk', 'Inter', sans-serif;
-  --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  /* SHADOW */
+  --shadow-card: 0 2px 8px rgba(0, 0, 0, 0.08);
 
-  --text-h1: 48px;
-  --text-h2: 36px;
-  --text-h3: 28px;
-  --font-size-sm: 0.875rem;
-  --font-size-md: 1rem;
-  --font-size-lg: 1.125rem;
-  --font-size-xl: 1.5rem;
+  /* Legacy aliases */
+  --color-brand: var(--color-primary);
+  --color-secondary: #87A83F;
+  --color-highlight: var(--color-warning);
+  --color-primary-light: var(--color-primary);
 
+  --color-primary-rgb: 47, 131, 152;
+  --color-success-rgb: 135, 168, 63;
+  --color-warning-rgb: 242, 185, 51;
+  --color-danger-rgb: 242, 124, 84;
+  --color-info-rgb: 192, 201, 30;
+  --color-brand-rgb: var(--color-primary-rgb);
+  --color-secondary-rgb: 135, 168, 63;
+  --color-highlight-rgb: var(--color-warning-rgb);
+
+  --bg-main: var(--bg-page);
+  --bg-card: var(--bg-surface);
+  --bg-hover: #f3f4f6;
+  --bg-main-rgb: 249, 250, 251;
+  --bg-surface-rgb: 255, 255, 255;
+  --bg-card-rgb: 255, 255, 255;
+  --bg-hover-rgb: 243, 244, 246;
+
+  --text-muted: #9ca3af;
+  --text-on-accent: var(--bg-surface);
+  --text-on-highlight: var(--text-primary);
+  --text-on-danger: var(--bg-surface);
+  --text-on-muted: var(--bg-surface);
+
+  --border-bright: #d1d5db;
+  --focus-ring: 0 0 0 3px rgba(var(--color-primary-rgb), 0.3);
+
+  --space-xs: var(--space-1);
+  --space-sm: var(--space-2);
+  --space-md: var(--space-3);
+  --space-lg: var(--space-4);
+  --space-xl: var(--space-5);
+  --space-2xl: var(--space-6);
+
+  --radius-button: var(--radius-md);
+  --radius-input: var(--radius-md);
+  --radius-card: var(--radius-lg);
+
+  --shadow-sm: var(--shadow-card);
+  --shadow-md: var(--shadow-card);
+  --shadow-lg: var(--shadow-card);
+
+  --font-base: 'DM Sans', system-ui, -apple-system, Segoe UI, sans-serif;
+  --font-heading: 'DM Sans', system-ui, -apple-system, Segoe UI, sans-serif;
+  --font-mono: 'DM Sans', system-ui, -apple-system, Segoe UI, sans-serif;
+
+  --text-h1: var(--font-size-h1);
+  --text-h2: var(--font-size-h2);
+  --text-h3: var(--font-size-h2);
+  --font-size-sm: var(--font-size-caption);
+  --font-size-md: var(--font-size-body);
+  --font-size-lg: var(--font-size-body);
+  --font-size-xl: var(--font-size-h2);
+
+  --gradient-accent: linear-gradient(135deg, var(--color-primary), var(--color-secondary));
   --transition-fast: 0.15s ease;
   --transition-normal: 0.25s ease;
 }

@@ -7,12 +7,14 @@ import {
 } from '@api/volunteer.api.js';
 import { getErrorMessage } from '@api/utils';
 import './RoleDashboard.css';
+import { useToast } from '../../contexts/ToastContext';
 
 const VolunteerDashboard = () => {
   const [issues, setIssues] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [workingId, setWorkingId] = useState('');
+  const { showToast } = useToast();
 
   useEffect(() => {
     let mounted = true;
@@ -46,7 +48,7 @@ const VolunteerDashboard = () => {
       patchLocalIssue(updated);
       return true;
     } catch (err) {
-      alert(getErrorMessage(err));
+      showToast(getErrorMessage(err), { tone: 'error' });
       return false;
     } finally {
       setWorkingId('');
@@ -96,11 +98,12 @@ const VolunteerDashboard = () => {
           ) : issues.length === 0 ? (
             <p className="text-muted">No volunteer-eligible issues right now.</p>
           ) : (
-            <table className="role-dashboard__table">
-              <thead>
-                <tr>
-                  <th>Issue</th>
-                  <th>Category</th>
+            <div className="table-wrapper">
+              <table className="role-dashboard__table">
+                <thead>
+                  <tr>
+                    <th>Issue</th>
+                    <th>Category</th>
                   <th>Status</th>
                   <th>Location</th>
                   <th>Actions</th>
@@ -139,7 +142,8 @@ const VolunteerDashboard = () => {
                   </tr>
                 ))}
               </tbody>
-            </table>
+              </table>
+            </div>
           )}
         </section>
       </div>
