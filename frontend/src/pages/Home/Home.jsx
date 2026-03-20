@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "../../hooks/useAuth";
-import { useRole } from "../../hooks/useRole";
+import { usePermission } from "../../hooks/usePermission";
 import { getIssues } from "@api/issues.api";
 import { mapBackendStatus, statusConfig } from "@/utils/statusConfig";
 import VoteButton from "../../components/issues/VoteButton/VoteButton";
@@ -862,7 +862,9 @@ function Footer() {
 
 const Home = () => {
   const { user, logout } = useAuth();
-  const { isAdmin, dashboardPath } = useRole();
+  // ✅ Use permissions instead of role checks
+  const { can, dashboardPath } = usePermission();
+  const isAdmin = can('admin:view_analytics');
 
   const [issues, setIssues] = useState([]);
   const [issuesLoading, setIssuesLoading] = useState(true);

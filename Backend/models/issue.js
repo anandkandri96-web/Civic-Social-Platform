@@ -181,6 +181,19 @@ const issueSchema = new mongoose.Schema(
       ],
       default: [],
     },
+
+    statusHistory: {
+      type: [
+        {
+          from: { type: String, trim: true, required: true },
+          to: { type: String, trim: true, required: true },
+          changedBy: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
+          changedAt: { type: Date, required: true, default: Date.now },
+          note: { type: String, default: "" },
+        },
+      ],
+      default: [],
+    },
   },
   { timestamps: true }
 );

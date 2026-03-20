@@ -4,7 +4,7 @@ import { useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { getIssues } from '@api/issues.api';
 import { getErrorMessage } from '@api/utils';
-import { useRole } from '../../hooks/useRole';
+import { usePermission } from '../../hooks/usePermission';
 import { ISSUE_STATUSES, ISSUE_STATUS_LABELS } from '../../constants/issueStatus';
 import IssueCard from '../../components/issues/IssueCard/IssueCard';
 import Skeleton from '../../components/common/Skeleton/Skeleton';
@@ -43,7 +43,8 @@ const SORT_OPTIONS = [
 ];
 
 const IssueList = () => {
-  const { isAdmin, loading: roleLoading } = useRole();
+  // ✅ Use permissions instead of role checks
+  const { can, loading: roleLoading } = usePermission();
   const [searchParams, setSearchParams] = useSearchParams();
   const searchQuery = useMemo(() => String(searchParams.get('search') || '').trim(), [searchParams]);
   const [issues, setIssues] = useState([]);
@@ -54,7 +55,8 @@ const IssueList = () => {
   const [sort, setSort] = useState('priority');
 
   useEffect(() => {
-    if (isAdmin) return () => {};
+    // ✅ Skip fetching if user lacks issue viewing permission
+    if (!can('issue:read')) return () => {};
     let mounted = true;
     const params = {};
     if (category) params.category = category;
@@ -80,7 +82,7 @@ const IssueList = () => {
     setLoading(true);
     fetchIssues();
     return () => { mounted = false; };
-  }, [category, status, sort, isAdmin, searchQuery]);
+  }, [category, status, sort, can, searchQuery]);
 
   if (roleLoading) {
     return (
@@ -99,7 +101,8 @@ const IssueList = () => {
       </section>
     );
   }
-  if (isAdmin) return <Navigate to="/admin" replace />;
+  // ✅ Redirect admins to admin dashboard (they have admin:view_all_issues permission, not issue:read)
+  if (can('admin:view_all_issues')) return <Navigate to="/admin/manage-issues" replace />;
 
   return (
     <section className="issues-page page">
@@ -141,7 +144,8 @@ const IssueList = () => {
               ))}
             </select>
           </div>
-          {!isAdmin && (
+          {/* ✅ Show report button only if user can create issues */}
+          {can('issue:create') && (
             <Link to="/issues/create" className="issues-create-link">
               + Report an Issue
             </Link>
@@ -188,7 +192,7 @@ const IssueList = () => {
                     ? 'Try changing filters or report a new issue.'
                     : 'No issues reported yet. Be the first to report one.'}
                 </p>
-                {!isAdmin && (
+                {can('issue:create') && (
                   <Link to="/issues/create" className="issues-empty-cta">
                     Report an Issue
                   </Link>

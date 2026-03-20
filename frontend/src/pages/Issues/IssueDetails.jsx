@@ -3,7 +3,7 @@ import { Link, useNavigate, useParams } from 'react-router-dom';
 import VoteButton from '../../components/issues/VoteButton/VoteButton';
 import StatusBadge from '../../components/issues/StatusBadge/StatusBadge';
 import { useAuth } from '../../hooks/useAuth';
-import { useRole } from '../../hooks/useRole';
+import { usePermission } from '../../hooks/usePermission';
 import { createIssueComment, deleteIssueComment, getIssueComments, updateIssueComment } from '@api/comments.api';
 import { closeIssue, deleteIssue, getIssueById, reopenIssue, verifyIssue } from '@api/issues.api';
 import { getErrorMessage } from '@api/utils';
@@ -29,7 +29,7 @@ const IssueDetails = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const { user, isAuthenticated } = useAuth();
-  const { isAdmin, isOfficer, isVolunteer } = useRole();
+  const { can, isAdmin, isOfficer, isVolunteer } = usePermission();
   const [issue, setIssue] = useState(null);
   const [comments, setComments] = useState([]);
   const [commentText, setCommentText] = useState('');
@@ -67,14 +67,17 @@ const IssueDetails = () => {
   const reporterId = issue?.reportedBy?._id ?? issue?.reportedBy;
   const isReporter = user?.id && String(reporterId) === String(user.id);
   const status = String(issue?.status || '').trim().toLowerCase();
-  const canDelete = isAdmin || (isReporter && (status === 'reported' || status === 'closed'));
-  const canClose = (isAdmin || isOfficer) && canTransition(issue?.status, 'closed');
+  // ✅ Use permissions instead of role checks
+  // issue:delete allows: admins (always), citizens (if reporter + deletable status)
+  const canDelete = can('issue:delete') && (user?.role === 'admin' || (isReporter && (status === 'reported' || status === 'closed')));
+  // issue:close allows: admins and officers (with transition check)
+  const canClose = can('issue:close') && canTransition(issue?.status, 'closed');
   const canVerify = isReporter && canTransition(issue?.status, 'citizen_verified');
   const REOPENABLE = ['resolved', 'resolved_by_community', 'closed'];
   const canReopen = isReporter && REOPENABLE.includes(issue?.status);
 
-  const backPath = isAdmin ? '/admin' : '/issues';
-  const backLabel = isAdmin ? 'Admin Dashboard' : 'Issues';
+  const backPath = can('admin:view_analytics') ? '/admin' : '/issues';
+  const backLabel = can('admin:view_analytics') ? 'Admin Dashboard' : 'Issues';
   const submittedImages = normalizeImages(issue?.images);
   const volunteerAfterImages = normalizeImages(issue?.communityProof);
   const workerAfterImages = normalizeImages(issue?.workerProgressImages);
@@ -260,7 +263,8 @@ const IssueDetails = () => {
 
               <div className="issue-header">
                 <h1>{issue.title}</h1>
-                {!isAdmin && (
+                {/* ✅ Show vote button only if user doesn't have admin permissions */}
+                {!can('admin:view_analytics') && (
                   <div onClick={(e) => e.stopPropagation()}>
                     <VoteButton
                       issueId={issue._id}
@@ -402,7 +406,8 @@ const IssueDetails = () => {
                   <ul className="issue-comment-list">
                     {comments.slice(0, 3).map((comment) => {
                       const commentUserId = comment?.user?._id ?? comment?.user;
-                      const canModifyComment = isAdmin || (user?.id && String(commentUserId) === String(user.id));
+                      // ✅ Use comment:delete permission (admin or comment author)
+                      const canModifyComment = can('comment:delete') && (user?.role === 'admin' || (user?.id && String(commentUserId) === String(user.id)));
                       const name = comment?.user?.name || 'User';
                       const avatar = String(name).charAt(0).toUpperCase();
                       const isLiked = liked.has(comment._id);
@@ -483,7 +488,8 @@ const IssueDetails = () => {
             </div>
           )}
 
-          {isVolunteer && (
+          {/* ✅ Show volunteer panel to volunteers */}
+          {can('volunteer:claim_issue') && (
             <div className="issue-side-card card">
               <VolunteerPanel issue={issue} onIssueUpdate={setIssue} />
             </div>

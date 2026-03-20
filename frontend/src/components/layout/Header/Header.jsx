@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../../hooks/useAuth';
 import { useRole } from '../../../hooks/useRole';
+import { usePermission } from '../../../hooks/usePermission';
 import { getNotifications } from '@api/notifications.api.js';
 import NotificationPanel from '../../notifications/NotificationPanel/NotificationPanel';
 import ThemeToggle from '../../common/ThemeToggle/ThemeToggle';
@@ -35,7 +36,8 @@ const ICONS = {
 
 const Header = () => {
   const { user, isAuthenticated, logout } = useAuth();
-  const { isCitizen, isAdmin, isOfficer, isWorker, dashboardPath } = useRole();
+  const { dashboardPath } = useRole();
+  const { can, isAdmin, isCitizen } = usePermission();
 
   const [searchTerm, setSearchTerm] = useState('');
   const [menuOpen, setMenuOpen] = useState(false);
@@ -84,7 +86,8 @@ const Header = () => {
   }, [isAuthenticated]);
 
   const navLinks = useMemo(() => {
-    const issuesTarget = isAdmin ? '/admin/manage-issues' : '/issues';
+    // ✅ Use permissions instead of role checks
+    const issuesTarget = can('admin:view_all_issues') ? '/admin/manage-issues' : '/issues';
     const mapTarget = isAuthenticated ? '/dashboard/map' : '/map';
     const dashboardTarget = isAuthenticated ? dashboardPath : '/login';
 
@@ -94,7 +97,7 @@ const Header = () => {
       { to: dashboardTarget, label: 'Dashboard' },
       { to: '/workflow', label: 'Workflow' },
     ];
-  }, [dashboardPath, isAdmin, isAuthenticated]);
+  }, [dashboardPath, isAuthenticated, can]);
 
   const handleSearchSubmit = (event) => {
     event.preventDefault();
@@ -171,7 +174,8 @@ const Header = () => {
               {link.label}
             </NavLink>
           ))}
-          {isAdmin && (
+          {/* ✅ Use permissions instead of role checks */}
+          {can('admin:view_analytics') && (
             <>
               <NavLink to="/admin/analytics" className={({ isActive }) => `app-header__nav-link${isActive ? ' is-active' : ''}`}>
                 View Analytics
@@ -216,7 +220,8 @@ const Header = () => {
 
         {isAuthenticated ? (
           <>
-            {isCitizen && !isAdmin && (
+            {/* ✅ Use permissions instead of role checks for Report Issue button */}
+            {can('issue:create') && (
               <Link to="/issues/create" className="app-header__report">
                 Report Issue
               </Link>
@@ -237,7 +242,8 @@ const Header = () => {
                   <Link to="/profile" className="app-header__avatar-item" role="menuitem">
                     Profile
                   </Link>
-                  {!isAdmin && !isOfficer && !isWorker && (
+                  {/* ✅ Show "My Issues" for citizens/volunteers (anyone without admin/officer/worker dashboards) */}
+                  {!can('admin:view_analytics') && !can('officer:review_issues') && !can('worker:view_tasks') && (
                     <Link to="/dashboard" className="app-header__avatar-item" role="menuitem">
                       My Issues
                     </Link>

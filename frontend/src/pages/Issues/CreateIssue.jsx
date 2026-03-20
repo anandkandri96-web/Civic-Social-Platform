@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react';
 import { Link, Navigate, useNavigate } from 'react-router-dom';
 import { createIssue as createIssueApi } from '@api/issues.api';
 import { getErrorMessage } from '@api/utils';
-import { useRole } from '../../hooks/useRole';
+import { usePermission } from '../../hooks/usePermission';
 import './CreateIssue.css';
 
 const CATEGORIES = [
@@ -26,7 +26,8 @@ const STEPS = ['Category', 'Location', 'Details', 'Review'];
 
 const CreateIssue = () => {
   const navigate = useNavigate();
-  const { isAdmin, loading } = useRole();
+  // ✅ Use permission to check if user can create issues
+  const { can, loading } = usePermission();
 
   const [step, setStep] = useState(1);
   const [submitting, setSubmitting] = useState(false);
@@ -56,7 +57,8 @@ const CreateIssue = () => {
   }, [step, form]);
 
   if (loading) return null;
-  if (isAdmin) return <Navigate to="/admin" replace />;
+  // ✅ Redirect admins and users without issue:create permission
+  if (!can('issue:create')) return <Navigate to="/issues" replace />;
 
   const setCoordsFromMap = (clientX, clientY, rect) => {
     const relX = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));

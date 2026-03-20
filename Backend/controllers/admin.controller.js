@@ -46,6 +46,9 @@ exports.getAllIssues = async (req, res) => {
   try {
     const { page = 1, limit = 20, status, category, sort = "-createdAt" } = req.query;
 
+    const allowedSortFields = new Set(["createdAt", "-createdAt", "priorityScore", "-priorityScore", "voteCount", "-voteCount", "severity", "-severity"]);
+    const sortValue = allowedSortFields.has(String(sort).trim()) ? String(sort).trim() : "-createdAt";
+
     const filter = {};
     if (status) filter.status = String(status).toLowerCase();
     if (category) filter.category = String(category).toLowerCase();
@@ -58,7 +61,7 @@ exports.getAllIssues = async (req, res) => {
         .populate("assignedDepartment", "name")
         .populate("assignedWorker", "name email workerId")
         .populate("volunteer", "name email")
-        .sort(sort)
+        .sort(sortValue)
         .skip(skip)
         .limit(Number(limit))
         .lean(),

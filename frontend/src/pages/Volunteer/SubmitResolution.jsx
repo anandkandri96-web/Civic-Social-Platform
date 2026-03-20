@@ -4,7 +4,7 @@ import { getIssueById } from '@api/issues.api';
 import { resolveVolunteerIssue } from '@api/volunteer.api';
 import { getErrorMessage } from '@api/utils';
 import { resolveMediaUrl } from '@/utils/mediaUrl';
-import { useRole } from '../../hooks/useRole';
+import { usePermission } from '../../hooks/usePermission';
 import Loader from '../../components/common/Loader/Loader';
 import SafeImage from '../../components/common/SafeImage/SafeImage';
 import './SubmitResolution.css';
@@ -12,7 +12,8 @@ import './SubmitResolution.css';
 const SubmitResolution = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { isVolunteer, loading: roleLoading } = useRole();
+  // ✅ Use permissions instead of role checks
+  const { can, loading: roleLoading } = usePermission();
 
   const [issue, setIssue] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -76,7 +77,7 @@ const SubmitResolution = () => {
   };
 
   if (roleLoading || loading) return <Loader fullScreen />;
-  if (!isVolunteer) return <Navigate to="/dashboard" replace />;
+  if (!can('volunteer:submit_resolution')) return <Navigate to="/dashboard" replace />;
   if (!issue) {
     return (
       <section className="submit-resolution page">

@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { useRole } from '../../hooks/useRole';
+import { usePermission } from '../../hooks/usePermission';
 import IssueLeafletMap from '../../components/map/IssueLeafletMap';
 import { getPublicHeatmap } from '@api/analytics.api.js';
 import { getErrorMessage } from '@api/utils';
@@ -8,7 +8,8 @@ import { getIssues } from '@api/issues.api';
 import './IssueMap.css';
 
 const IssueMap = () => {
-  const { isAdmin } = useRole();
+  // ✅ Use permissions instead of role checks
+  const { can } = usePermission();
   const [heatmapData, setHeatmapData] = useState([]);
   const [mode, setMode] = useState('heatmap'); // 'heatmap' | 'issues'
   const [issues, setIssues] = useState([]);
@@ -117,7 +118,7 @@ const IssueMap = () => {
         <aside className="issue-map-sidebar">
           <div className="issue-map-head">
             <span>Bengaluru - Civic Map</span>
-            {!isAdmin && <Link to="/issues/create">+ Report</Link>}
+            {can('issue:create') && <Link to="/issues/create">+ Report</Link>}
           </div>
 
           {error && <div className="issue-map-error">{error}</div>}

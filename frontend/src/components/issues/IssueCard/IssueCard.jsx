@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import VoteButton from '../VoteButton/VoteButton';
 import { useAuth } from '../../../hooks/useAuth';
-import { useRole } from '../../../hooks/useRole';
+import { usePermission } from '../../../hooks/usePermission';
 import { deleteIssue } from '@api/issues.api.js';
 import { getErrorMessage } from '@api/utils';
 import { mapBackendStatus, statusConfig } from '@/utils/statusConfig';
@@ -38,7 +38,7 @@ function formatTimeAgo(date) {
 
 const IssueCard = ({ issue, onVote, onDeleted }) => {
   const { user } = useAuth();
-  const { isAdmin } = useRole();
+  const { can } = usePermission();
   const [deleting, setDeleting] = useState(false);
   const navigate = useNavigate();
   const { showToast } = useToast();
@@ -59,7 +59,11 @@ const IssueCard = ({ issue, onVote, onDeleted }) => {
   const reporterId = rep && typeof rep === 'object' ? rep._id : rep;
   const isReporter = !!user?.id && String(reporterId) === String(user.id);
   const status = String(issue?.status || '').trim().toLowerCase();
-  const canDelete = isAdmin || (isReporter && (status === 'reported' || status === 'closed'));
+  
+  // ✅ Use permissions instead of role checks
+  // Can delete if: admin OR (reporter AND in deletable status)
+  const canDelete = can('issue:delete') && (user?.role === 'admin' || (isReporter && (status === 'reported' || status === 'closed')));
+  
   const departmentName =
     issue?.assignedDepartment?.name ??
     (typeof issue?.assignedDepartment === 'string' ? issue.assignedDepartment : issue?.department);
@@ -177,7 +181,8 @@ const IssueCard = ({ issue, onVote, onDeleted }) => {
       <p className="issue-card__desc">{issue.description || 'No description provided.'}</p>
 
       <div className="issue-card__footer">
-        {!isAdmin && (
+        {/* ✅ Show vote button only if user doesn't have admin permissions */}
+        {!can('admin:view_analytics') && (
           <div className="issue-card__vote" onClick={(e) => e.stopPropagation()}>
             <VoteButton
               issueId={issue._id}

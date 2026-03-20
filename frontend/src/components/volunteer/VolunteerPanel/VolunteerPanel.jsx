@@ -2,16 +2,17 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { claimVolunteerIssue, updateVolunteerProgress } from '@api/volunteer.api.js';
 import { getErrorMessage } from '@api/utils';
-import { useRole } from '../../../hooks/useRole';
+import { usePermission } from '../../../hooks/usePermission';
 import { useToast } from '../../../contexts/ToastContext';
 import './VolunteerPanel.css';
 
 const VolunteerPanel = ({ issue, onIssueUpdate }) => {
-  const { isVolunteer } = useRole();
+  // ✅ Use permissions instead of role checks
+  const { can } = usePermission();
   const [loading, setLoading] = useState(false);
   const { showToast } = useToast();
 
-  if (!isVolunteer) return null;
+  if (!can('volunteer:claim_issue')) return null;
   if (!issue?._id) return null;
 
   const handleClaim = async () => {

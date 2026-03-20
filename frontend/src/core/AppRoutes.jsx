@@ -15,8 +15,10 @@ import CreateIssue from '../pages/Issues/CreateIssue';
 
 import UserDashboard from '../pages/Dashboard/UserDashboard';
 import AdminDashboard from '../pages/Dashboard/AdminDashboard';
-import { useRole } from '../hooks/useRole';
+import { usePermission } from '../hooks/usePermission';
 
+import NotFound from '../pages/NotFound/NotFound';
+import Unauthorized from '../pages/Unauthorized/Unauthorized';
 import Loader from '../components/common/Loader/Loader';
 
 const Analytics = lazy(() => import('../pages/Admin/Analytics'));
@@ -32,12 +34,13 @@ const Profile = lazy(() => import('../pages/Profile/Profile'));
 const SubmitResolution = lazy(() => import('../pages/Volunteer/SubmitResolution'));
 
 const DashboardEntry = () => {
-  const { isAdmin, isOfficer, isWorker, isVolunteer } = useRole();
+  // ✅ Use permissions instead of role checks
+  const { can } = usePermission();
 
-  if (isAdmin) return <Navigate to="/admin" replace />;
-  if (isOfficer) return <Navigate to="/dashboard/officer" replace />;
-  if (isWorker) return <Navigate to="/dashboard/worker" replace />;
-  if (isVolunteer) return <Navigate to="/dashboard/volunteer" replace />;
+  if (can('admin:view_analytics')) return <Navigate to="/admin" replace />;
+  if (can('officer:review_issues') || can('officer:view_queue')) return <Navigate to="/dashboard/officer" replace />;
+  if (can('worker:view_tasks')) return <Navigate to="/dashboard/worker" replace />;
+  if (can('volunteer:claim_issue')) return <Navigate to="/dashboard/volunteer" replace />;
   return <UserDashboard />;
 };
 
@@ -61,7 +64,7 @@ const AppRoutes = () => (
           <Route
             path="/dashboard/volunteer"
             element={(
-              <ProtectedRoute requiredRole="volunteer">
+              <ProtectedRoute requiredPermissions={["volunteer:access", "volunteer:claim_issue"]} fallbackRoute="/unauthorized">
                 <VolunteerDashboard />
               </ProtectedRoute>
             )}
@@ -69,7 +72,7 @@ const AppRoutes = () => (
           <Route
             path="/dashboard/volunteer/submit/:id"
             element={(
-              <ProtectedRoute requiredRole="volunteer">
+              <ProtectedRoute requiredPermissions={["volunteer:access", "volunteer:submit_resolution"]} fallbackRoute="/unauthorized">
                 <SubmitResolution />
               </ProtectedRoute>
             )}
@@ -77,7 +80,7 @@ const AppRoutes = () => (
           <Route
             path="/dashboard/officer"
             element={(
-              <ProtectedRoute requiredRole="officer">
+              <ProtectedRoute requiredPermissions={["officer:access", "officer:review_issues"]} fallbackRoute="/unauthorized">
                 <OfficerDashboard />
               </ProtectedRoute>
             )}
@@ -85,7 +88,7 @@ const AppRoutes = () => (
           <Route
             path="/dashboard/officer/analytics"
             element={(
-              <ProtectedRoute requiredRole="officer">
+              <ProtectedRoute requiredPermissions={["officer:access", "admin:view_analytics"]} fallbackRoute="/unauthorized">
                 <Analytics />
               </ProtectedRoute>
             )}
@@ -93,19 +96,36 @@ const AppRoutes = () => (
           <Route
             path="/dashboard/worker"
             element={(
-              <ProtectedRoute requiredRole="worker">
+              <ProtectedRoute requiredPermissions={["worker:view_tasks"]} fallbackRoute="/unauthorized">
                 <WorkerDashboard />
               </ProtectedRoute>
             )}
           />
-          <Route path="/issues/create" element={<CreateIssue />} />
-          <Route path="/notifications" element={<Notifications />} />
-          <Route path="/dashboard/map" element={<IssueMap />} />
-          <Route path="/profile" element={<Profile />} />
+          <Route path="/issues/create" element={
+            <ProtectedRoute requiredPermission="issue:create" fallbackRoute="/unauthorized">
+              <CreateIssue />
+            </ProtectedRoute>
+          } />
+          <Route path="/notifications" element={
+            <ProtectedRoute requiredPermission="issue:read" fallbackRoute="/unauthorized">
+              <Notifications />
+            </ProtectedRoute>
+          } />
+          <Route path="/dashboard/map" element={
+            <ProtectedRoute requiredPermission="issue:read" fallbackRoute="/unauthorized">
+              <IssueMap />
+            </ProtectedRoute>
+          } />
+          <Route path="/profile" element={
+            <ProtectedRoute requiredPermission="issue:read" fallbackRoute="/unauthorized">
+              <Profile />
+            </ProtectedRoute>
+          } />
         </Route>
       </Route>
 
-      <Route element={<ProtectedRoute requiredRole="admin" />}>
+      {/* ✅ Admin routes protected by permission */}
+      <Route element={<ProtectedRoute requiredPermission="admin:view_analytics" />}>
         <Route element={<DashboardLayout />}>
           <Route path="/admin" element={<AdminDashboard />} />
           <Route path="/admin/analytics" element={<Analytics />} />

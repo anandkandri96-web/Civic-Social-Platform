@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import { useAuth } from '../../hooks/useAuth';
-import { useRole } from '../../hooks/useRole';
+
 import citizenIcon from '../../assets/citizen icon.png';
 import officerIcon from '../../assets/officer icon.png';
 import volunteerIcon from '../../assets/volunteer icon.png';
@@ -66,7 +66,8 @@ const ROLE_SUMMARY = {
 
 const Profile = () => {
   const { user } = useAuth();
-  const { role } = useRole();
+  // ✅ Get role from user object instead of useRole hook
+  const role = user?.role || 'citizen';
 
   const profileMeta = useMemo(
     () => ROLE_SUMMARY[role] || ROLE_SUMMARY.citizen,

@@ -21,4 +21,10 @@ describe("Issue status flow", () => {
       expect(STATUS_TRANSITIONS[state].length).toBe(0);
     }
   });
+
+  it("enforces community flow transitions", () => {
+    expect(canTransition(ISSUE_STATUS.VOLUNTEER_CLAIMED, ISSUE_STATUS.COMMUNITY_FIX_IN_PROGRESS)).toBe(true);
+    expect(canTransition(ISSUE_STATUS.COMMUNITY_FIX_IN_PROGRESS, ISSUE_STATUS.RESOLVED_BY_COMMUNITY)).toBe(true);
+    expect(canTransition(ISSUE_STATUS.REPORTED, ISSUE_STATUS.RESOLVED)).toBe(false);
+  });
 });

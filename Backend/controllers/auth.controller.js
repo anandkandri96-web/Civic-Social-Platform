@@ -44,7 +44,9 @@ exports.register = async (req, res) => {
     const name = String(body.name).trim();
     const email = String(body.email).trim().toLowerCase();
     const password = String(body.password);
-    const requestedRole = normalizeRole(body.role || ROLES.CITIZEN);
+    // ✅ SECURITY FIX: Force 'citizen' role for all new registrations
+    // Only admins can elevate users to other roles via separate admin endpoint
+    const requestedRole = ROLES.CITIZEN;
 
     if (name.length < 2 || name.length > 60) {
       return apiResponse(res, 400, "Name must be 2-60 characters");
@@ -58,10 +60,6 @@ exports.register = async (req, res) => {
       return apiResponse(res, 400, "Password must be 6-128 characters");
     }
 
-    if (!PUBLIC_ROLES.has(requestedRole)) {
-      return apiResponse(res, 400, "Invalid role for public registration");
-    }
-
     const existing = await User.findOne({ email });
     if (existing) {
       return apiResponse(res, 400, "Email already registered");
@@ -72,7 +70,8 @@ exports.register = async (req, res) => {
       email,
       password,
       role: requestedRole,
-      isApproved: requestedRole === ROLES.CITIZEN,
+      // ✅ New citizens are auto-approved (no escalation needed)
+      isApproved: true,
     });
 
     const token = generateToken(user);

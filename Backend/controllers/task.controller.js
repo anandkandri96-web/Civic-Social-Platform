@@ -148,6 +148,9 @@ exports.updateTaskStatus = async (req, res) => {
     task.status = nextStatus;
 
     if (nextStatus === TASK_STATUS.ACCEPTED) {
+      if (!canTransition(task.issue.status, ISSUE_STATUS.WORK_IN_PROGRESS)) {
+        return apiResponse(res, 400, `Cannot move issue from ${task.issue.status} to ${ISSUE_STATUS.WORK_IN_PROGRESS}`);
+      }
       await Issue.findByIdAndUpdate(task.issue._id, { status: ISSUE_STATUS.WORK_IN_PROGRESS });
       await createNotification({
         userId: task.issue.reportedBy,
@@ -158,10 +161,16 @@ exports.updateTaskStatus = async (req, res) => {
     }
 
     if (nextStatus === TASK_STATUS.IN_PROGRESS) {
+      if (!canTransition(task.issue.status, ISSUE_STATUS.WORK_IN_PROGRESS)) {
+        return apiResponse(res, 400, `Cannot move issue from ${task.issue.status} to ${ISSUE_STATUS.WORK_IN_PROGRESS}`);
+      }
       await Issue.findByIdAndUpdate(task.issue._id, { status: ISSUE_STATUS.WORK_IN_PROGRESS });
     }
 
     if (nextStatus === TASK_STATUS.COMPLETED) {
+      if (!canTransition(task.issue.status, ISSUE_STATUS.RESOLVED)) {
+        return apiResponse(res, 400, `Cannot move issue from ${task.issue.status} to ${ISSUE_STATUS.RESOLVED}`);
+      }
       task.completedAt = new Date();
       await Issue.findByIdAndUpdate(task.issue._id, {
         status: ISSUE_STATUS.RESOLVED,
@@ -171,6 +180,9 @@ exports.updateTaskStatus = async (req, res) => {
     }
 
     if (nextStatus === TASK_STATUS.COMPLICATION_REPORTED) {
+      if (!canTransition(task.issue.status, ISSUE_STATUS.UNDER_REVIEW)) {
+        return apiResponse(res, 400, `Cannot move issue from ${task.issue.status} to ${ISSUE_STATUS.UNDER_REVIEW}`);
+      }
       await Issue.findByIdAndUpdate(task.issue._id, { status: ISSUE_STATUS.UNDER_REVIEW });
     }
 

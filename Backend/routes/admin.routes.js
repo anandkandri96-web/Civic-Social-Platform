@@ -1,19 +1,8 @@
-// // backend/routes/admin.routes.js
-
-// const express = require('express');
-// const { getStats, getAllIssues } = require('../controllers/admin.controller');
-// const { protect, checkRole } = require('../middlewares/auth.middleware'); // updated import
-
-// const router = express.Router();
-
-// // Admin-only routes
-// router.get('/stats', protect, checkRole(['admin']), getStats);
-// router.get('/issues', protect, checkRole(['admin']), getAllIssues);
-
-// module.exports = router;
-
 const router = require("express").Router();
-const { protect, checkRole } = require("../middlewares/auth.middleware");
+const { protect } = require("../middlewares/auth.middleware");
+const { canPerform } = require("../middlewares/permission.middleware");
+const { validatePagination, validateSort } = require("../middlewares/validation.middleware");
+const { PERMISSIONS } = require("../config/permissions.config");
 const {
   getStats,
   getAllIssues,
@@ -29,17 +18,66 @@ const {
 } = require("../controllers/admin.controller");
 const { getHeatmap } = require("../controllers/analytics.controller");
 
-router.get("/stats", protect, checkRole(["admin"]), getStats);
-router.get("/issues", protect, checkRole(["admin"]), getAllIssues);
-router.get("/users", protect, checkRole(["admin"]), getUsers);
-router.post("/users", protect, checkRole(["admin"]), createUser);
-router.patch("/users/:id/role", protect, checkRole(["admin"]), updateUserRole);
-router.patch("/users/:id/status", protect, checkRole(["admin"]), updateUserStatus);
-router.patch("/users/:id/approve", protect, checkRole(["admin"]), approveUser);
-router.patch("/users/:id/department", protect, checkRole(["admin"]), assignUserDepartment);
-router.delete("/users/:id", protect, checkRole(["admin"]), deleteUser);
-router.get("/departments", protect, checkRole(["admin"]), getDepartments);
-router.post("/departments", protect, checkRole(["admin"]), createDepartment);
-router.get("/analytics/heatmap", protect, checkRole(["admin", "officer"]), getHeatmap);
+// ✅ Admin Analytics & Insights
+router.get("/stats", protect, canPerform(PERMISSIONS.ADMIN_VIEW_ANALYTICS), getStats);
+router.get(
+  "/analytics/heatmap",
+  protect,
+  canPerform(PERMISSIONS.ADMIN_VIEW_ANALYTICS),
+  getHeatmap
+);
+
+// ✅ Admin Issue Management
+router.get(
+  "/issues",
+  protect,
+  canPerform(PERMISSIONS.ADMIN_VIEW_ISSUES),
+  validatePagination(),
+  validateSort(["createdAt", "-createdAt", "priorityScore", "-priorityScore", "voteCount", "-voteCount", "severity", "-severity"]),
+  getAllIssues
+);
+
+// ✅ Admin User Management
+router.get("/users", protect, canPerform(PERMISSIONS.ADMIN_MANAGE_USERS), getUsers);
+router.post("/users", protect, canPerform(PERMISSIONS.ADMIN_MANAGE_USERS), createUser);
+router.patch(
+  "/users/:id/role",
+  protect,
+  canPerform(PERMISSIONS.ADMIN_CHANGE_ROLE),
+  updateUserRole
+);
+router.patch(
+  "/users/:id/status",
+  protect,
+  canPerform(PERMISSIONS.ADMIN_MANAGE_USERS),
+  updateUserStatus
+);
+router.patch(
+  "/users/:id/approve",
+  protect,
+  canPerform(PERMISSIONS.ADMIN_APPROVE_USERS),
+  approveUser
+);
+router.patch(
+  "/users/:id/department",
+  protect,
+  canPerform(PERMISSIONS.ADMIN_MANAGE_USERS),
+  assignUserDepartment
+);
+router.delete(
+  "/users/:id",
+  protect,
+  canPerform(PERMISSIONS.ADMIN_MANAGE_USERS),
+  deleteUser
+);
+
+// ✅ Admin Department Management
+router.get("/departments", protect, canPerform(PERMISSIONS.ADMIN_MANAGE_DEPARTMENTS), getDepartments);
+router.post(
+  "/departments",
+  protect,
+  canPerform(PERMISSIONS.ADMIN_MANAGE_DEPARTMENTS),
+  createDepartment
+);
 
 module.exports = router;

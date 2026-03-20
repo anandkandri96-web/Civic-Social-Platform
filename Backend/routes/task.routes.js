@@ -1,7 +1,8 @@
 const router = require("express").Router();
-const { protect, checkRole } = require("../middlewares/auth.middleware");
+const { protect } = require("../middlewares/auth.middleware");
+const { canPerform } = require("../middlewares/permission.middleware");
 const { uploadImages } = require("../middlewares/upload.middleware");
-const { ROLES } = require("../utils/constants");
+const { PERMISSIONS } = require("../config/permissions.config");
 const {
   createTask,
   getMyTasks,
@@ -9,19 +10,37 @@ const {
   addTaskProgress,
 } = require("../controllers/task.controller");
 
+// ✅ All task routes require authentication
 router.use(protect);
 
-// Worker: list own tasks
-router.get("/my", checkRole([ROLES.WORKER]), getMyTasks);
+// ✅ Worker: List assigned tasks
+router.get(
+  "/my",
+  canPerform(PERMISSIONS.TASK_VIEW_OWN),
+  getMyTasks
+);
 
-// Officer/Admin: create/assign a task for an issue
-router.post("/", checkRole([ROLES.OFFICER, ROLES.ADMIN]), createTask);
+// ✅ Officer/Admin: Create and assign tasks to workers
+router.post(
+  "/",
+  canPerform(PERMISSIONS.TASK_CREATE),
+  createTask
+);
 
-// Worker: update task status (accept / in_progress / completed / complication_reported)
-router.patch("/:id/status", checkRole([ROLES.WORKER]), updateTaskStatus);
+// ✅ Worker: Update task status (accept/in_progress/completed)
+router.patch(
+  "/:id/status",
+  canPerform(PERMISSIONS.TASK_UPDATE_STATUS),
+  updateTaskStatus
+);
 
-// Worker: upload progress images / reports
-router.post("/:id/progress", checkRole([ROLES.WORKER]), uploadImages("progressImages", 5), addTaskProgress);
+// ✅ Worker: Upload progress reports with images
+router.post(
+  "/:id/progress",
+  canPerform(PERMISSIONS.TASK_ADD_PROGRESS),
+  uploadImages("progressImages", 5),
+  addTaskProgress
+);
 
 module.exports = router;
 
