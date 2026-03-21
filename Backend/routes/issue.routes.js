@@ -2,7 +2,7 @@ const router = require("express").Router();
 const Issue = require("../models/issue");
 const { protect, optionalAuth } = require("../middlewares/auth.middleware");
 const { canPerform, canPerformResourceAction, canPerformAny } = require("../middlewares/permission.middleware");
-const { validatePagination, validateSort } = require("../middlewares/validation.middleware");
+const { validatePagination, validateSort, validateLatitudeLongitude } = require("../middlewares/validation.middleware");
 const { uploadIssueImage } = require("../middlewares/upload.middleware");
 const { PERMISSIONS } = require("../config/permissions.config");
 const {

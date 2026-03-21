@@ -27,10 +27,7 @@ export const getIssueById = async (id) => {
  */
 export const createIssue = async (issueData) => {
   if (!issueData) throw new Error("Issue data is required");
-  const isFormData = typeof FormData !== "undefined" && issueData instanceof FormData;
-  const res = await api.post("/issues", issueData, isFormData ? {
-    headers: { "Content-Type": "multipart/form-data" },
-  } : undefined);
+  const res = await api.post("/issues", issueData);
   return getResponseData(res);
 };
 
@@ -47,10 +44,7 @@ export const updateIssueStatus = async (id, status) => {
 };
 
 export const updateIssue = async (id, payload) => {
-  const isFormData = typeof FormData !== 'undefined' && payload instanceof FormData;
-  const res = await api.patch(`/issues/${id}`, payload, isFormData ? {
-    headers: { 'Content-Type': 'multipart/form-data' },
-  } : undefined);
+  const res = await api.patch(`/issues/${id}`, payload);
   return getResponseData(res);
 };
 

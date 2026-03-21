@@ -111,7 +111,7 @@ Run these from the `Backend` directory:
 
 - `GET /admin/stats` (admin)
 - `GET /admin/issues` (admin)
-  - query: `page`, `limit`, `status`, `category`, `sort`
+  - query: `page`, `limit`, `status`, `category`, `sort`, `search`
 - `GET /admin/users` (admin)
   - query: `page`, `limit`, `role`, `isActive`, `isApproved`, `departmentId`
 - `POST /admin/users` (admin)
@@ -128,6 +128,16 @@ Run these from the `Backend` directory:
 - `GET /admin/departments` (admin)
 - `POST /admin/departments` (admin)
   - body: `{ "name": "", "description": "", "categories": ["roads"], "coverageArea"?: { "type": "Polygon", "coordinates": [[[77.0,12.0],[77.1,12.0],[77.1,12.1],[77.0,12.1],[77.0,12.0]]] } }`
+
+## Role Upgrade Requests
+
+- `POST /role-upgrades` (protected)
+  - body: `{ "requestedRole": "volunteer|officer|worker", "preferredDepartment"?: "text", "motivation": "text", "experience"?: "text", "availability"?: "text", "supportingLinks"?: ["https://..."] }`
+- `GET /role-upgrades/my` (protected)
+- `GET /admin/role-upgrades` (admin)
+  - query: `page`, `limit`, `status`, `requestedRole`, `userId`, `departmentId`, `search`
+- `PATCH /admin/role-upgrades/:id/decision` (admin)
+  - body: `{ "decision": "approved|rejected", "adminNotes"?: "text", "departmentId"?: "<dept_id>" }`
 
 ## Analytics
 

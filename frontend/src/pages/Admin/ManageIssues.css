@@ -16,6 +16,27 @@
   gap: 40px;
 }
 
+.manage-issues .issues-search-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px;
+  margin-bottom: var(--space-md);
+  border-radius: 999px;
+  border: 1px solid var(--border-color);
+  background: var(--bg-surface);
+  color: var(--text-secondary);
+  font-size: 0.85rem;
+}
+
+.manage-issues .issues-search-pill button {
+  border: none;
+  background: transparent;
+  color: var(--color-primary);
+  cursor: pointer;
+  font-weight: 600;
+}
+
 /* =========================
    ISSUE ROW
 ========================= */

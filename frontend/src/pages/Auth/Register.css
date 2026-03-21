@@ -114,8 +114,7 @@
 }
 
 /* INPUT + SELECT */
-.register-field input,
-.register-field select {
+.register-field input {
   width: 100%;
   border: 1px solid transparent;
   border-radius: var(--radius-md);
@@ -132,14 +131,12 @@
 }
 
 /* hover */
-.register-field input:hover,
-.register-field select:hover {
+.register-field input:hover {
   border-color: rgba(var(--color-primary-rgb), 0.3);
 }
 
 /* focus */
-.register-field input:focus,
-.register-field select:focus {
+.register-field input:focus {
   outline: none;
   border-color: var(--color-primary);
   background: rgba(255, 255, 255, 0.07);
@@ -154,30 +151,6 @@
   to {
     box-shadow: 0 0 0 3px rgba(var(--color-primary-rgb), 0.2);
   }
-}
-
-/* SELECT FIX */
-.register-field select {
-  appearance: none;
-  cursor: pointer;
-}
-
-/* CUSTOM DROPDOWN ARROW — only on select fields */
-.register-field--select::after {
-  content: "▾";
-  position: absolute;
-  right: 14px;
-  top: 50%;
-  transform: translateY(2px);
-  font-size: 0.9rem;
-  color: var(--text-secondary);
-  pointer-events: none;
-  transition: all 0.25s ease;
-}
-
-.register-field--select:hover::after {
-  color: var(--color-primary);
-  transform: translateY(2px) scale(1.1);
 }
 
 /* PASSWORD FIELD */

@@ -32,6 +32,8 @@ const Notifications = lazy(() => import('../pages/Notifications/Notifications'))
 const IssueMap = lazy(() => import('../pages/Map/IssueMap'));
 const Profile = lazy(() => import('../pages/Profile/Profile'));
 const SubmitResolution = lazy(() => import('../pages/Volunteer/SubmitResolution'));
+const RoleUpgrade = lazy(() => import('../pages/Profile/RoleUpgrade'));
+const RoleUpgradeRequests = lazy(() => import('../pages/Admin/RoleUpgradeRequests'));
 
 const DashboardEntry = () => {
   // ✅ Use permissions instead of role checks
@@ -50,6 +52,7 @@ const AppRoutes = () => (
       <Route path="/" element={<Home />} />
       <Route path="/login" element={<Login />} />
       <Route path="/register" element={<Register />} />
+      <Route path="/unauthorized" element={<Unauthorized />} />
 
       <Route element={<MainLayout />}>
         <Route path="/issues" element={<IssuesList />} />
@@ -121,6 +124,11 @@ const AppRoutes = () => (
               <Profile />
             </ProtectedRoute>
           } />
+          <Route path="/profile/role-upgrade" element={
+            <ProtectedRoute requiredPermission="role:upgrade_request" fallbackRoute="/unauthorized">
+              <RoleUpgrade />
+            </ProtectedRoute>
+          } />
         </Route>
       </Route>
 
@@ -131,8 +139,10 @@ const AppRoutes = () => (
           <Route path="/admin/analytics" element={<Analytics />} />
           <Route path="/admin/manage-issues" element={<ManageIssues />} />
           <Route path="/admin/users" element={<UserManagement />} />
+          <Route path="/admin/role-upgrades" element={<RoleUpgradeRequests />} />
         </Route>
       </Route>
+      <Route path="*" element={<NotFound />} />
     </Routes>
   </Suspense>
 );

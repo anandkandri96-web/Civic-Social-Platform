@@ -20,6 +20,7 @@ const analyticsRoutes = require("./routes/analytics.routes");
 const heatmapRoutes = require("./routes/heatmap.routes");
 const notificationRoutes = require("./routes/notification.routes");
 const imageRoutes = require("./routes/image.routes");
+const roleUpgradeRoutes = require("./routes/roleUpgrade.routes");
 const errorHandler = require("./middlewares/error.middleware");
 
 const app = express();
@@ -88,6 +89,7 @@ app.use("/api/analytics", analyticsRoutes);
 app.use("/api/heatmap", heatmapRoutes);
 app.use("/api/notifications", notificationRoutes);
 app.use("/api/images", imageRoutes);
+app.use("/api/role-upgrades", roleUpgradeRoutes);
 
 app.use((req, res) => {
   res.status(404).json({ message: "Route not found" });

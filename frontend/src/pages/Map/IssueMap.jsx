@@ -33,7 +33,10 @@ const IssueMap = () => {
         const normalized = (Array.isArray(data) ? data : []).map((point) => ({
           lat: point.lat,
           lng: point.lng,
-          weight: Number(point.count || 1),
+          count: Number(point.count || 1),
+          avgSeverity: Number(point.avgSeverity || 0),
+          maxSeverity: Number(point.maxSeverity || 0),
+          weight: Number(point.avgSeverity || point.maxSeverity || point.count || 1),
         }));
         setHeatmapData(normalized);
       } catch (err) {
@@ -190,7 +193,11 @@ const IssueMap = () => {
             </>
           ) : (
             <div className="issue-map-list">
-              {loading ? <p className="issue-map-note">Loading heatmap...</p> : <p className="issue-map-note">Heatmap shows issue density</p>}
+              {loading ? (
+                <p className="issue-map-note">Loading heatmap...</p>
+              ) : (
+                <p className="issue-map-note">Color = severity (1-5), size = density</p>
+              )}
             </div>
           )}
         </aside>
@@ -198,14 +205,16 @@ const IssueMap = () => {
         <div className="issue-map-canvas-wrap">
           <div className="issue-map-canvas">
             {mode === 'heatmap' ? (
-              <IssueLeafletMap heatmapData={heatmapData} className="issue-map-leaflet" zoom={11} />
+              <IssueLeafletMap heatmapData={heatmapData} className="issue-map-leaflet" zoom={11} maxZoom={20} />
             ) : (
               <IssueLeafletMap
                 issues={mapIssuePoints}
                 activeId={activeId}
+                activeIssue={activeIssue}
                 onSelect={(id) => setActiveId(id)}
                 className="issue-map-leaflet"
                 zoom={12}
+                maxZoom={20}
               />
             )}
 

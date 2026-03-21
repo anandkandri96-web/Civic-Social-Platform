@@ -16,6 +16,10 @@ const {
   getDepartments,
   createDepartment,
 } = require("../controllers/admin.controller");
+const {
+  getRoleUpgradeRequests,
+  reviewRoleUpgradeRequest,
+} = require("../controllers/roleUpgrade.controller");
 const { getHeatmap } = require("../controllers/analytics.controller");
 
 // ✅ Admin Analytics & Insights
@@ -69,6 +73,21 @@ router.delete(
   protect,
   canPerform(PERMISSIONS.ADMIN_MANAGE_USERS),
   deleteUser
+);
+
+// ✅ Role upgrade requests
+router.get(
+  "/role-upgrades",
+  protect,
+  canPerform(PERMISSIONS.ADMIN_MANAGE_ROLE_UPGRADES),
+  validatePagination(),
+  getRoleUpgradeRequests
+);
+router.patch(
+  "/role-upgrades/:id/decision",
+  protect,
+  canPerform(PERMISSIONS.ADMIN_MANAGE_ROLE_UPGRADES),
+  reviewRoleUpgradeRequest
 );
 
 // ✅ Admin Department Management

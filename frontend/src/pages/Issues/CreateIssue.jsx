@@ -1,4 +1,9 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import { MapContainer, Marker, TileLayer, useMap, useMapEvents } from 'react-leaflet';
+import L from 'leaflet';
+import 'leaflet/dist/leaflet.css';
+import markerIcon from 'leaflet/dist/images/marker-icon.png';
+import markerShadow from 'leaflet/dist/images/marker-shadow.png';
 import { Link, Navigate, useNavigate } from 'react-router-dom';
 import { createIssue as createIssueApi } from '@api/issues.api';
 import { getErrorMessage } from '@api/utils';
@@ -24,6 +29,42 @@ const SEVERITIES = [
 
 const STEPS = ['Category', 'Location', 'Details', 'Review'];
 
+const DEFAULT_CENTER = [12.9716, 77.5946];
+const MAP_ICON = L.icon({
+  iconUrl: markerIcon,
+  shadowUrl: markerShadow,
+  iconSize: [25, 41],
+  iconAnchor: [12, 41],
+  shadowSize: [41, 41],
+});
+const TILE_URL = 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png';
+const TILE_ATTRIBUTION = '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors';
+
+const MapFocus = ({ lat, lng }) => {
+  const map = useMap();
+
+  useEffect(() => {
+    if (!Number.isFinite(lat) || !Number.isFinite(lng)) return;
+    map.flyTo([lat, lng], Math.max(map.getZoom(), 13), {
+      animate: true,
+      duration: 0.6,
+    });
+  }, [lat, lng, map]);
+
+  return null;
+};
+
+const LocationPickerMarker = ({ lat, lng, onSelect }) => {
+  useMapEvents({
+    click(event) {
+      onSelect?.(event.latlng);
+    },
+  });
+
+  if (!Number.isFinite(lat) || !Number.isFinite(lng)) return null;
+  return <Marker position={[lat, lng]} icon={MAP_ICON} />;
+};
+
 const CreateIssue = () => {
   const navigate = useNavigate();
   // ✅ Use permission to check if user can create issues
@@ -41,8 +82,7 @@ const CreateIssue = () => {
     severity: 3,
     description: '',
   });
-  const [pin, setPin] = useState({ x: 50, y: 48 });
-  const [imageFile, setImageFile] = useState(null);
+  const [imageFiles, setImageFiles] = useState([]);
 
   const selectedCategory = useMemo(
     () => CATEGORIES.find((cat) => cat.value === form.category) || CATEGORIES[0],
@@ -60,12 +100,14 @@ const CreateIssue = () => {
   // ✅ Redirect admins and users without issue:create permission
   if (!can('issue:create')) return <Navigate to="/issues" replace />;
 
-  const setCoordsFromMap = (clientX, clientY, rect) => {
-    const relX = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
-    const relY = Math.max(0, Math.min(1, (clientY - rect.top) / rect.height));
-    const lat = (13.2 - relY * 0.7).toFixed(5);
-    const lng = (77.2 + relX * 0.8).toFixed(5);
-    setPin({ x: relX * 100, y: relY * 100 });
+  const latNum = Number(form.lat);
+  const lngNum = Number(form.lng);
+  const hasCoords = Number.isFinite(latNum) && Number.isFinite(lngNum);
+  const mapCenter = hasCoords ? [latNum, lngNum] : DEFAULT_CENTER;
+
+  const handleMapSelect = (latlng) => {
+    const lat = Number(latlng.lat).toFixed(5);
+    const lng = Number(latlng.lng).toFixed(5);
     setForm((prev) => ({ ...prev, lat, lng }));
   };
 
@@ -132,11 +174,12 @@ const CreateIssue = () => {
       payload.append('description', description);
       payload.append('category', form.category);
       payload.append('severity', String(severityNum));
-      payload.append('priorityScore', String(severityNum));
       payload.append('lat', String(latNum));
       payload.append('lng', String(lngNum));
       payload.append('locationText', locationText);
-      if (imageFile) payload.append('image', imageFile);
+      if (imageFiles.length > 0) {
+        imageFiles.forEach((file) => payload.append('images', file));
+      }
 
       const issue = await createIssueApi(payload);
       navigate(`/issues/${issue._id}`, { replace: true });
@@ -196,25 +239,23 @@ const CreateIssue = () => {
         {step === 2 && (
           <div className="report-panel">
             <h2>🗺️ Pin Location</h2>
-            <p>Click the map area to set exact coordinates.</p>
-            <div
+            <p>Click the map to set exact coordinates.</p>
+            <MapContainer
+              center={mapCenter}
+              zoom={16}
+              scrollWheelZoom
+              maxZoom={20}
               className="report-map-picker"
-              onClick={(e) => {
-                const rect = e.currentTarget.getBoundingClientRect();
-                setCoordsFromMap(e.clientX, e.clientY, rect);
-              }}
-              role="button"
-              tabIndex={0}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') {
-                  const rect = e.currentTarget.getBoundingClientRect();
-                  setCoordsFromMap(rect.left + rect.width / 2, rect.top + rect.height / 2, rect);
-                }
-              }}
             >
-              <div className="report-map-grid" />
-              <span className="report-map-pin" style={{ left: `${pin.x}%`, top: `${pin.y}%` }}>📍</span>
-            </div>
+              <TileLayer
+                attribution={TILE_ATTRIBUTION}
+                url={TILE_URL}
+                maxZoom={20}
+                detectRetina
+              />
+              <MapFocus lat={latNum} lng={lngNum} />
+              <LocationPickerMarker lat={latNum} lng={lngNum} onSelect={handleMapSelect} />
+            </MapContainer>
 
             <div className="report-location-row">
               <input
@@ -286,9 +327,21 @@ const CreateIssue = () => {
               <input
                 type="file"
                 accept="image/*"
-                onChange={(e) => setImageFile(e.target.files?.[0] || null)}
+                multiple
+                onChange={(e) => setImageFiles(Array.from(e.target.files || []))}
               />
-              <small>{imageFile ? imageFile.name : 'Optional evidence photo'}</small>
+              <small>
+                {imageFiles.length > 0
+                  ? `${imageFiles.length} photo${imageFiles.length > 1 ? 's' : ''} selected`
+                  : 'Optional evidence photos (up to 5)'}
+              </small>
+              {imageFiles.length > 0 && (
+                <ul className="report-upload-list">
+                  {imageFiles.map((file) => (
+                    <li key={file.name}>{file.name}</li>
+                  ))}
+                </ul>
+              )}
             </div>
           </div>
         )}
@@ -301,10 +354,36 @@ const CreateIssue = () => {
               <div><span>Category</span><strong>{selectedCategory.label}</strong></div>
               <div><span>Location</span><strong>{form.locationText || '-'}</strong></div>
               <div><span>Coordinates</span><strong>{form.lat}, {form.lng}</strong></div>
+              <div>
+                <span>Map Preview</span>
+                {hasCoords ? (
+                  <MapContainer
+                    center={mapCenter}
+                    zoom={16}
+                    scrollWheelZoom={false}
+                    dragging={false}
+                    doubleClickZoom={false}
+                    zoomControl={false}
+                    attributionControl={false}
+                    keyboard={false}
+                    className="report-map-preview"
+                  >
+                    <TileLayer url={TILE_URL} maxZoom={20} detectRetina />
+                    <Marker position={[latNum, lngNum]} icon={MAP_ICON} />
+                  </MapContainer>
+                ) : (
+                  <div className="report-map-preview report-map-preview--empty">Location not set</div>
+                )}
+              </div>
               <div><span>Title</span><strong>{form.title || '-'}</strong></div>
               <div><span>Severity</span><strong>{SEVERITIES.find((sev) => sev.value === Number(form.severity))?.label}</strong></div>
               <div><span>Description</span><strong>{form.description || '-'}</strong></div>
-              <div><span>Photo</span><strong>{imageFile?.name || 'Not attached'}</strong></div>
+              <div>
+                <span>Photos</span>
+                <strong>
+                  {imageFiles.length > 0 ? imageFiles.map((file) => file.name).join(', ') : 'Not attached'}
+                </strong>
+              </div>
             </div>
           </div>
         )}

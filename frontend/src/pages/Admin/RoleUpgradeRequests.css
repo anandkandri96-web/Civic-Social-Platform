@@ -1,0 +1,167 @@
+﻿.role-requests__toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: center;
+  margin: 16px 0 20px;
+}
+
+.role-requests__toolbar input,
+.role-requests__toolbar select {
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-input);
+  background: var(--bg-surface);
+  color: var(--text-primary);
+  padding: 10px 12px;
+  font-size: 0.85rem;
+}
+
+.role-requests__refresh {
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-input);
+  background: var(--bg-surface);
+  color: var(--text-primary);
+  padding: 10px 16px;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: transform 0.2s ease, border-color 0.2s ease;
+}
+
+.role-requests__refresh:hover {
+  border-color: var(--color-primary);
+  transform: translateY(-1px);
+}
+
+.role-requests__table {
+  padding: 12px 16px;
+}
+
+.role-requests__grid {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.role-requests__grid th,
+.role-requests__grid td {
+  border-bottom: 1px solid var(--border-color);
+  text-align: left;
+  padding: 12px 10px;
+  font-size: 0.84rem;
+  vertical-align: top;
+}
+
+.role-requests__grid select {
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-input);
+  background: var(--bg-surface);
+  color: var(--text-primary);
+  padding: 6px 8px;
+  font-size: 0.78rem;
+}
+
+.role-requests__grid th {
+  color: var(--text-secondary);
+  font-family: var(--font-mono);
+  text-transform: uppercase;
+  font-size: 0.7rem;
+  letter-spacing: 0.08em;
+  background: color-mix(in srgb, var(--bg-surface) 92%, black);
+}
+
+.role-requests__empty {
+  text-align: center;
+  color: var(--text-secondary);
+  padding: 16px;
+}
+
+.role-requests__meta {
+  color: var(--text-secondary);
+  font-size: 0.75rem;
+  margin-top: 4px;
+}
+
+.role-requests__status {
+  display: inline-flex;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  border: 1px solid var(--border-color);
+  background: color-mix(in srgb, var(--bg-surface) 80%, var(--color-primary));
+}
+
+.role-requests__status--approved {
+  border-color: color-mix(in srgb, var(--color-success) 60%, var(--border-color));
+  background: color-mix(in srgb, var(--color-success) 18%, transparent);
+}
+
+.role-requests__status--rejected {
+  border-color: color-mix(in srgb, var(--color-danger) 60%, var(--border-color));
+  background: color-mix(in srgb, var(--color-danger) 18%, transparent);
+}
+
+.role-requests__status--pending {
+  border-color: color-mix(in srgb, var(--color-warning) 60%, var(--border-color));
+  background: color-mix(in srgb, var(--color-warning) 18%, transparent);
+}
+
+.role-requests__actions {
+  display: grid;
+  gap: 8px;
+}
+
+.role-requests__actions input {
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-input);
+  background: var(--bg-surface);
+  color: var(--text-primary);
+  padding: 8px 10px;
+  font-size: 0.8rem;
+}
+
+.role-requests__actions select {
+  width: 100%;
+  margin-top: 6px;
+}
+
+.role-requests__buttons {
+  display: flex;
+  gap: 6px;
+}
+
+.role-requests__buttons button {
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-input);
+  background: var(--bg-surface);
+  color: var(--text-primary);
+  padding: 6px 10px;
+  font-size: 0.75rem;
+  cursor: pointer;
+  transition: transform 0.2s ease, border-color 0.2s ease;
+}
+
+.role-requests__buttons button:hover {
+  transform: translateY(-1px);
+  border-color: var(--color-primary);
+}
+
+.role-requests__buttons .approve {
+  border-color: color-mix(in srgb, var(--color-success) 60%, var(--border-color));
+  color: var(--color-success);
+}
+
+.role-requests__buttons .reject {
+  border-color: color-mix(in srgb, var(--color-danger) 60%, var(--border-color));
+  color: var(--color-danger);
+}
+
+@media (max-width: 1100px) {
+  .role-requests__table {
+    padding: 12px;
+  }
+
+  .role-requests__grid {
+    min-width: 980px;
+  }
+}

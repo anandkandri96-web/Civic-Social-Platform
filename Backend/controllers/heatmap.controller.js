@@ -14,22 +14,51 @@ exports.getPublicHeatmap = async (_req, res) => {
       {
         $match: {
           location: { $exists: true },
-          "location.coordinates.0": { $type: "number" },
-          "location.coordinates.1": { $type: "number" },
+        },
+      },
+      {
+        $project: {
+          lng: {
+            $convert: {
+              input: { $arrayElemAt: ["$location.coordinates", 0] },
+              to: "double",
+              onError: null,
+              onNull: null,
+            },
+          },
+          lat: {
+            $convert: {
+              input: { $arrayElemAt: ["$location.coordinates", 1] },
+              to: "double",
+              onError: null,
+              onNull: null,
+            },
+          },
+          severitySafe: { $ifNull: ["$severity", 1] },
+        },
+      },
+      {
+        $match: {
+          lng: { $ne: null },
+          lat: { $ne: null },
         },
       },
       {
         $group: {
-          _id: "$location.coordinates",
+          _id: { lng: "$lng", lat: "$lat" },
           count: { $sum: 1 },
+          avgSeverity: { $avg: "$severitySafe" },
+          maxSeverity: { $max: "$severitySafe" },
         },
       },
       {
         $project: {
           _id: 0,
-          lng: { $arrayElemAt: ["$_id", 0] },
-          lat: { $arrayElemAt: ["$_id", 1] },
+          lng: "$_id.lng",
+          lat: "$_id.lat",
           count: 1,
+          avgSeverity: { $round: ["$avgSeverity", 1] },
+          maxSeverity: 1,
         },
       },
       { $sort: { count: -1 } },
@@ -42,4 +71,3 @@ exports.getPublicHeatmap = async (_req, res) => {
     return apiResponse(res, 500, "Failed to fetch heatmap data");
   }
 };
-

@@ -48,6 +48,7 @@ const Header = () => {
   const headerRef = useRef(null);
   const location = useLocation();
   const navigate = useNavigate();
+  const isIssuePage = location.pathname.startsWith('/issues') || location.pathname.startsWith('/admin/manage-issues');
 
   const brandTarget = isAuthenticated ? dashboardPath : '/';
   const avatarLetter = (user?.name || user?.email || 'U').charAt(0).toUpperCase();
@@ -95,14 +96,15 @@ const Header = () => {
       { to: issuesTarget, label: 'Issues' },
       { to: mapTarget, label: 'Map' },
       { to: dashboardTarget, label: 'Dashboard' },
-      { to: '/workflow', label: 'Workflow' },
     ];
   }, [dashboardPath, isAuthenticated, can]);
 
   const handleSearchSubmit = (event) => {
     event.preventDefault();
     const query = searchTerm.trim();
-    navigate(query ? `/issues?search=${encodeURIComponent(query)}` : '/issues');
+    const isAdmin = can('admin:view_all_issues');
+    const base = isAdmin ? '/admin/manage-issues' : '/issues';
+    navigate(query ? `${base}?search=${encodeURIComponent(query)}` : base);
     setMenuOpen(false);
   };
 
@@ -150,16 +152,19 @@ const Header = () => {
           <span className="app-header__brand-text">Social Civic Platform</span>
         </Link>
 
-        <form className="app-header__search" onSubmit={handleSearchSubmit} role="search">
-          <span className="app-header__search-icon">{ICONS.search}</span>
-          <input
-            type="search"
-            placeholder="Search issues"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            aria-label="Search civic issues"
-          />
-        </form>
+        {isIssuePage && (
+          <form className="app-header__search" onSubmit={handleSearchSubmit} role="search">
+            <span className="app-header__search-icon">{ICONS.search}</span>
+            <input
+              type="search"
+              placeholder="Search issues by title, category, or location"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              aria-label="Search issues by title, category, or location"
+              name="issueSearch"
+            />
+          </form>
+        )}
       </div>
 
       <div className="app-header__center">
@@ -184,6 +189,11 @@ const Header = () => {
                 Manage Users
               </NavLink>
             </>
+          )}
+          {can('admin:manage_role_upgrades') && (
+            <NavLink to="/admin/role-upgrades" className={({ isActive }) => `app-header__nav-link${isActive ? ' is-active' : ''}`}>
+              Role Requests
+            </NavLink>
           )}
         </nav>
       </div>
@@ -242,6 +252,11 @@ const Header = () => {
                   <Link to="/profile" className="app-header__avatar-item" role="menuitem">
                     Profile
                   </Link>
+                  {can('role:upgrade_request') && !can('admin:view_analytics') && (
+                    <Link to="/profile/role-upgrade" className="app-header__avatar-item" role="menuitem">
+                      Role Upgrade
+                    </Link>
+                  )}
                   {/* ✅ Show "My Issues" for citizens/volunteers (anyone without admin/officer/worker dashboards) */}
                   {!can('admin:view_analytics') && !can('officer:review_issues') && !can('worker:view_tasks') && (
                     <Link to="/dashboard" className="app-header__avatar-item" role="menuitem">

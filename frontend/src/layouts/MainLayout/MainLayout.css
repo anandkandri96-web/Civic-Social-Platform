@@ -9,3 +9,7 @@
   flex: 1;
   padding: var(--space-lg) 0;
 }
+
+.main-content--home-map {
+  padding-top: var(--header-height);
+}

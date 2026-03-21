@@ -45,6 +45,9 @@ export const PERMISSIONS = Object.freeze({
   VOTE_CREATE: 'vote:create',
   VOTE_DELETE: 'vote:delete',
 
+  // Role upgrade requests
+  ROLE_UPGRADE_REQUEST: 'role:upgrade_request',
+
   // Volunteer actions
   VOLUNTEER_CLAIM_ISSUE: 'volunteer:claim_issue',
   VOLUNTEER_SUBMIT_RESOLUTION: 'volunteer:submit_resolution',
@@ -81,6 +84,7 @@ export const PERMISSIONS = Object.freeze({
   ADMIN_DELETE_USER: 'admin:delete_user',
   ADMIN_MANAGE_DEPARTMENTS: 'admin:manage_departments',
   ADMIN_VIEW_ANALYTICS: 'admin:view_analytics',
+  ADMIN_MANAGE_ROLE_UPGRADES: 'admin:manage_role_upgrades',
 });
 
 export const ROLE_PERMISSIONS = Object.freeze({
@@ -93,6 +97,7 @@ export const ROLE_PERMISSIONS = Object.freeze({
     PERMISSIONS.COMMENT_DELETE,
     PERMISSIONS.VOTE_CREATE,
     PERMISSIONS.VOTE_DELETE,
+    PERMISSIONS.ROLE_UPGRADE_REQUEST,
   ]),
 
   [ROLES.VOLUNTEER]: new Set([
@@ -104,6 +109,7 @@ export const ROLE_PERMISSIONS = Object.freeze({
     PERMISSIONS.COMMENT_DELETE,
     PERMISSIONS.VOTE_CREATE,
     PERMISSIONS.VOTE_DELETE,
+    PERMISSIONS.ROLE_UPGRADE_REQUEST,
     PERMISSIONS.VOLUNTEER_ACCESS,
     PERMISSIONS.VOLUNTEER_CLAIM_ISSUE,
     PERMISSIONS.VOLUNTEER_SUBMIT_RESOLUTION,

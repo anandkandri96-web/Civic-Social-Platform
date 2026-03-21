@@ -1,4 +1,5 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { getAllIssuesAdmin, updateIssueStatusAdmin } from '@api/admin.api';
 import { getErrorMessage } from '@api/utils';
 import IssueCard from '../../components/issues/IssueCard/IssueCard';
@@ -15,6 +16,8 @@ const ManageIssues = () => {
   const [error, setError] = useState('');
   const [updatingId, setUpdatingId] = useState(null);
   const { showToast } = useToast();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const searchQuery = useMemo(() => String(searchParams.get('search') || '').trim(), [searchParams]);
 
   useEffect(() => {
     let mounted = true;
@@ -23,7 +26,10 @@ const ManageIssues = () => {
       setLoading(true);
       setError('');
       try {
-        const payload = await getAllIssuesAdmin({ limit: 100 });
+        const payload = await getAllIssuesAdmin({
+          limit: 100,
+          search: searchQuery || undefined,
+        });
         if (mounted) setIssues(Array.isArray(payload?.data) ? payload.data : []);
       } catch (err) {
         if (mounted) setError(getErrorMessage(err));
@@ -36,7 +42,7 @@ const ManageIssues = () => {
     return () => {
       mounted = false;
     };
-  }, []);
+  }, [searchQuery]);
 
   const handleStatusChange = async (issueId, status) => {
     setUpdatingId(issueId);
@@ -59,6 +65,22 @@ const ManageIssues = () => {
         />
 
         {error && <div className="issues-error">{error}</div>}
+
+        {searchQuery ? (
+          <div className="issues-search-pill">
+            <span>Search: {searchQuery}</span>
+            <button
+              type="button"
+              onClick={() => {
+                const next = new URLSearchParams(searchParams);
+                next.delete('search');
+                setSearchParams(next);
+              }}
+            >
+              Clear
+            </button>
+          </div>
+        ) : null}
 
         {loading ? (
           <Loader fullScreen />

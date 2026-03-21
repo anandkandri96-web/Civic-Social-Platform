@@ -123,6 +123,10 @@ import PermissionAwareButton from '@components/common/PermissionAwareButton';
 - `admin:delete_user` - Remove users
 - `admin:manage_departments` - Manage city departments
 - `admin:view_analytics` - Access analytics dashboard
+- `admin:manage_role_upgrades` - Review role upgrade requests
+
+### Role Upgrade
+- `role:upgrade_request` - Request a role upgrade (citizen/volunteer)
 
 ---
 
@@ -135,6 +139,7 @@ import PermissionAwareButton from '@components/common/PermissionAwareButton';
 - `issue:reopen`
 - `comment:create`, `comment:edit`, `comment:delete`
 - `vote:create`, `vote:delete`
+- `role:upgrade_request`
 
 ### Volunteer (Extends Citizen)
 - All citizen permissions
@@ -142,6 +147,7 @@ import PermissionAwareButton from '@components/common/PermissionAwareButton';
 - `volunteer:claim_issue`
 - `volunteer:submit_resolution`
 - `volunteer:update_progress`
+- `role:upgrade_request`
 
 ### Officer
 - `issue:read`

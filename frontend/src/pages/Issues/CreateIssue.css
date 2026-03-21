@@ -126,27 +126,43 @@
 
 .report-map-picker {
   position: relative;
-  height: 230px;
+  height: 320px;
   margin-bottom: 12px;
   border: 1px solid var(--border-color);
   border-radius: var(--radius-card);
   overflow: hidden;
   background: #071324;
   cursor: crosshair;
+  width: 100%;
 }
 
-.report-map-grid {
-  position: absolute;
-  inset: 0;
-  background-image: linear-gradient(rgba(var(--color-brand-rgb), 0.08) 1px, transparent 1px), linear-gradient(90deg, rgba(var(--color-brand-rgb), 0.08) 1px, transparent 1px);
-  background-size: 32px 32px;
+.report-map-preview {
+  position: relative;
+  height: 160px;
+  border-radius: var(--radius-card);
+  border: 1px solid var(--border-color);
+  overflow: hidden;
+  background: #071324;
 }
 
-.report-map-pin {
-  position: absolute;
-  transform: translate(-50%, -100%);
-  filter: drop-shadow(var(--shadow-card));
-  pointer-events: none;
+.report-map-picker .leaflet-container,
+.report-map-preview .leaflet-container {
+  width: 100%;
+  height: 100%;
+}
+
+.report-map-preview--empty {
+  display: grid;
+  place-items: center;
+  color: var(--text-secondary);
+  font-size: 0.85rem;
+}
+
+.report-upload-list {
+  margin: 8px 0 0;
+  padding-left: 18px;
+  color: var(--text-secondary);
+  font-size: 0.82rem;
 }
 
 .report-location-row {
@@ -245,6 +261,14 @@
 @media (max-width: 768px) {
   .report-category-grid {
     grid-template-columns: repeat(2, 1fr);
+  }
+
+  .report-map-picker {
+    height: 260px;
+  }
+
+  .report-map-preview {
+    height: 140px;
   }
 
   .report-location-row {

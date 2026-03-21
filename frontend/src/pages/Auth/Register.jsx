@@ -12,7 +12,6 @@ const Register = () => {
     name: '',
     email: '',
     password: '',
-    role: 'citizen',
   });
 
   const [error, setError] = useState('');
@@ -38,8 +37,6 @@ const Register = () => {
       const name = userData.name.trim();
       const email = userData.email.trim().toLowerCase();
       const password = String(userData.password || '');
-      const role = String(userData.role || 'citizen').toLowerCase();
-
       // ✅ Validation
       if (name.length < 2 || name.length > 60) {
         setError('Name must be 2-60 characters');
@@ -56,17 +53,11 @@ const Register = () => {
         return;
       }
 
-      if (!['citizen', 'volunteer', 'officer', 'worker'].includes(role)) {
-        setError('Invalid role selected');
-        return;
-      }
-
       // ✅ API Call
       await register({
         name,
         email,
         password,
-        role,
       });
 
       // ✅ Redirect to login after success
@@ -86,7 +77,7 @@ const Register = () => {
       <div className="register-card card">
         <h1 className="register-title">Join Social Civic Platform</h1>
         <p className="register-subtitle">
-          Create an account to start reporting issues
+          Create an account to start reporting issues. Role upgrades are requested after signup.
         </p>
 
         {error && <div className="register-error">{error}</div>}
@@ -139,22 +130,6 @@ const Register = () => {
             >
               {showPassword ? 'Hide' : 'Show'}
             </button>
-          </div>
-
-          {/* ROLE */}
-          <div className="register-field register-field--select">
-            <label>Role</label>
-            <select
-              name="role"
-              value={userData.role}
-              onChange={handleChange}
-              required
-            >
-              <option value="citizen">👤 Citizen</option>
-              <option value="volunteer">🤝 Volunteer</option>
-              <option value="officer">🛡️ Officer</option>
-              <option value="worker">🔧 Worker</option>
-            </select>
           </div>
 
           {/* BUTTON */}

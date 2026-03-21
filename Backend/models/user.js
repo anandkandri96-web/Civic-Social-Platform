@@ -60,9 +60,6 @@ const userSchema = new mongoose.Schema(
       type: String,
       trim: true,
       uppercase: true,
-      unique: true,
-      sparse: true,
-      index: true,
       match: [/^W-\d{3,}$/, "workerId must match W-001 format"],
       default: null,
     },
@@ -71,14 +68,20 @@ const userSchema = new mongoose.Schema(
       type: String,
       trim: true,
       uppercase: true,
-      unique: true,
-      sparse: true,
-      index: true,
       match: [/^O-\d{3,}$/, "officerId must match O-001 format"],
       default: null,
     },
   },
   { timestamps: true }
+);
+
+userSchema.index(
+  { workerId: 1 },
+  { unique: true, partialFilterExpression: { workerId: { $type: "string", $ne: "" } } }
+);
+userSchema.index(
+  { officerId: 1 },
+  { unique: true, partialFilterExpression: { officerId: { $type: "string", $ne: "" } } }
 );
 
 userSchema.pre("save", async function (next) {

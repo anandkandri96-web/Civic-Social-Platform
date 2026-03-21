@@ -20,6 +20,22 @@ const DESC_MAX = 2000;
 const VALID_STATUSES = new Set(Object.values(ISSUE_STATUS));
 const CITIZEN_EDITABLE_STATUSES = new Set([ISSUE_STATUS.REPORTED, ISSUE_STATUS.UNDER_REVIEW]);
 
+const escapeRegex = (value) => String(value).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
+function buildIssueSearchFilter(raw) {
+  const term = String(raw || "").trim();
+  if (!term) return null;
+  const regex = new RegExp(escapeRegex(term), "i");
+  return {
+    $or: [
+      { title: regex },
+      { description: regex },
+      { locationText: regex },
+      { category: regex },
+    ],
+  };
+}
+
 function extractImageAssetId(url) {
   if (!url) return null;
   const s = String(url);
@@ -69,7 +85,7 @@ function appendStatusHistory(issue, fromStatus, toStatus, userId, note = "") {
   if (!issue) return;
   issue.statusHistory = issue.statusHistory || [];
   issue.statusHistory.push({
-    from: String(fromStatus || "").trim(),
+    from: String(fromStatus || "unknown").trim(),
     to: String(toStatus || "").trim(),
     changedBy: userId,
     changedAt: new Date(),
@@ -173,7 +189,7 @@ exports.createIssue = async (req, res) => {
       status: ISSUE_STATUS.REPORTED,
       statusHistory: [
         {
-          from: "",
+          from: "new",
           to: ISSUE_STATUS.REPORTED,
           changedBy: req.user._id,
           changedAt: new Date(),
@@ -320,9 +336,8 @@ exports.getIssues = async (req, res) => {
       filter.status = String(status).trim().toLowerCase();
     }
 
-    if (search) {
-      filter.$text = { $search: String(search).trim() };
-    }
+    const searchFilter = buildIssueSearchFilter(search);
+    if (searchFilter) Object.assign(filter, searchFilter);
 
     if (lat !== undefined && lng !== undefined) {
       const coords = parseCoords(lat, lng);

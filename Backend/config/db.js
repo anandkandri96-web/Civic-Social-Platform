@@ -1,6 +1,7 @@
 // backend/config/db.js
 
 const mongoose = require("mongoose");
+const User = require("../models/user");
 
 const connectDB = async () => {
   if (!process.env.MONGO_URI) {
@@ -20,6 +21,14 @@ const connectDB = async () => {
     console.log(
       `✅ MongoDB Connected | Host: ${conn.connection.host} | DB: ${conn.connection.name}`
     );
+
+    if (process.env.NODE_ENV !== "production") {
+      try {
+        await User.syncIndexes();
+      } catch (err) {
+        console.warn("?? Failed to sync User indexes:", err.message);
+      }
+    }
 
     // Connection events (important for cron jobs)
     mongoose.connection.on("connected", () => {

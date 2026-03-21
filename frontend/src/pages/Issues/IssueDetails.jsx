@@ -83,7 +83,8 @@ const IssueDetails = () => {
   const workerAfterImages = normalizeImages(issue?.workerProgressImages);
   const afterImages = [...new Set([...volunteerAfterImages, ...workerAfterImages])];
   const isResolvedFlow = ['resolved', 'resolved_by_community', 'citizen_verified', 'closed'].includes(issue?.status);
-  const coverImage = isResolvedFlow && afterImages[0] ? afterImages[0] : submittedImages[0];
+  const coverImage = submittedImages[0];
+  const resolutionImage = afterImages[0];
   const isVerified =
     issue?.verified === true ||
     issue?.verifiedByCitizen === true ||
@@ -112,6 +113,22 @@ const IssueDetails = () => {
   const departmentName =
     issue?.assignedDepartment?.name ??
     (typeof issue?.assignedDepartment === 'string' ? issue.assignedDepartment : issue?.department);
+  const locationText = issue?.locationText ? String(issue.locationText).trim() : '';
+  const coordLat = Number(coords?.[1]);
+  const coordLng = Number(coords?.[0]);
+  const coordLabel = Number.isFinite(coordLat) && Number.isFinite(coordLng)
+    ? `${coordLat.toFixed(5)}, ${coordLng.toFixed(5)}`
+    : '';
+  const locationLabel = locationText
+    ? `${locationText}${coordLabel ? ` (${coordLabel})` : ''}`
+    : coordLabel || '-';
+  const metaItems = [
+    { label: 'Location', value: locationLabel },
+    { label: 'Reported', value: issue?.createdAt ? new Date(issue.createdAt).toLocaleString() : '-' },
+    { label: 'Reporter', value: issue?.reportedBy?.name ?? 'Unknown' },
+    ...(departmentName ? [{ label: 'Department', value: departmentName }] : []),
+  ];
+  const showResolutionCard = Boolean(issue) && (isResolvedFlow || resolutionImage || issue?.communityResolutionReport?.text);
 
   const handleDelete = async () => {
     if (!canDelete || !issue?._id) return;
@@ -277,17 +294,12 @@ const IssueDetails = () => {
               </div>
 
               <div className="issue-meta">
-                <span>
-                  Location:{' '}
-                  {issue.locationText && String(issue.locationText).trim()
-                    ? `${String(issue.locationText).trim()}${issue.location?.coordinates ? ` (${issue.location.coordinates[1]}, ${issue.location.coordinates[0]})` : ''}`
-                    : issue.location?.coordinates
-                      ? `${issue.location.coordinates[1]}, ${issue.location.coordinates[0]}`
-                      : issue.location || '-'}
-                </span>
-                <span>Reported: {new Date(issue.createdAt).toLocaleString()}</span>
-                <span>By: {issue.reportedBy?.name ?? 'Unknown'}</span>
-                {departmentName ? <span>Department: {departmentName}</span> : null}
+                {metaItems.map((item) => (
+                  <div key={item.label} className="issue-meta-item">
+                    <span>{item.label}</span>
+                    <strong>{item.value}</strong>
+                  </div>
+                ))}
               </div>
 
               <div className="issue-description">
@@ -299,7 +311,16 @@ const IssueDetails = () => {
                 <div className="issue-map-preview">
                   <h3>Location Map</h3>
                   <div className="issue-map-preview__canvas" aria-label="Issue location map">
-                    <IssueLeafletMap issues={mapPoints} activeId={issue._id} zoom={14} scrollWheelZoom={false} className="issue-map-preview__leaflet" />
+                    <IssueLeafletMap
+                      issues={mapPoints}
+                      activeId={issue._id}
+                      zoom={16}
+                      scrollWheelZoom
+                      showZoomControl
+                      showAttribution={false}
+                      className="issue-map-preview__leaflet"
+                      showRecenter
+                    />
                   </div>
                 </div>
               )}
@@ -333,14 +354,19 @@ const IssueDetails = () => {
           </div>
 
           {/* Issue Resolution Card */}
+          {showResolutionCard && (
           <div className="issue-resolution-card">
             <div className="resolution-image">
-              <SafeImage
-                src={afterImages[0] || submittedImages[0]}
-                alt="Resolution progress"
-                showSkeleton
-                style={{ width: '100%', height: '400px', objectFit: 'cover' }}
-              />
+              {resolutionImage ? (
+                <SafeImage
+                  src={resolutionImage}
+                  alt="Resolution progress"
+                  showSkeleton
+                  style={{ width: '100%', height: '400px', objectFit: 'cover' }}
+                />
+              ) : (
+                <div className="resolution-placeholder">Resolution image will appear after the fix is submitted.</div>
+              )}
             </div>
             
             <div className="resolution-body">
@@ -468,6 +494,7 @@ const IssueDetails = () => {
               </div>
             </div>
           </div>
+          )}
         </div>
 
         <aside className="issue-details-right">

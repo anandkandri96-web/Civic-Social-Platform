@@ -6,6 +6,22 @@ const { apiResponse } = require("../utils/apiResponse");
 const { ROLES } = require("../utils/constants");
 const { generateNextOfficerId, generateNextWorkerId } = require("../services/serialId.service");
 
+const escapeRegex = (value) => String(value).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
+const buildIssueSearchFilter = (raw) => {
+  const term = String(raw || "").trim();
+  if (!term) return null;
+  const regex = new RegExp(escapeRegex(term), "i");
+  return {
+    $or: [
+      { title: regex },
+      { description: regex },
+      { locationText: regex },
+      { category: regex },
+    ],
+  };
+};
+
 exports.getStats = async (_req, res) => {
   try {
     const [totalIssues, totalUsers, statusBreakdown, avgResolution] = await Promise.all([
@@ -44,7 +60,7 @@ exports.getStats = async (_req, res) => {
 
 exports.getAllIssues = async (req, res) => {
   try {
-    const { page = 1, limit = 20, status, category, sort = "-createdAt" } = req.query;
+    const { page = 1, limit = 20, status, category, sort = "-createdAt", search } = req.query;
 
     const allowedSortFields = new Set(["createdAt", "-createdAt", "priorityScore", "-priorityScore", "voteCount", "-voteCount", "severity", "-severity"]);
     const sortValue = allowedSortFields.has(String(sort).trim()) ? String(sort).trim() : "-createdAt";
@@ -52,6 +68,8 @@ exports.getAllIssues = async (req, res) => {
     const filter = {};
     if (status) filter.status = String(status).toLowerCase();
     if (category) filter.category = String(category).toLowerCase();
+    const searchFilter = buildIssueSearchFilter(search);
+    if (searchFilter) Object.assign(filter, searchFilter);
 
     const skip = (Number(page) - 1) * Number(limit);
 
