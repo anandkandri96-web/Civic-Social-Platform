@@ -26,14 +26,14 @@ describe("auth.controller", () => {
     jest.clearAllMocks();
   });
 
-  it("registers volunteer as pending approval", async () => {
+  it("registers new users as citizens and auto-approves", async () => {
     User.findOne.mockResolvedValue(null);
     User.create.mockResolvedValue({
       _id: "u1",
       name: "Vol User",
       email: "v@x.com",
-      role: "volunteer",
-      isApproved: false,
+      role: "citizen",
+      isApproved: true,
     });
 
     const req = {
@@ -50,8 +50,8 @@ describe("auth.controller", () => {
 
     expect(User.create).toHaveBeenCalledWith(
       expect.objectContaining({
-        role: "volunteer",
-        isApproved: false,
+        role: "citizen",
+        isApproved: true,
       })
     );
     expect(res.status).toHaveBeenCalledWith(201);

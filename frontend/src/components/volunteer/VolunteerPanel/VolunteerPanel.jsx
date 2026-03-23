@@ -8,11 +8,11 @@ import './VolunteerPanel.css';
 
 const VolunteerPanel = ({ issue, onIssueUpdate }) => {
   // ✅ Use permissions instead of role checks
-  const { can } = usePermission();
+  const { can, isVolunteer } = usePermission();
   const [loading, setLoading] = useState(false);
   const { showToast } = useToast();
 
-  if (!can('volunteer:claim_issue')) return null;
+  if (!isVolunteer || !can('volunteer:claim_issue')) return null;
   if (!issue?._id) return null;
 
   const handleClaim = async () => {

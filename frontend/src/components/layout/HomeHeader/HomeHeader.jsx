@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import ThemeToggle from "../../common/ThemeToggle/ThemeToggle";
 import "../../../pages/Home/Home.css";
 
-const HomeHeader = ({ isLoggedIn, isAdmin, dashboardPath, onLogout }) => {
+const HomeHeader = ({ isLoggedIn, isAdmin, dashboardPath, onLogout, showHowItWorks = true }) => {
   const [scrolled, setScrolled] = useState(false);
 
   useEffect(() => {
@@ -32,9 +32,11 @@ const HomeHeader = ({ isLoggedIn, isAdmin, dashboardPath, onLogout }) => {
         <nav className="header__nav">
           {!isLoggedIn && (
             <>
-              <a href="#how-it-works" className="header__nav-link">
-                How It Works
-              </a>
+              {showHowItWorks && (
+                <a href="#how-it-works" className="header__nav-link">
+                  How It Works
+                </a>
+              )}
               <a href="#issues" className="header__nav-link">
                 Issues
               </a>

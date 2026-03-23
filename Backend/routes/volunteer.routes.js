@@ -3,6 +3,8 @@ const { protect } = require("../middlewares/auth.middleware");
 const { canPerform } = require("../middlewares/permission.middleware");
 const { uploadImages } = require("../middlewares/upload.middleware");
 const { PERMISSIONS } = require("../config/permissions.config");
+const { ROLES } = require("../utils/constants");
+const { apiResponse } = require("../utils/apiResponse");
 const {
   getAvailableIssues,
   claimIssue,
@@ -10,8 +12,15 @@ const {
   submitCommunityResolution,
 } = require("../controllers/volunteer.controller");
 
+const ensureVolunteer = (req, res, next) => {
+  if (req.user?.role !== ROLES.VOLUNTEER) {
+    return apiResponse(res, 403, "Only volunteers can access volunteer actions");
+  }
+  return next();
+};
+
 // ✅ All volunteer routes require authentication + VOLUNTEER_ACCESS permission
-router.use(protect, canPerform(PERMISSIONS.VOLUNTEER_ACCESS));
+router.use(protect, ensureVolunteer, canPerform(PERMISSIONS.VOLUNTEER_ACCESS));
 
 // ✅ View available issues (volunteers can browse unclaimed issues)
 router.get("/issues/available", getAvailableIssues);

@@ -59,6 +59,7 @@ const RoleUpgrade = () => {
   });
 
   const currentRole = String(user?.role || 'citizen').toLowerCase();
+  const isAdmin = currentRole === 'admin';
 
   const availableRoles = useMemo(
     () => ROLE_OPTIONS.filter((option) => option.value !== currentRole),
@@ -84,9 +85,9 @@ const RoleUpgrade = () => {
   }, []);
 
   useEffect(() => {
-    if (!can('role:upgrade_request')) return;
+    if (!can('role:upgrade_request') || isAdmin) return;
     fetchRequests();
-  }, [can, fetchRequests]);
+  }, [can, fetchRequests, isAdmin]);
 
   const handleChange = (event) => {
     const { name, value } = event.target;
@@ -141,6 +142,27 @@ const RoleUpgrade = () => {
       setSubmitting(false);
     }
   };
+
+  if (isAdmin) {
+    return (
+      <section className="role-upgrade page">
+        <div className="container">
+          <PageHeader
+            title="Role Upgrade Request"
+            subtitle="Role upgrades are not available for admin accounts."
+          />
+          <div className="role-upgrade__grid">
+            <article className="role-upgrade__card card">
+              <h2>Admin accounts</h2>
+              <div className="role-upgrade__notice">
+                Admins already have full access. Role upgrade requests are disabled.
+              </div>
+            </article>
+          </div>
+        </div>
+      </section>
+    );
+  }
 
   if (loading) return <Loader fullScreen />;
 

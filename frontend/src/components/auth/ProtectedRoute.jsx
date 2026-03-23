@@ -17,6 +17,7 @@ import { Navigate, Outlet, useLocation } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
 import { usePermission } from '../../hooks/usePermission';
 import Loader from '../common/Loader/Loader';
+import { hasRole } from '../../utils/roleCheck';
 
 const ProtectedRoute = ({
   requiredRole,        // Single role or array of roles (backward compatibility)
@@ -26,7 +27,7 @@ const ProtectedRoute = ({
   children,
 }) => {
   const { user, loading, isAuthenticated } = useAuth();
-  const { can, canPerformAny, canPerformAll } = usePermission();
+  const { canPerformAny } = usePermission();
   const location = useLocation();
 
   // Show loader while auth state is being determined
@@ -48,7 +49,7 @@ const ProtectedRoute = ({
   // Role check (backward compatibility)
   if (requiredRole) {
     const roles = Array.isArray(requiredRole) ? requiredRole : [requiredRole];
-    if (!roles.includes(user?.role)) {
+    if (!hasRole(user?.role, roles)) {
       return <Navigate to={fallbackRoute} replace />;
     }
   }

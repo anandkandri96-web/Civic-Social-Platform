@@ -5,6 +5,8 @@ import IssueLeafletMap from '../../components/map/IssueLeafletMap';
 import { getPublicHeatmap } from '@api/analytics.api.js';
 import { getErrorMessage } from '@api/utils';
 import { getIssues } from '@api/issues.api';
+import { ISSUE_CATEGORY_FILTER_OPTIONS, ISSUE_STATUS_FILTER_OPTIONS } from '../../constants/issueOptions';
+import { ISSUE_STATUS_LABELS } from '../../constants/issueStatus';
 import './IssueMap.css';
 
 const IssueMap = () => {
@@ -54,22 +56,25 @@ const IssueMap = () => {
   }, []);
 
   useEffect(() => {
-    if (mode !== 'issues') return undefined;
+    if (mode !== 'issues' && mode !== 'heatmap') return undefined;
     let mounted = true;
 
     const loadIssues = async () => {
       setIssuesLoading(true);
       setError('');
       try {
-        const params = {};
-        if (category) params.category = category;
-        if (status) params.status = status;
-        params.sort = 'priority';
+        const params = { sort: 'priority' };
+        if (mode === 'issues') {
+          if (category) params.category = category;
+          if (status) params.status = status;
+        } else {
+          params.limit = 300;
+        }
         const data = await getIssues(params);
         const list = Array.isArray(data) ? data : [];
         if (!mounted) return;
         setIssues(list);
-        if (!activeId && list[0]?._id) setActiveId(list[0]._id);
+        if (mode === 'issues' && !activeId && list[0]?._id) setActiveId(list[0]._id);
       } catch (err) {
         if (!mounted) return;
         setError(getErrorMessage(err));
@@ -99,6 +104,7 @@ const IssueMap = () => {
           category: it.category,
           status: it.status,
           priority: Number(it.severity || 3),
+          severity: Number(it.severity || 3),
           votes: Number(it.voteCount || 0),
           locationText: it.locationText || '',
           lat,
@@ -148,25 +154,17 @@ const IssueMap = () => {
               <div className="issue-map-filter-group">
                 <label htmlFor="map-category">Category</label>
                 <select id="map-category" value={category} onChange={(e) => setCategory(e.target.value)}>
-                  <option value="">All</option>
-                  <option value="roads">Roads</option>
-                  <option value="electricity">Electricity</option>
-                  <option value="garbage">Garbage</option>
-                  <option value="drainage">Drainage</option>
-                  <option value="water">Water</option>
-                  <option value="other">Other</option>
+                  {ISSUE_CATEGORY_FILTER_OPTIONS.map((opt) => (
+                    <option key={opt.value || 'all'} value={opt.value}>{opt.label}</option>
+                  ))}
                 </select>
               </div>
               <div className="issue-map-filter-group">
                 <label htmlFor="map-status">Status</label>
                 <select id="map-status" value={status} onChange={(e) => setStatus(e.target.value)}>
-                  <option value="">All</option>
-                  <option value="reported">Reported</option>
-                  <option value="under_review">Under Review</option>
-                  <option value="assigned_to_department">Assigned</option>
-                  <option value="work_in_progress">Work In Progress</option>
-                  <option value="resolved">Resolved</option>
-                  <option value="closed">Closed</option>
+                  {ISSUE_STATUS_FILTER_OPTIONS.map((opt) => (
+                    <option key={opt.value || 'all'} value={opt.value}>{opt.label}</option>
+                  ))}
                 </select>
               </div>
 
@@ -184,7 +182,7 @@ const IssueMap = () => {
                       onClick={() => setActiveId(p.id)}
                     >
                       <strong>{p.title}</strong>
-                      <small>{p.status} | votes {p.votes}</small>
+                      <small>{ISSUE_STATUS_LABELS[p.status] || p.status} | votes {p.votes}</small>
                       <small>{p.locationText || '-'}</small>
                     </button>
                   ))
@@ -205,7 +203,15 @@ const IssueMap = () => {
         <div className="issue-map-canvas-wrap">
           <div className="issue-map-canvas">
             {mode === 'heatmap' ? (
-              <IssueLeafletMap heatmapData={heatmapData} className="issue-map-leaflet" zoom={11} maxZoom={20} />
+              <IssueLeafletMap
+                issues={mapIssuePoints}
+                heatmapData={heatmapData}
+                className="issue-map-leaflet"
+                zoom={11}
+                maxZoom={20}
+                showMarkers={false}
+                dotMode
+              />
             ) : (
               <IssueLeafletMap
                 issues={mapIssuePoints}
@@ -219,11 +225,11 @@ const IssueMap = () => {
             )}
 
             {mode === 'issues' && activeIssue ? (
-              <div className="issue-map-preview-card" role="dialog" aria-label="Selected issue preview">
-                <div className="issue-map-preview-head">
-                  <strong>{activeIssue.title}</strong>
-                  <span className="issue-map-preview-badge">{activeIssue.status}</span>
-                </div>
+                <div className="issue-map-preview-card" role="dialog" aria-label="Selected issue preview">
+                  <div className="issue-map-preview-head">
+                    <strong>{activeIssue.title}</strong>
+                    <span className="issue-map-preview-badge">{ISSUE_STATUS_LABELS[activeIssue.status] || activeIssue.status}</span>
+                  </div>
                 <div className="issue-map-preview-meta">
                   <span>Votes: {activeIssue.votes}</span>
                   <span>Priority: {activeIssue.priority}</span>

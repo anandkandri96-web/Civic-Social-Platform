@@ -29,6 +29,7 @@ const AppLayout = ({ layoutClassName, mainClassName }) => {
           isAdmin={isAdmin}
           dashboardPath={dashboardPath}
           onLogout={logout}
+          showHowItWorks={false}
         />
       ) : (
         <Header />

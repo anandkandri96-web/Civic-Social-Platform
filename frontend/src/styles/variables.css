@@ -86,6 +86,7 @@
   --font-base: 'DM Sans', system-ui, -apple-system, Segoe UI, sans-serif;
   --font-heading: 'DM Sans', system-ui, -apple-system, Segoe UI, sans-serif;
   --font-mono: 'DM Sans', system-ui, -apple-system, Segoe UI, sans-serif;
+  --font-display: 'DM Sans', system-ui, -apple-system, Segoe UI, sans-serif;
 
   --text-h1: var(--font-size-h1);
   --text-h2: var(--font-size-h2);

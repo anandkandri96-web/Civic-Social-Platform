@@ -1,5 +1,5 @@
-import { test, expect } from '@playwright/test';
-import { setupMockApi } from '../utils/testHelpers';
+const { test, expect } = require('@playwright/test');
+const { setupMockApi } = require('../utils/testHelpers');
 
 test.describe('Auth - Register', () => {
   test.beforeEach(async ({ page }) => {
@@ -7,24 +7,21 @@ test.describe('Auth - Register', () => {
     await page.goto('/register', { waitUntil: 'domcontentloaded' });
   });
 
-  test('citizen can register and gets redirected to login', async ({ page }) => {
-    await page.locator('input[name=\"name\"]').fill('New Citizen');
-    await page.locator('input[name=\"email\"]').fill(`citizen.new.${Date.now()}@city.local`);
-    await page.locator('input[name=\"password\"]').fill('Password123!');
-    await page.locator('select[name=\"role\"]').selectOption('citizen');
+  test('user can register and gets redirected to login', async ({ page }) => {
+    await page.locator('input[name="name"]').fill('New Citizen');
+    await page.locator('input[name="email"]').fill(`citizen.new.${Date.now()}@city.local`);
+    await page.locator('input[name="password"]').fill('Password123!');
     await page.getByRole('button', { name: /create account/i }).click();
 
     await expect(page).toHaveURL(/\/login$/);
     await expect(page.getByRole('button', { name: /sign in/i })).toBeVisible();
   });
 
-  test('volunteer can register from role selector', async ({ page }) => {
-    await page.locator('input[name=\"name\"]').fill('New Volunteer');
-    await page.locator('input[name=\"email\"]').fill(`volunteer.new.${Date.now()}@city.local`);
-    await page.locator('input[name=\"password\"]').fill('Password123!');
-    await page.locator('select[name=\"role\"]').selectOption('volunteer');
+  test('invalid email shows validation error', async ({ page }) => {
+    await page.locator('input[name="name"]').fill('Test User');
+    await page.locator('input[name="email"]').fill('invalid-email');
+    await page.locator('input[name="password"]').fill('Password123!');
     await page.getByRole('button', { name: /create account/i }).click();
-
-    await expect(page).toHaveURL(/\/login$/);
+    await expect(page.locator('.register-error')).toContainText(/valid email/i);
   });
 });

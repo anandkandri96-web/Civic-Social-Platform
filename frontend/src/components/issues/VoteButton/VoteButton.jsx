@@ -10,7 +10,7 @@ const VoteButton = ({
   userVoted: initialVoted = false,
   onVote,
 }) => {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, user } = useAuth();
   const navigate = useNavigate();
 
   const [voteCount, setVoteCount] = useState(initialCount);
@@ -64,6 +64,16 @@ const VoteButton = ({
         >
           Sign in to vote
         </button>
+      </div>
+    );
+  }
+
+  const isStaff = ['admin', 'officer'].includes(String(user?.role || '').toLowerCase());
+  if (isStaff) {
+    return (
+      <div className="vote-button-wrapper">
+        <span className="vote-count">Votes: {voteCount}</span>
+        <span className="vote-disabled">Voting disabled for staff</span>
       </div>
     );
   }

@@ -9,7 +9,8 @@ const TaskProgressUpload = ({ task, onUpdate }) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const MAX_IMAGES = 5;
-  const canComplete = ['accepted', 'in_progress'].includes(String(task?.status || '').toLowerCase());
+  const hasProgressImages = Array.isArray(task?.progressImages) && task.progressImages.length > 0;
+  const canComplete = ['accepted', 'in_progress'].includes(String(task?.status || '').toLowerCase()) && hasProgressImages;
   const { showToast } = useToast();
 
   const handleUploadProgress = async () => {
@@ -69,6 +70,9 @@ const TaskProgressUpload = ({ task, onUpdate }) => {
       <button onClick={handleComplete} disabled={loading || !canComplete}>
         Mark Task Completed
       </button>
+      {!hasProgressImages && (
+        <p className="task-progress-upload__hint">Upload at least one image before completing the task.</p>
+      )}
     </div>
   );
 };

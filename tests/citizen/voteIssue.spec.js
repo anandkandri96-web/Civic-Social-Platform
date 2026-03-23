@@ -1,5 +1,5 @@
-import { test, expect } from '@playwright/test';
-import { loginCitizen, setupMockApi } from '../utils/testHelpers';
+const { test, expect } = require('@playwright/test');
+const { loginCitizen, setupMockApi } = require('../utils/testHelpers');
 
 test.describe('Citizen - Vote Issue', () => {
   test.beforeEach(async ({ page }) => {
@@ -18,9 +18,9 @@ test.describe('Citizen - Vote Issue', () => {
     await expect(voteButton).toHaveAttribute('aria-pressed', 'true');
   });
 
-  test('citizen can open issue details and verify vote UI is available', async ({ page }) => {
+  test('citizen can open issue details and see vote control', async ({ page }) => {
     await page.goto('/issues', { waitUntil: 'domcontentloaded' });
-    await page.getByRole('link', { name: /view/i }).first().click();
+    await page.getByRole('link', { name: /broken streetlight/i }).click();
     await expect(page.locator('button.vote-button')).toBeVisible();
   });
 });

@@ -31,7 +31,24 @@ const TaskCard = ({ task, onUpdate, children, workerId }) => {
         <p className="task-worker-id">Worker ID: {workerId || 'N/A'}</p>
         <p>Category: {task.issue?.category}</p>
         <p>Location: {task.issue?.locationText}</p>
+        {task.issue?.description ? <p>Description: {task.issue.description}</p> : null}
       </div>
+      {Array.isArray(task?.issue?.images) && task.issue.images.length > 0 ? (
+        <div className="task-progress-gallery" aria-label="Reported issue images">
+          {task.issue.images.slice(0, 6).map((src, idx) => (
+            <a
+              key={`${src}-${idx}`}
+              href={String(src)}
+              target="_blank"
+              rel="noreferrer"
+              className="task-progress-thumb"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <SafeImage src={src} alt={`Issue photo ${idx + 1}`} showSkeleton style={{ width: '100%', height: '100%' }} />
+            </a>
+          ))}
+        </div>
+      ) : null}
       {Array.isArray(task?.progressImages) && task.progressImages.length > 0 ? (
         <div className="task-progress-gallery" aria-label="Uploaded task progress images">
           {task.progressImages.slice(0, 6).map((src, idx) => (

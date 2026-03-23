@@ -5,7 +5,7 @@ import StatusBadge from '../../components/issues/StatusBadge/StatusBadge';
 import { useAuth } from '../../hooks/useAuth';
 import { usePermission } from '../../hooks/usePermission';
 import { createIssueComment, deleteIssueComment, getIssueComments, updateIssueComment } from '@api/comments.api';
-import { closeIssue, deleteIssue, getIssueById, reopenIssue, verifyIssue } from '@api/issues.api';
+import { closeIssue, deleteIssue, getIssueById, reopenIssue, verifyIssue, updateIssue } from '@api/issues.api';
 import { getErrorMessage } from '@api/utils';
 import { resolveMediaUrl } from '@/utils/mediaUrl';
 import { canTransition } from '../../utils/statusFlow';
@@ -16,6 +16,7 @@ import Skeleton from '../../components/common/Skeleton/Skeleton';
 import SafeImage from '../../components/common/SafeImage/SafeImage';
 import { useToast } from '../../contexts/ToastContext';
 import { useModal } from '../../contexts/ModalContext';
+import { ISSUE_CATEGORIES, ISSUE_SEVERITY_OPTIONS, ISSUE_SEVERITY_LABELS } from '../../constants/issueOptions';
 import './IssueDetails.css';
 
 const normalizeImages = (images) =>
@@ -25,11 +26,14 @@ const normalizeImages = (images) =>
         .filter(Boolean)
     : [];
 
+const TITLE_RE = /[a-zA-Z]/;
+const TITLE_NUMERIC_ONLY_RE = /^[0-9\s]+$/;
+
 const IssueDetails = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const { user, isAuthenticated } = useAuth();
-  const { can, isAdmin, isOfficer, isVolunteer } = usePermission();
+  const { can, isVolunteer } = usePermission();
   const [issue, setIssue] = useState(null);
   const [comments, setComments] = useState([]);
   const [commentText, setCommentText] = useState('');
@@ -40,6 +44,16 @@ const IssueDetails = () => {
   const [actionLoading, setActionLoading] = useState(false);
   const [commentLoading, setCommentLoading] = useState(false);
   const [deleteError, setDeleteError] = useState('');
+  const [editing, setEditing] = useState(false);
+  const [editLoading, setEditLoading] = useState(false);
+  const [editError, setEditError] = useState('');
+  const [editForm, setEditForm] = useState({
+    title: '',
+    description: '',
+    category: 'roads',
+    severity: 3,
+    locationText: '',
+  });
   const { showToast } = useToast();
   const { confirm } = useModal();
 
@@ -64,12 +78,24 @@ const IssueDetails = () => {
     };
   }, [id]);
 
+  useEffect(() => {
+    if (!issue) return;
+    setEditForm({
+      title: issue.title || '',
+      description: issue.description || '',
+      category: issue.category || 'roads',
+      severity: typeof issue.severity === 'number' ? issue.severity : Number(issue.severity || 3),
+      locationText: issue.locationText || '',
+    });
+  }, [issue]);
+
   const reporterId = issue?.reportedBy?._id ?? issue?.reportedBy;
   const isReporter = user?.id && String(reporterId) === String(user.id);
   const status = String(issue?.status || '').trim().toLowerCase();
   // ✅ Use permissions instead of role checks
   // issue:delete allows: admins (always), citizens (if reporter + deletable status)
-  const canDelete = can('issue:delete') && (user?.role === 'admin' || (isReporter && (status === 'reported' || status === 'closed')));
+  const canDelete = can('issue:delete') && (user?.role === 'admin' || (isReporter && ['reported', 'under_review', 'closed'].includes(status)));
+  const canEdit = can('issue:update') && isReporter && ['reported', 'under_review'].includes(status);
   // issue:close allows: admins and officers (with transition check)
   const canClose = can('issue:close') && canTransition(issue?.status, 'closed');
   const canVerify = isReporter && canTransition(issue?.status, 'citizen_verified');
@@ -164,6 +190,58 @@ const IssueDetails = () => {
     }
   };
 
+  const handleEditSave = async () => {
+    if (!issue?._id) return;
+    const title = editForm.title.trim();
+    const description = editForm.description.trim();
+    const locationText = editForm.locationText.trim();
+    const severityNum = Number(editForm.severity);
+
+    if (title.length < 3) {
+      setEditError('Title must be at least 3 characters.');
+      return;
+    }
+    if (TITLE_NUMERIC_ONLY_RE.test(title)) {
+      setEditError('Title cannot be only numbers.');
+      return;
+    }
+    if (!TITLE_RE.test(title)) {
+      setEditError('Title must include at least one letter.');
+      return;
+    }
+    if (description.length < 10) {
+      setEditError('Description must be at least 10 characters.');
+      return;
+    }
+    if (!locationText) {
+      setEditError('Location text is required.');
+      return;
+    }
+    if (!Number.isFinite(severityNum) || severityNum < 1 || severityNum > 5) {
+      setEditError('Please select a valid severity level.');
+      return;
+    }
+
+    setEditLoading(true);
+    setEditError('');
+    try {
+      const updated = await updateIssue(issue._id, {
+        title,
+        description,
+        category: editForm.category,
+        severity: severityNum,
+        locationText,
+      });
+      setIssue(updated);
+      setEditing(false);
+      showToast('Issue updated successfully.', { tone: 'success' });
+    } catch (err) {
+      setEditError(getErrorMessage(err));
+    } finally {
+      setEditLoading(false);
+    }
+  };
+
   const handleCreateComment = async (e) => {
     e.preventDefault();
     const message = commentText.trim();
@@ -255,11 +333,13 @@ const IssueDetails = () => {
             
             <div className="issue-details-body">
               <div className="issue-tags">
-                <span className="tag">{issue.category}</span>
+                <span className="tag">
+                  {ISSUE_CATEGORIES.find((cat) => cat.value === issue.category)?.label || issue.category}
+                </span>
                 <span className="tag secondary">
                   Priority:{' '}
                   {typeof issue.severity === 'number'
-                    ? ['Low', 'Medium', 'High', 'Critical', 'Urgent'][issue.severity - 1] || issue.severity
+                    ? ISSUE_SEVERITY_LABELS[issue.severity] || issue.severity
                     : issue.severity}
                 </span>
                 {isVerified ? (
@@ -302,6 +382,101 @@ const IssueDetails = () => {
                 ))}
               </div>
 
+              {canEdit && (
+                <div className="issue-edit">
+                  <div className="issue-edit__head">
+                    <h3>Edit Report</h3>
+                    <button
+                      type="button"
+                      className="issue-edit__toggle"
+                      onClick={() => {
+                        setEditError('');
+                        setEditing((prev) => !prev);
+                      }}
+                    >
+                      {editing ? 'Close' : 'Edit'}
+                    </button>
+                  </div>
+
+                  {editing && (
+                    <div className="issue-edit__form">
+                      <label>
+                        Title
+                        <input
+                          type="text"
+                          value={editForm.title}
+                          onChange={(e) => setEditForm((prev) => ({ ...prev, title: e.target.value }))}
+                          placeholder="Issue title"
+                        />
+                      </label>
+                      <label>
+                        Category
+                        <select
+                          value={editForm.category}
+                          onChange={(e) => setEditForm((prev) => ({ ...prev, category: e.target.value }))}
+                        >
+                          {ISSUE_CATEGORIES.map((cat) => (
+                            <option key={cat.value} value={cat.value}>{cat.label}</option>
+                          ))}
+                        </select>
+                      </label>
+                      <label>
+                        Severity
+                        <select
+                          value={String(editForm.severity)}
+                          onChange={(e) => setEditForm((prev) => ({ ...prev, severity: Number(e.target.value) }))}
+                        >
+                          {ISSUE_SEVERITY_OPTIONS.map((sev) => (
+                            <option key={sev.value} value={sev.value}>{sev.label}</option>
+                          ))}
+                        </select>
+                      </label>
+                      <label>
+                        Location text
+                        <input
+                          type="text"
+                          value={editForm.locationText}
+                          onChange={(e) => setEditForm((prev) => ({ ...prev, locationText: e.target.value }))}
+                          placeholder="Area or landmark"
+                        />
+                      </label>
+                      <label>
+                        Description
+                        <textarea
+                          rows={4}
+                          value={editForm.description}
+                          onChange={(e) => setEditForm((prev) => ({ ...prev, description: e.target.value }))}
+                          placeholder="Describe the issue"
+                        />
+                      </label>
+                      {editError && <div className="issue-edit__error">{editError}</div>}
+                      <div className="issue-edit__actions">
+                        <button type="button" onClick={handleEditSave} disabled={editLoading}>
+                          {editLoading ? 'Saving...' : 'Save changes'}
+                        </button>
+                        <button
+                          type="button"
+                          className="ghost"
+                          onClick={() => {
+                            setEditing(false);
+                            setEditError('');
+                            setEditForm({
+                              title: issue.title || '',
+                              description: issue.description || '',
+                              category: issue.category || 'roads',
+                              severity: typeof issue.severity === 'number' ? issue.severity : Number(issue.severity || 3),
+                              locationText: issue.locationText || '',
+                            });
+                          }}
+                        >
+                          Cancel
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+
               <div className="issue-description">
                 <h3>Description</h3>
                 <p>{issue.description || 'No description provided.'}</p>
@@ -328,12 +503,22 @@ const IssueDetails = () => {
               {(canVerify || canReopen || canClose || canDelete) && (
                 <div className="issue-workflow-actions">
                   {canVerify && (
-                    <button type="button" disabled={actionLoading} onClick={() => handleIssueAction(verifyIssue)}>
+                    <button
+                      type="button"
+                      className="issue-action issue-action--verify"
+                      disabled={actionLoading}
+                      onClick={() => handleIssueAction(verifyIssue)}
+                    >
                       Verify Resolution
                     </button>
                   )}
                   {canReopen && (
-                    <button type="button" disabled={actionLoading} onClick={() => handleIssueAction(reopenIssue)}>
+                    <button
+                      type="button"
+                      className="issue-action issue-action--reopen"
+                      disabled={actionLoading}
+                      onClick={() => handleIssueAction(reopenIssue)}
+                    >
                       Reopen Issue
                     </button>
                   )}
@@ -376,6 +561,19 @@ const IssueDetails = () => {
                 <h3>Current Status</h3>
                 <StatusBadge status={issue.status} />
               </div>
+
+              {afterImages.length > 1 && (
+                <div className="issue-images-section">
+                  <h3>Resolution Photos</h3>
+                  <div className="issue-image-grid">
+                    {afterImages.map((img, idx) => (
+                      <a key={`after-${img}-${idx}`} href={resolveMediaUrl(img)} target="_blank" rel="noreferrer">
+                        <SafeImage src={img} alt={`Resolution photo ${idx + 1}`} showSkeleton style={{ width: '100%', height: 80 }} />
+                      </a>
+                    ))}
+                  </div>
+                </div>
+              )}
 
               <div className="assignments-section">
                 <h3>Assignments</h3>
@@ -516,7 +714,7 @@ const IssueDetails = () => {
           )}
 
           {/* ✅ Show volunteer panel to volunteers */}
-          {can('volunteer:claim_issue') && (
+          {isVolunteer && can('volunteer:claim_issue') && (
             <div className="issue-side-card card">
               <VolunteerPanel issue={issue} onIssueUpdate={setIssue} />
             </div>

@@ -77,11 +77,11 @@ const userSchema = new mongoose.Schema(
 
 userSchema.index(
   { workerId: 1 },
-  { unique: true, partialFilterExpression: { workerId: { $type: "string", $ne: "" } } }
+  { unique: true, partialFilterExpression: { workerId: { $type: "string", $gt: "" } } }
 );
 userSchema.index(
   { officerId: 1 },
-  { unique: true, partialFilterExpression: { officerId: { $type: "string", $ne: "" } } }
+  { unique: true, partialFilterExpression: { officerId: { $type: "string", $gt: "" } } }
 );
 
 userSchema.pre("save", async function (next) {

@@ -4,12 +4,14 @@ import { useAuth } from '../../hooks/useAuth';
 import { normalizeRole } from '../../utils/roleCheck';
 import { getErrorMessage } from '@api/utils';
 import Button from '../../components/common/Button/Button';
+import { useToast } from '../../contexts/ToastContext';
 import './Login.css';
 
 const Login = () => {
   const { login } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
+  const { showToast } = useToast();
 
   const redirectTo = location.state?.from?.pathname || '/dashboard';
 
@@ -49,6 +51,7 @@ const Login = () => {
         email,
         password,
       });
+      showToast('Successfully signed in.', { tone: 'success' });
 
       const actualRole = normalizeRole(data?.user?.role || '');
 

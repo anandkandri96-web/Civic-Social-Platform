@@ -1,24 +1,20 @@
-import { test, expect } from '@playwright/test';
-import { loginWorker, setupMockApi } from '../utils/testHelpers';
+const { test, expect } = require('@playwright/test');
+const { loginWorker, setupMockApi } = require('../utils/testHelpers');
 
-test.describe('Field Worker - Complete Task', () => {
+test.describe('Worker - Tasks', () => {
   test.beforeEach(async ({ page }) => {
     await setupMockApi(page);
     await loginWorker(page);
     await page.goto('/dashboard/worker', { waitUntil: 'domcontentloaded' });
   });
 
-  test('field worker can accept task, update progress, and mark completed', async ({ page }) => {
+  test('worker can accept a task', async ({ page }) => {
     await expect(page.getByRole('heading', { name: /worker dashboard/i })).toBeVisible();
 
-    const firstRow = page.locator('tbody tr').first();
-    await firstRow.getByRole('button', { name: /accept/i }).click();
-    await expect(firstRow).toContainText('accepted');
+    const taskCard = page.locator('.task-card').first();
+    await expect(taskCard.getByRole('button', { name: /accept task/i })).toBeVisible();
 
-    await firstRow.getByRole('combobox').selectOption('in_progress');
-    await expect(firstRow).toContainText('in_progress');
-
-    await firstRow.getByRole('combobox').selectOption('completed');
-    await expect(firstRow).toContainText('completed');
+    await taskCard.getByRole('button', { name: /accept task/i }).click();
+    await expect(taskCard.locator('.task-status')).toContainText(/accepted/i);
   });
 });

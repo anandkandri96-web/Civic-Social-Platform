@@ -37,7 +37,7 @@ const ICONS = {
 const Header = () => {
   const { user, isAuthenticated, logout } = useAuth();
   const { dashboardPath } = useRole();
-  const { can, isAdmin, isCitizen } = usePermission();
+  const { can } = usePermission();
 
   const [searchTerm, setSearchTerm] = useState('');
   const [menuOpen, setMenuOpen] = useState(false);
@@ -52,6 +52,7 @@ const Header = () => {
 
   const brandTarget = isAuthenticated ? dashboardPath : '/';
   const avatarLetter = (user?.name || user?.email || 'U').charAt(0).toUpperCase();
+  const avatarUrl = user?.avatarUrl || user?.avatar || user?.profileImage || user?.photo || '';
 
   useEffect(() => {
     // Closing transient UI on route change is intentional.
@@ -245,7 +246,11 @@ const Header = () => {
                 aria-label="User menu"
                 aria-expanded={avatarOpen}
               >
-                {avatarLetter}
+                {avatarUrl ? (
+                  <img src={avatarUrl} alt="Profile" className="app-header__avatar-img" />
+                ) : (
+                  avatarLetter
+                )}
               </button>
               {avatarOpen && (
                 <div className="app-header__avatar-menu" role="menu" aria-label="User menu">

@@ -19,15 +19,18 @@ import {
   canPerformResourceAction,
   ROLES 
 } from '../utils/permissions.config';
+import { normalizeRole } from '../utils/roleCheck';
 
 export const usePermission = () => {
   const { user, loading } = useAuth();
 
   // Memoize user permissions
+  const normalizedRole = useMemo(() => normalizeRole(user?.role || null), [user?.role]);
+
   const permissions = useMemo(() => {
-    if (!user?.role) return new Set();
-    return ROLE_PERMISSIONS[user.role] ?? new Set();
-  }, [user?.role]);
+    if (!normalizedRole) return new Set();
+    return ROLE_PERMISSIONS[normalizedRole] ?? new Set();
+  }, [normalizedRole]);
 
   /**
    * Check if user can perform a specific permission
@@ -35,9 +38,9 @@ export const usePermission = () => {
    * @returns {boolean}
    */
   const can = useCallback((permission) => {
-    if (loading || !user?.role) return false;
-    return hasPermission(user.role, permission);
-  }, [loading, user?.role]);
+    if (loading || !normalizedRole) return false;
+    return hasPermission(normalizedRole, permission);
+  }, [loading, normalizedRole]);
 
   /**
    * Alias for 'can' - more intuitive naming
@@ -50,10 +53,10 @@ export const usePermission = () => {
    * @returns {boolean}
    */
   const canPerformAny = useCallback((permissions) => {
-    if (loading || !user?.role) return false;
+    if (loading || !normalizedRole) return false;
     const list = Array.isArray(permissions) ? permissions : [permissions];
-    return list.some((perm) => hasPermission(user.role, perm));
-  }, [loading, user?.role]);
+    return list.some((perm) => hasPermission(normalizedRole, perm));
+  }, [loading, normalizedRole]);
 
   /**
    * Check if user has ALL of the provided permissions
@@ -61,10 +64,10 @@ export const usePermission = () => {
    * @returns {boolean}
    */
   const canPerformAll = useCallback((permissions) => {
-    if (loading || !user?.role) return false;
+    if (loading || !normalizedRole) return false;
     const list = Array.isArray(permissions) ? permissions : [permissions];
-    return list.every((perm) => hasPermission(user.role, perm));
-  }, [loading, user?.role]);
+    return list.every((perm) => hasPermission(normalizedRole, perm));
+  }, [loading, normalizedRole]);
 
   /**
    * Resource-level permission check
@@ -91,17 +94,17 @@ export const usePermission = () => {
     userPermissions: permissions,
 
     // Current user role
-    role: user?.role,
+    role: normalizedRole || user?.role,
 
     // Loading state
     loading,
 
     // Convenience checks for common roles (for backward compatibility)
-    isAdmin: user?.role === ROLES.ADMIN,
-    isOfficer: user?.role === ROLES.OFFICER,
-    isWorker: user?.role === ROLES.WORKER,
-    isVolunteer: user?.role === ROLES.VOLUNTEER,
-    isCitizen: user?.role === ROLES.CITIZEN,
+    isAdmin: normalizedRole === ROLES.ADMIN,
+    isOfficer: normalizedRole === ROLES.OFFICER,
+    isWorker: normalizedRole === ROLES.WORKER,
+    isVolunteer: normalizedRole === ROLES.VOLUNTEER,
+    isCitizen: normalizedRole === ROLES.CITIZEN,
   };
 };
 

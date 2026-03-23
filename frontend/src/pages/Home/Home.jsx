@@ -3,31 +3,26 @@ import { Link } from "react-router-dom";
 import { useAuth } from "../../hooks/useAuth";
 import { usePermission } from "../../hooks/usePermission";
 import { getIssues } from "@api/issues.api";
+import { getPublicHeatmap } from "@api/analytics.api";
 import { mapBackendStatus, statusConfig } from "@/utils/statusConfig";
 import VoteButton from "../../components/issues/VoteButton/VoteButton";
 import IssueLeafletMap from "../../components/map/IssueLeafletMap";
 import SafeImage from "../../components/common/SafeImage/SafeImage";
+import Loader from "../../components/common/Loader/Loader";
 import HomeHeader from "../../components/layout/HomeHeader/HomeHeader";
 import citizenIcon from "../../assets/citizen icon.png";
 import officerIcon from "../../assets/officer icon.png";
 import volunteerIcon from "../../assets/volunteer icon.png";
 import workerIcon from "../../assets/worker icon.png";
-
-const CATEGORY_LABELS = {
-  roads: "Roads",
-  electricity: "Electricity",
-  garbage: "Garbage",
-  drainage: "Drainage",
-  water: "Water",
-  other: "Other",
-};
+import { ISSUE_CATEGORIES, ISSUE_CATEGORY_LABELS, ISSUE_SEVERITY_OPTIONS } from "../../constants/issueOptions";
 
 const CATEGORY_COLORS = {
-  Roads: "#F2B933",
-  Electricity: "#2F8398",
-  Garbage: "#87A83F",
-  Drainage: "#C0C91E",
-  Other: "#F27C54",
+  roads: "#F2B933",
+  electricity: "#2F8398",
+  garbage: "#87A83F",
+  drainage: "#C0C91E",
+  water: "#2F8398",
+  other: "#F27C54",
 };
 
 const HOW_IT_WORKS = [
@@ -99,7 +94,7 @@ function getLocation(issue) {
 
 function normalizeIssue(issue) {
   const rawCategory = String(issue.category || "other").toLowerCase();
-  const category = CATEGORY_LABELS[rawCategory] || rawCategory || "Other";
+  const categoryLabel = ISSUE_CATEGORY_LABELS[rawCategory] || rawCategory || "Other";
   const status = mapBackendStatus(issue.status);
   const config = statusConfig[status] || {};
   const votes = issue.voteCount ?? issue.votes ?? 0;
@@ -108,7 +103,8 @@ function normalizeIssue(issue) {
     id: issue._id || issue.id,
     raw: issue,
     title: issue.title || "Untitled issue",
-    category,
+    category: rawCategory,
+    categoryLabel,
     status,
     statusLabel: config.label || "Reported",
     statusColor: config.color || "warning",
@@ -452,9 +448,8 @@ function PriorityIssuesSection({
   isAdmin,
 }) {
   const categories = useMemo(() => {
-    const unique = [...new Set(issues.map((i) => i.category))].filter(Boolean);
-    return ["all", ...unique];
-  }, [issues]);
+    return ["all", ...ISSUE_CATEGORIES.map((cat) => cat.value)];
+  }, []);
 
   const filteredIssues = useMemo(() => {
     if (filter === "all") return issues;
@@ -487,7 +482,7 @@ function PriorityIssuesSection({
               className={`issues-filter-btn${filter === cat ? " active" : ""}`}
               onClick={() => setFilter(cat)}
             >
-              {cat === "all" ? "All Categories" : cat}
+              {cat === "all" ? "All Categories" : ISSUE_CATEGORY_LABELS[cat] || cat}
             </button>
           ))}
         </div>
@@ -513,7 +508,7 @@ function PriorityIssuesSection({
                 )}
               </div>
             )
-            : filteredIssues.map((issue, index) => {
+            : filteredIssues.map((issue) => {
               const catColor = CATEGORY_COLORS[issue.category] || "#2F8398";
               const submittedImages = Array.isArray(issue?.raw?.images)
                 ? issue.raw.images.map((img) => String(img || "").trim()).filter(Boolean)
@@ -543,7 +538,7 @@ function PriorityIssuesSection({
                   <div className="issue-card__content">
                     <div className="issue-card__top">
                       <span className="issue-card__category" style={{ "--cat-color": catColor }}>
-                        {issue.category}
+                        {issue.categoryLabel || issue.category}
                       </span>
                       <span className={`issue-card__status status-${issue.statusColor || "warning"}`}>
                         {issue.statusLabel}
@@ -593,7 +588,27 @@ function PriorityIssuesSection({
   );
 }
 
-function MapPreviewSection({ mapIssues = [] }) {
+function MapPreviewSection({ mapIssues = [], heatmapData = [] }) {
+  const severityPalette = {
+    1: '#87A83F',
+    2: '#2F8398',
+    3: '#F2B933',
+    4: '#F27C54',
+    5: '#F27C54',
+  };
+  const legendItems = [...ISSUE_SEVERITY_OPTIONS]
+    .sort((a, b) => b.value - a.value)
+    .map((opt) => ({
+      color: severityPalette[opt.value] || '#F27C54',
+      label: opt.label,
+    }));
+  const heatmapPoints = Array.isArray(heatmapData) ? heatmapData : [];
+  const activeZones = heatmapPoints.length > 0 ? heatmapPoints.length : mapIssues.length;
+  const criticalClusters = heatmapPoints.length > 0
+    ? heatmapPoints.filter((point) => Number(point?.avgSeverity || point?.maxSeverity || point?.weight || 0) >= 4).length
+    : mapIssues.filter((issue) => Number(issue?.priority || issue?.severity || 0) >= 4).length;
+  const refreshLabel = activeZones > 0 ? 'Live' : 'Waiting';
+
   return (
     <section className="map-section" id="map">
       <div className="container">
@@ -607,12 +622,7 @@ function MapPreviewSection({ mapIssues = [] }) {
             </p>
 
             <div className="map-legend">
-              {[
-                { color: "#F27C54", label: "Critical Density" },
-                { color: "#F2B933", label: "High Concentration" },
-                { color: "#2F8398", label: "Medium Activity" },
-                { color: "#87A83F", label: "Low Activity" },
-              ].map((item) => (
+              {legendItems.map((item) => (
                 <div className="map-legend__item" key={item.label}>
                   <span className="map-legend__dot" style={{ background: item.color }} />
                   <span className="map-legend__label">{item.label}</span>
@@ -622,15 +632,15 @@ function MapPreviewSection({ mapIssues = [] }) {
 
             <div className="map-stats">
               <div className="map-stat">
-                <span className="map-stat__value">18</span>
+                <span className="map-stat__value">{activeZones}</span>
                 <span className="map-stat__label">Active Zones</span>
               </div>
               <div className="map-stat">
-                <span className="map-stat__value">3</span>
+                <span className="map-stat__value">{criticalClusters}</span>
                 <span className="map-stat__label">Critical Clusters</span>
               </div>
               <div className="map-stat">
-                <span className="map-stat__value">Real-time</span>
+                <span className="map-stat__value">{refreshLabel}</span>
                 <span className="map-stat__label">Data Refresh</span>
               </div>
             </div>
@@ -644,14 +654,17 @@ function MapPreviewSection({ mapIssues = [] }) {
             <div className="map-canvas">
               <IssueLeafletMap
                 issues={mapIssues}
+                heatmapData={heatmapData}
                 activeId={mapIssues[0]?.id || ""}
                 className="map-preview-leaflet"
                 zoom={11}
-                scrollWheelZoom={false}
-                showZoomControl={false}
-                showAttribution={false}
+                scrollWheelZoom
+                showZoomControl
+                showAttribution
                 maxZoom={20}
-                showRecenter={false}
+                showRecenter
+                showMarkers={false}
+                dotMode
               />
             </div>
           </div>
@@ -774,6 +787,8 @@ const Home = () => {
 
   const [issues, setIssues] = useState([]);
   const [issuesLoading, setIssuesLoading] = useState(true);
+  const [heatmapData, setHeatmapData] = useState([]);
+  const [mapDotIssues, setMapDotIssues] = useState([]);
   const [filter, setFilter] = useState("all");
 
   useEffect(() => {
@@ -803,6 +818,47 @@ const Home = () => {
     };
   }, []);
 
+  useEffect(() => {
+    let mounted = true;
+
+    const fetchHeatmap = async () => {
+      try {
+        const data = await getPublicHeatmap();
+        if (!mounted) return;
+        setHeatmapData(Array.isArray(data) ? data : []);
+      } catch {
+        if (mounted) setHeatmapData([]);
+      }
+    };
+
+    fetchHeatmap();
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    let mounted = true;
+
+    const fetchMapDots = async () => {
+      try {
+        const data = await getIssues({ limit: 200, sort: 'newest' });
+        if (!mounted) return;
+        const normalized = (Array.isArray(data) ? data : [])
+          .map(normalizeIssue)
+          .filter((issue) => Boolean(issue.id));
+        setMapDotIssues(normalized);
+      } catch {
+        if (mounted) setMapDotIssues([]);
+      }
+    };
+
+    fetchMapDots();
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
   const isLoggedIn = Boolean(user);
   const handleVoteUpdate = (issueId, result) => {
     setIssues((prev) =>
@@ -821,7 +877,8 @@ const Home = () => {
   };
 
   const mapPreviewIssues = useMemo(() => {
-    return issues
+    const source = mapDotIssues.length > 0 ? mapDotIssues : issues;
+    return source
       .filter((issue) => Array.isArray(issue.coordinates) && issue.coordinates.length >= 2)
       .slice(0, 20)
       .map((issue) => {
@@ -832,16 +889,17 @@ const Home = () => {
         return {
           id: issue.id,
           title: issue.title,
-          category: issue.category,
+          category: issue.categoryLabel || issue.category,
           status: issue.statusLabel,
           priority: Math.min(5, Math.max(1, Number(issue.raw?.severity || 3))),
+          severity: Math.min(5, Math.max(1, Number(issue.raw?.severity || 3))),
           locationText: issue.location,
           lat,
           lng,
         };
       })
       .filter(Boolean);
-  }, [issues]);
+  }, [issues, mapDotIssues]);
 
   return (
     <div className="home-page">
@@ -855,7 +913,7 @@ const Home = () => {
       <main>
         <HeroSection isLoggedIn={isLoggedIn} isAdmin={isAdmin} enableGlobe={!isLoggedIn} />
         <HowItWorksSection />
-        <MapPreviewSection mapIssues={mapPreviewIssues} />
+        <MapPreviewSection mapIssues={mapPreviewIssues} heatmapData={heatmapData} />
         <PriorityIssuesSection
           issues={issues}
           loading={issuesLoading}

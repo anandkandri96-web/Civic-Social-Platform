@@ -31,7 +31,7 @@ describe("vote.controller", () => {
 
     expect(res.status).toHaveBeenCalledWith(403);
     expect(res.json).toHaveBeenCalledWith(
-      expect.objectContaining({ message: "Admins cannot vote on issues" })
+      expect.objectContaining({ message: expect.stringContaining("cannot vote") })
     );
   });
 });

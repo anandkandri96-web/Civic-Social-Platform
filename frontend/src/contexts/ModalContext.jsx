@@ -81,6 +81,7 @@ export const ModalProvider = ({ children }) => {
   );
 };
 
+// eslint-disable-next-line react-refresh/only-export-components
 export const useModal = () => {
   const ctx = useContext(ModalContext);
   if (!ctx) {
@@ -88,4 +89,3 @@ export const useModal = () => {
   }
   return ctx;
 };
-

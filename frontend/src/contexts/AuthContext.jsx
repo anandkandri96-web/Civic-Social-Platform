@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import * as authApi from "../api/auth.api";
 import { AuthContext } from "./AuthContextBase";
+import { normalizeRole } from "../utils/roleCheck";
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
@@ -14,11 +15,12 @@ export const AuthProvider = ({ children }) => {
 
       if (!me || !me.role) throw new Error("Invalid /me response");
 
+      const normalizedRole = normalizeRole(me.role);
       setUser({
         id: me._id || me.id,
         name: me.name,
         email: me.email,
-        role: String(me.role).toLowerCase(),
+        role: normalizedRole || String(me.role).toLowerCase(),
         department: me.department ?? null,
         workerId: me.workerId ?? null,
         officerId: me.officerId ?? null,
@@ -88,4 +90,3 @@ export const AuthProvider = ({ children }) => {
     </AuthContext.Provider>
   );
 };
-

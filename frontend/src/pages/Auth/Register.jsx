@@ -3,6 +3,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { register } from '@api/auth.api';
 import { getErrorMessage } from '@api/utils';
 import Button from '../../components/common/Button/Button';
+import { useToast } from '../../contexts/ToastContext';
 import './Register.css';
 
 const Register = () => {
@@ -17,8 +18,10 @@ const Register = () => {
   const [error, setError] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const { showToast } = useToast();
 
   const EMAIL_RE = /^\S+@\S+\.\S+$/;
+  const NAME_RE = /^[A-Za-z][A-Za-z\s.'-]{1,59}$/;
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -38,8 +41,8 @@ const Register = () => {
       const email = userData.email.trim().toLowerCase();
       const password = String(userData.password || '');
       // ✅ Validation
-      if (name.length < 2 || name.length > 60) {
-        setError('Name must be 2-60 characters');
+      if (!NAME_RE.test(name)) {
+        setError('Name must be 2-60 letters and spaces only');
         return;
       }
 
@@ -61,6 +64,7 @@ const Register = () => {
       });
 
       // ✅ Redirect to login after success
+      showToast('Successfully registered. Please sign in.', { tone: 'success' });
       navigate('/login', { replace: true });
 
     } catch (err) {

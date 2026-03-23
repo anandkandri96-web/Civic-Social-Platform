@@ -54,16 +54,12 @@ export const PERMISSIONS = Object.freeze({
   VOLUNTEER_UPDATE_PROGRESS: 'volunteer:update_progress',
 
   // Officer actions
-  OFFICER_REVIEW_ISSUES: 'officer:review_issues',
   OFFICER_REVIEW_ISSUE: 'officer:review_issue',
   OFFICER_ASSIGN_WORKER: 'officer:assign_worker',
   OFFICER_UPDATE_STATUS: 'officer:update_status',
-  OFFICER_UPDATE_ISSUE_STATUS: 'officer:update_status',
   OFFICER_MANAGE_VOLUNTEERS: 'officer:manage_volunteers',
   OFFICER_VIEW_QUEUE: 'officer:view_queue',
   OFFICER_VIEW_DEPARTMENT: 'officer:view_department',
-  OFFICER_CLOSE_ISSUE: 'issue:close', // Backward compatibility
-  OFFICER_ACCESS: 'officer:access',
 
   // Worker/Task actions
   WORKER_ACCEPT_TASK: 'worker:accept_task',
@@ -91,6 +87,8 @@ export const ROLE_PERMISSIONS = Object.freeze({
   [ROLES.CITIZEN]: new Set([
     PERMISSIONS.ISSUE_CREATE,
     PERMISSIONS.ISSUE_READ,
+    PERMISSIONS.ISSUE_UPDATE,
+    PERMISSIONS.ISSUE_DELETE,
     PERMISSIONS.ISSUE_VERIFY,
     PERMISSIONS.ISSUE_REOPEN,
     PERMISSIONS.COMMENT_CREATE,
@@ -103,6 +101,8 @@ export const ROLE_PERMISSIONS = Object.freeze({
   [ROLES.VOLUNTEER]: new Set([
     PERMISSIONS.ISSUE_CREATE,
     PERMISSIONS.ISSUE_READ,
+    PERMISSIONS.ISSUE_UPDATE,
+    PERMISSIONS.ISSUE_DELETE,
     PERMISSIONS.ISSUE_VERIFY,
     PERMISSIONS.ISSUE_REOPEN,
     PERMISSIONS.COMMENT_CREATE,
@@ -128,14 +128,36 @@ export const ROLE_PERMISSIONS = Object.freeze({
   ]),
 
   [ROLES.WORKER]: new Set([
+    PERMISSIONS.ISSUE_CREATE,
+    PERMISSIONS.ISSUE_READ,
+    PERMISSIONS.ISSUE_UPDATE,
+    PERMISSIONS.ISSUE_DELETE,
+    PERMISSIONS.ISSUE_VERIFY,
+    PERMISSIONS.ISSUE_REOPEN,
+    PERMISSIONS.COMMENT_CREATE,
+    PERMISSIONS.COMMENT_DELETE,
+    PERMISSIONS.VOTE_CREATE,
+    PERMISSIONS.VOTE_DELETE,
+    PERMISSIONS.ROLE_UPGRADE_REQUEST,
     PERMISSIONS.WORKER_ACCEPT_TASK,
     PERMISSIONS.WORKER_UPDATE_PROGRESS,
     PERMISSIONS.WORKER_COMPLETE_TASK,
     PERMISSIONS.WORKER_VIEW_TASKS,
-    PERMISSIONS.ISSUE_READ,
   ]),
 
-  [ROLES.ADMIN]: new Set(Object.values(PERMISSIONS)),
+  [ROLES.ADMIN]: new Set(
+    Object.values(PERMISSIONS).filter(
+      (perm) =>
+        ![
+          PERMISSIONS.VOTE_CREATE,
+          PERMISSIONS.VOTE_DELETE,
+          PERMISSIONS.VOLUNTEER_ACCESS,
+          PERMISSIONS.VOLUNTEER_CLAIM_ISSUE,
+          PERMISSIONS.VOLUNTEER_SUBMIT_RESOLUTION,
+          PERMISSIONS.VOLUNTEER_UPDATE_PROGRESS,
+        ].includes(perm)
+    )
+  ),
 });
 
 export const RESOURCE_PERMISSIONS = Object.freeze({
@@ -143,11 +165,11 @@ export const RESOURCE_PERMISSIONS = Object.freeze({
     DELETE: (user, issue) => {
       if (!user || !issue) return false;
 
-      if (user.role === ROLES.CITIZEN) {
+      if ([ROLES.CITIZEN, ROLES.VOLUNTEER, ROLES.WORKER].includes(user.role)) {
         const isReporter =
           String(user._id) === String(issue.reportedBy) ||
           String(user._id) === String(issue.reportedBy?._id);
-        const isDeletableStatus = ['reported', 'closed'].includes(issue.status);
+        const isDeletableStatus = ['reported', 'under_review', 'closed'].includes(issue.status);
         return isReporter && isDeletableStatus;
       }
 
@@ -168,7 +190,7 @@ export const RESOURCE_PERMISSIONS = Object.freeze({
       return false;
     },
 
-    CLOSE: (user, issue) => {
+    CLOSE: (user) => {
       if (!user) return false;
       return [ROLES.OFFICER, ROLES.ADMIN].includes(user.role);
     },

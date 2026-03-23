@@ -4,6 +4,7 @@
 .worker-dashboard {
   display: grid;
   gap: 24px;
+  min-width: 1024px;
 }
 
 /* =========================
@@ -148,7 +149,7 @@
 ========================= */
 .tasks-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  grid-template-columns: repeat(2, minmax(320px, 1fr));
   gap: 20px;
 }
 
@@ -178,34 +179,4 @@
 .task-card > *:not(:last-child) {
   padding-bottom: 8px;
   border-bottom: 1px solid color-mix(in srgb, var(--border-color) 70%, transparent);
-}
-
-/* =========================
-   RESPONSIVE (POLISHED)
-========================= */
-@media (max-width: 1024px) {
-  .worker-dashboard .dashboard-header {
-    flex-direction: column;
-    align-items: stretch;
-    gap: 16px;
-  }
-
-  .worker-dashboard__profile {
-    width: 100%;
-  }
-}
-
-@media (max-width: 600px) {
-  .worker-dashboard {
-    gap: 18px;
-  }
-
-  .worker-dashboard .dashboard-header h1 {
-    font-size: 1.35rem;
-  }
-
-  .tasks-grid {
-    grid-template-columns: 1fr;
-    gap: 16px;
-  }
 }

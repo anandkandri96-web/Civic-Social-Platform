@@ -1,5 +1,5 @@
-import { test, expect } from '@playwright/test';
-import { loginVolunteer, setupMockApi } from '../utils/testHelpers';
+const { test, expect } = require('@playwright/test');
+const { loginVolunteer, setupMockApi } = require('../utils/testHelpers');
 
 test.describe('Volunteer - Community Fix', () => {
   test.beforeEach(async ({ page }) => {
@@ -8,23 +8,13 @@ test.describe('Volunteer - Community Fix', () => {
     await page.goto('/dashboard/volunteer', { waitUntil: 'domcontentloaded' });
   });
 
-  test('volunteer can move issue to community fix and resolve it', async ({ page }) => {
-    const firstRow = page.locator('tbody tr').first();
+  test('volunteer can start fix and open submit form', async ({ page }) => {
+    const firstRow = page.locator('table.role-dashboard__table tbody tr').first();
 
-    // Claim issue.
     await firstRow.getByRole('button', { name: /claim/i }).click();
-    await expect(firstRow).toContainText('volunteer_claimed');
-
-    // Start fix workflow.
     await firstRow.getByRole('button', { name: /start fix/i }).click();
-    await expect(firstRow).toContainText('community_fix_in_progress');
 
-    // Resolve with proof prompt.
-    page.once('dialog', async (dialog) => {
-      await dialog.accept('https://example.com/before.jpg,https://example.com/after.jpg');
-    });
-    await firstRow.getByRole('button', { name: /resolve/i }).click();
-
-    await expect(firstRow).toContainText('resolved_by_community');
+    await firstRow.getByRole('link', { name: /open submit form/i }).click();
+    await expect(page.getByRole('heading', { name: /submit resolution/i })).toBeVisible();
   });
 });

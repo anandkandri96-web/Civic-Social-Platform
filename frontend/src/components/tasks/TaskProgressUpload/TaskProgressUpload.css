@@ -24,3 +24,8 @@
   padding: 12px;
   color: var(--text-secondary);
 }
+
+.task-progress-upload__hint {
+  font-size: 0.78rem;
+  color: var(--text-secondary);
+}

@@ -5,7 +5,7 @@ import { getErrorMessage } from '@api/utils';
 import IssueCard from '../../components/issues/IssueCard/IssueCard';
 import Loader from '../../components/common/Loader/Loader';
 import PageHeader from '../../components/common/PageHeader/PageHeader';
-import { ISSUE_STATUSES } from '../../utils/constants';
+import { ISSUE_STATUS_OPTIONS } from '../../constants/issueOptions';
 import { canTransition } from '../../utils/statusFlow';
 import { useToast } from '../../contexts/ToastContext';
 import './ManageIssues.css';
@@ -103,8 +103,8 @@ const ManageIssues = () => {
                       onChange={(e) => handleStatusChange(issue._id, e.target.value)}
                       disabled={updatingId === issue._id}
                     >
-                      {ISSUE_STATUSES.filter((status) => status === issue.status || canTransition(issue.status, status)).map((status) => (
-                        <option key={status} value={status}>{status}</option>
+                      {ISSUE_STATUS_OPTIONS.filter((opt) => opt.value === issue.status || canTransition(issue.status, opt.value)).map((opt) => (
+                        <option key={opt.value} value={opt.value}>{opt.label}</option>
                       ))}
                     </select>
                   </label>

@@ -70,7 +70,18 @@ const RoleUpgradeRequests = () => {
       try {
         const data = await getDepartmentsAdmin();
         if (!mounted) return;
-        setDepartments(Array.isArray(data) ? data : []);
+        const rawDepts = Array.isArray(data) ? data : [];
+        const deduped = [];
+        const seen = new Set();
+        for (const dept of rawDepts) {
+          const name = String(dept?.name || '').trim();
+          if (!name) continue;
+          const key = name.toLowerCase();
+          if (seen.has(key)) continue;
+          seen.add(key);
+          deduped.push({ ...dept, name });
+        }
+        setDepartments(deduped.sort((a, b) => String(a?.name || '').localeCompare(String(b?.name || ''))));
       } catch (err) {
         if (mounted) showToast(getErrorMessage(err), { tone: 'error' });
       }

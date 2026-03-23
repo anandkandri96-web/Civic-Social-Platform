@@ -1,16 +1,19 @@
 .issue-map-page {
   width: 100%;
   height: 100%;
-  min-height: 600px;
+  height: clamp(480px, calc(100dvh - var(--header-height, 64px) - 48px), 720px);
+  min-height: clamp(480px, calc(100dvh - var(--header-height, 64px) - 48px), 720px);
   padding: 24px;
+  display: flex;
 }
 
 .issue-map-layout {
   width: 100%;
   height: 100%;
-  min-height: 600px;
+  min-height: 0;
   display: flex;
   overflow: hidden;
+  flex: 1;
 }
 
 .issue-map-sidebar {
@@ -22,6 +25,7 @@
   display: flex;
   flex-direction: column;
   gap: 12px;
+  min-height: 0;
 }
 
 .issue-map-head {
@@ -109,8 +113,13 @@
 
 .issue-map-list {
   overflow-y: auto;
+  overflow-x: hidden;
   display: grid;
   gap: 8px;
+  flex: 1;
+  min-height: 0;
+  padding-right: 4px;
+  scrollbar-gutter: stable;
 }
 
 .issue-map-item {
@@ -123,6 +132,8 @@
   display: grid;
   gap: 4px;
   cursor: pointer;
+  width: 42%;
+  box-sizing: border-box;
 }
 
 .issue-map-item strong {
@@ -144,13 +155,15 @@
   flex: 1;
   display: grid;
   grid-template-rows: 1fr auto;
+  height: 100%;
+  min-height: 0;
 }
 
 .issue-map-canvas {
   position: relative;
   width: 100%;
   height: 100%;
-  min-height: 600px;
+  min-height: 0;
 }
 
 .issue-map-leaflet {
@@ -169,15 +182,16 @@
   right: 16px;
   bottom: 16px;
   width: min(340px, calc(100% - 32px));
-  border: 1px solid var(--border-color);
+  border: 1px solid var(--border-bright);
   border-radius: var(--radius-card);
-  background: rgba(14, 24, 40, 0.92);
+  background: rgba(var(--bg-card-rgb), 0.94);
   backdrop-filter: blur(10px);
-  box-shadow: var(--shadow-card);
+  box-shadow: var(--shadow-card), 0 14px 32px rgba(0, 0, 0, 0.18);
   padding: 12px;
   z-index: 5;
   display: grid;
   gap: 12px;
+  color: var(--text-primary);
 }
 
 .issue-map-preview-head {

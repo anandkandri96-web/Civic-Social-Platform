@@ -138,6 +138,90 @@
   line-height: 1.6;
 }
 
+.issue-edit {
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-card);
+  padding: 16px;
+  margin-bottom: 16px;
+  background: var(--bg-card);
+}
+
+.issue-edit__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.issue-edit__head h3 {
+  font-family: var(--font-heading);
+  font-size: 1rem;
+}
+
+.issue-edit__toggle {
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-button);
+  padding: 6px 12px;
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-family: var(--font-mono);
+  color: var(--color-primary-light);
+}
+
+.issue-edit__form {
+  margin-top: 12px;
+  display: grid;
+  gap: 12px;
+}
+
+.issue-edit__form label {
+  display: grid;
+  gap: 6px;
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  font-family: var(--font-mono);
+  color: var(--text-secondary);
+}
+
+.issue-edit__form input,
+.issue-edit__form select,
+.issue-edit__form textarea {
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-input);
+  padding: 10px 12px;
+  background: var(--bg-surface);
+  color: var(--text-primary);
+  font-size: 0.85rem;
+  font-family: var(--font-base);
+  text-transform: none;
+  letter-spacing: 0;
+}
+
+.issue-edit__error {
+  color: var(--color-danger);
+  font-size: 0.8rem;
+}
+
+.issue-edit__actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.issue-edit__actions button {
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-button);
+  padding: 8px 14px;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.issue-edit__actions button.ghost {
+  background: transparent;
+}
+
 .issue-images-section {
   margin-top: var(--space-md);
 }
@@ -261,6 +345,32 @@
   border-radius: var(--radius-button);
   padding: 8px 12px;
   font-size: 0.78rem;
+}
+
+.issue-workflow-actions .issue-action {
+  font-weight: 700;
+}
+
+.issue-workflow-actions .issue-action--verify {
+  border-color: rgba(var(--color-success-rgb), 0.5);
+  background: rgba(var(--color-success-rgb), 0.18);
+  color: var(--color-success);
+  box-shadow: 0 6px 14px rgba(var(--color-success-rgb), 0.2);
+}
+
+.issue-workflow-actions .issue-action--verify:hover {
+  background: rgba(var(--color-success-rgb), 0.26);
+}
+
+.issue-workflow-actions .issue-action--reopen {
+  border-color: rgba(var(--color-warning-rgb), 0.55);
+  background: rgba(var(--color-warning-rgb), 0.2);
+  color: var(--color-warning);
+  box-shadow: 0 6px 14px rgba(var(--color-warning-rgb), 0.2);
+}
+
+.issue-workflow-actions .issue-action--reopen:hover {
+  background: rgba(var(--color-warning-rgb), 0.3);
 }
 
 .issue-comments {

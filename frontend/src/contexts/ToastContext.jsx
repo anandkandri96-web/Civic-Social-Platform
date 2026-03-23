@@ -41,9 +41,10 @@ export const ToastProvider = ({ children }) => {
   );
 
   useEffect(() => {
+    const timersRef = timers.current;
     return () => {
-      timers.current.forEach((timer) => clearTimeout(timer));
-      timers.current.clear();
+      timersRef.forEach((timer) => clearTimeout(timer));
+      timersRef.clear();
     };
   }, []);
 
@@ -79,6 +80,7 @@ export const ToastProvider = ({ children }) => {
   );
 };
 
+// eslint-disable-next-line react-refresh/only-export-components
 export const useToast = () => {
   const ctx = useContext(ToastContext);
   if (!ctx) {
@@ -86,4 +88,3 @@ export const useToast = () => {
   }
   return ctx;
 };
-

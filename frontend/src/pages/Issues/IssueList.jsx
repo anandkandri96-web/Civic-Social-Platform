@@ -3,36 +3,14 @@ import { Link, Navigate, useSearchParams } from 'react-router-dom';
 import { getIssues } from '@api/issues.api';
 import { getErrorMessage } from '@api/utils';
 import { usePermission } from '../../hooks/usePermission';
-import { ISSUE_STATUSES, ISSUE_STATUS_LABELS } from '../../constants/issueStatus';
+import { ISSUE_STATUS_FILTER_OPTIONS, ISSUE_CATEGORY_FILTER_OPTIONS } from '../../constants/issueOptions';
 import IssueCard from '../../components/issues/IssueCard/IssueCard';
 import Skeleton from '../../components/common/Skeleton/Skeleton';
 import IssueCardSkeleton from '../../components/common/Skeleton/IssueCardSkeleton';
 import './IssueList.css';
 
-const CATEGORIES = [
-  { value: '', label: 'All Categories' },
-  { value: 'roads', label: 'Roads' },
-  { value: 'electricity', label: 'Electricity' },
-  { value: 'garbage', label: 'Garbage' },
-  { value: 'drainage', label: 'Drainage' },
-  { value: 'water', label: 'Water' },
-  { value: 'other', label: 'Other' },
-];
-
-const STATUSES = [
-  { value: '', label: 'All Statuses' },
-  { value: ISSUE_STATUSES.REPORTED, label: ISSUE_STATUS_LABELS[ISSUE_STATUSES.REPORTED] },
-  { value: ISSUE_STATUSES.UNDER_REVIEW, label: ISSUE_STATUS_LABELS[ISSUE_STATUSES.UNDER_REVIEW] },
-  { value: ISSUE_STATUSES.ASSIGNED_TO_DEPARTMENT, label: ISSUE_STATUS_LABELS[ISSUE_STATUSES.ASSIGNED_TO_DEPARTMENT] },
-  { value: ISSUE_STATUSES.WORK_IN_PROGRESS, label: ISSUE_STATUS_LABELS[ISSUE_STATUSES.WORK_IN_PROGRESS] },
-  { value: ISSUE_STATUSES.RESOLVED, label: ISSUE_STATUS_LABELS[ISSUE_STATUSES.RESOLVED] },
-  { value: ISSUE_STATUSES.CITIZEN_VERIFIED, label: ISSUE_STATUS_LABELS[ISSUE_STATUSES.CITIZEN_VERIFIED] },
-  { value: ISSUE_STATUSES.CLOSED, label: ISSUE_STATUS_LABELS[ISSUE_STATUSES.CLOSED] },
-  { value: ISSUE_STATUSES.VOLUNTEER_CLAIMED, label: ISSUE_STATUS_LABELS[ISSUE_STATUSES.VOLUNTEER_CLAIMED] },
-  { value: ISSUE_STATUSES.COMMUNITY_FIX_IN_PROGRESS, label: ISSUE_STATUS_LABELS[ISSUE_STATUSES.COMMUNITY_FIX_IN_PROGRESS] },
-  { value: ISSUE_STATUSES.RESOLVED_BY_COMMUNITY, label: ISSUE_STATUS_LABELS[ISSUE_STATUSES.RESOLVED_BY_COMMUNITY] },
-  { value: ISSUE_STATUSES.REJECTED, label: ISSUE_STATUS_LABELS[ISSUE_STATUSES.REJECTED] },
-];
+const CATEGORIES = ISSUE_CATEGORY_FILTER_OPTIONS;
+const STATUSES = ISSUE_STATUS_FILTER_OPTIONS;
 
 const SORT_OPTIONS = [
   { value: 'priority', label: 'Sort by Priority' },
@@ -53,8 +31,6 @@ const IssueList = () => {
   const [sort, setSort] = useState('priority');
 
   useEffect(() => {
-    // ✅ Skip fetching if user lacks issue viewing permission
-    if (!can('issue:read')) return () => {};
     let mounted = true;
     const params = {};
     if (category) params.category = category;
@@ -80,7 +56,7 @@ const IssueList = () => {
     setLoading(true);
     fetchIssues();
     return () => { mounted = false; };
-  }, [category, status, sort, can, searchQuery]);
+  }, [category, status, sort, searchQuery]);
 
   if (roleLoading) {
     return (
@@ -119,19 +95,19 @@ const IssueList = () => {
               value={category}
               onChange={(e) => setCategory(e.target.value)}
             >
-              {CATEGORIES.map((opt) => (
-                <option key={opt.value || 'all'} value={opt.value}>{opt.label}</option>
-              ))}
-            </select>
+            {CATEGORIES.map((opt) => (
+              <option key={opt.value || 'all'} value={opt.value}>{opt.label}</option>
+            ))}
+          </select>
             <select
               className="issues-filter-select"
               value={status}
               onChange={(e) => setStatus(e.target.value)}
             >
-              {STATUSES.map((opt) => (
-                <option key={opt.value || 'all'} value={opt.value}>{opt.label}</option>
-              ))}
-            </select>
+            {STATUSES.map((opt) => (
+              <option key={opt.value || 'all'} value={opt.value}>{opt.label}</option>
+            ))}
+          </select>
             <select
               className="issues-filter-select"
               value={sort}
@@ -197,41 +173,24 @@ const IssueList = () => {
                 )}
               </div>
             ) : (
-              issues.map((issue, index) => {
-                // Dynamic card size logic based on issue data
-                const voteCount = issue.voteCount ?? issue.votes ?? 0;
-                const commentCount = issue.commentCount ?? issue.commentsCount ?? (Array.isArray(issue.comments) ? issue.comments.length : 0);
-                
-                const isWide = index % 5 === 0 && voteCount >= 10;
-                const isTall = index % 7 === 0 && commentCount >= 3;
-                const isLarge = index % 11 === 0 && voteCount >= 20;
-                
-                const cardClasses = [
-                  isLarge ? "issue-card-large" : "",
-                  !isLarge && isWide ? "issue-card-wide" : "",
-                  !isLarge && !isWide && isTall ? "issue-card-tall" : ""
-                ].filter(Boolean).join(" ");
-                
-                return (
-                  <div key={issue._id} className={cardClasses}>
-                    <IssueCard
-                      issue={issue}
-                      onVote={(result) => {
-                        setIssues((prev) =>
-                          prev.map((i) =>
-                            i._id === issue._id
-                              ? { ...i, voteCount: result.voteCount, userVoted: result.voted }
-                              : i
-                          )
-                        );
-                      }}
-                      onDeleted={(deletedId) => {
-                        setIssues((prev) => prev.filter((i) => i._id !== deletedId));
-                      }}
-                    />
-                  </div>
-                );
-              })
+              issues.map((issue) => (
+                <IssueCard
+                  key={issue._id}
+                  issue={issue}
+                  onVote={(result) => {
+                    setIssues((prev) =>
+                      prev.map((i) =>
+                        i._id === issue._id
+                          ? { ...i, voteCount: result.voteCount, userVoted: result.voted }
+                          : i
+                      )
+                    );
+                  }}
+                  onDeleted={(deletedId) => {
+                    setIssues((prev) => prev.filter((i) => i._id !== deletedId));
+                  }}
+                />
+              ))
             )}
           </div>
         )}

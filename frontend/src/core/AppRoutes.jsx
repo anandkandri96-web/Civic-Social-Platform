@@ -67,7 +67,7 @@ const AppRoutes = () => (
           <Route
             path="/dashboard/volunteer"
             element={(
-              <ProtectedRoute requiredPermissions={["volunteer:access", "volunteer:claim_issue"]} fallbackRoute="/unauthorized">
+              <ProtectedRoute requiredRole="volunteer" requiredPermissions={["volunteer:access", "volunteer:claim_issue"]} fallbackRoute="/unauthorized">
                 <VolunteerDashboard />
               </ProtectedRoute>
             )}
@@ -75,7 +75,7 @@ const AppRoutes = () => (
           <Route
             path="/dashboard/volunteer/submit/:id"
             element={(
-              <ProtectedRoute requiredPermissions={["volunteer:access", "volunteer:submit_resolution"]} fallbackRoute="/unauthorized">
+              <ProtectedRoute requiredRole="volunteer" requiredPermissions={["volunteer:access", "volunteer:submit_resolution"]} fallbackRoute="/unauthorized">
                 <SubmitResolution />
               </ProtectedRoute>
             )}

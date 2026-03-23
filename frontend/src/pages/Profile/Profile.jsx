@@ -73,6 +73,7 @@ const Profile = () => {
   const { can } = usePermission();
   // ✅ Get role from user object instead of useRole hook
   const role = user?.role || 'citizen';
+  const isAdmin = String(role).toLowerCase() === 'admin';
 
   const profileMeta = useMemo(
     () => ROLE_SUMMARY[role] || ROLE_SUMMARY.citizen,
@@ -184,7 +185,7 @@ const Profile = () => {
           </div>
         </article>
 
-        {can('role:upgrade_request') && (
+        {can('role:upgrade_request') && !isAdmin && (
           <article className="profile-panel profile-panel--upgrade">
             <h2>Role Upgrade</h2>
             <p className="profile-upgrade-copy">

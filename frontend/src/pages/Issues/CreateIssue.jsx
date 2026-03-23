@@ -8,24 +8,11 @@ import { Link, Navigate, useNavigate } from 'react-router-dom';
 import { createIssue as createIssueApi } from '@api/issues.api';
 import { getErrorMessage } from '@api/utils';
 import { usePermission } from '../../hooks/usePermission';
+import { ISSUE_CATEGORIES, ISSUE_SEVERITY_OPTIONS } from '../../constants/issueOptions';
 import './CreateIssue.css';
 
-const CATEGORIES = [
-  { value: 'roads', label: 'Roads', icon: 'RD' },
-  { value: 'electricity', label: 'Electricity', icon: 'EL' },
-  { value: 'garbage', label: 'Waste', icon: 'WS' },
-  { value: 'drainage', label: 'Drainage', icon: 'DR' },
-  { value: 'water', label: 'Water', icon: 'WT' },
-  { value: 'other', label: 'Other', icon: 'OT' },
-];
-
-const SEVERITIES = [
-  { value: 1, label: 'Low' },
-  { value: 2, label: 'Medium' },
-  { value: 3, label: 'High' },
-  { value: 4, label: 'Critical' },
-  { value: 5, label: 'Urgent' },
-];
+const TITLE_RE = /[a-zA-Z]/;
+const TITLE_NUMERIC_ONLY_RE = /^[0-9\s]+$/;
 
 const STEPS = ['Category', 'Location', 'Details', 'Review'];
 
@@ -52,6 +39,28 @@ const MapFocus = ({ lat, lng }) => {
   }, [lat, lng, map]);
 
   return null;
+};
+
+const MapZoomIndicator = ({ maxZoom }) => {
+  const map = useMap();
+  const [zoom, setZoom] = useState(() => map.getZoom());
+
+  useEffect(() => {
+    const onZoom = () => setZoom(map.getZoom());
+    map.on('zoomend', onZoom);
+    return () => {
+      map.off('zoomend', onZoom);
+    };
+  }, [map]);
+
+  const safeMax = Number.isFinite(Number(maxZoom)) ? Number(maxZoom) : 19;
+  const percent = Math.min(100, Math.max(0, Math.round((zoom / safeMax) * 100)));
+
+  return (
+    <div className="leaflet-zoom-indicator" aria-live="polite">
+      {percent}% zoom
+    </div>
+  );
 };
 
 const LocationPickerMarker = ({ lat, lng, onSelect }) => {
@@ -85,14 +94,18 @@ const CreateIssue = () => {
   const [imageFiles, setImageFiles] = useState([]);
 
   const selectedCategory = useMemo(
-    () => CATEGORIES.find((cat) => cat.value === form.category) || CATEGORIES[0],
+    () => ISSUE_CATEGORIES.find((cat) => cat.value === form.category) || ISSUE_CATEGORIES[0],
     [form.category]
   );
 
   const canMoveNext = useMemo(() => {
     if (step === 1) return Boolean(form.category);
     if (step === 2) return Boolean(form.locationText.trim()) && !Number.isNaN(Number(form.lat)) && !Number.isNaN(Number(form.lng));
-    if (step === 3) return form.title.trim().length >= 3 && form.description.trim().length >= 10;
+    if (step === 3) {
+      const title = form.title.trim();
+      const isNumericOnly = TITLE_NUMERIC_ONLY_RE.test(title);
+      return title.length >= 3 && TITLE_RE.test(title) && !isNumericOnly && form.description.trim().length >= 10;
+    }
     return true;
   }, [step, form]);
 
@@ -154,6 +167,14 @@ const CreateIssue = () => {
     }
     if (title.length < 3) {
       setError('Title must be at least 3 characters.');
+      return;
+    }
+    if (TITLE_NUMERIC_ONLY_RE.test(title)) {
+      setError('Title cannot be only numbers.');
+      return;
+    }
+    if (!TITLE_RE.test(title)) {
+      setError('Title must include at least one letter.');
       return;
     }
     if (description.length < 10) {
@@ -221,7 +242,7 @@ const CreateIssue = () => {
             <h2>Select Category</h2>
             <p>Choose the category that best describes this issue.</p>
             <div className="report-category-grid">
-              {CATEGORIES.map((cat) => (
+              {ISSUE_CATEGORIES.map((cat) => (
                 <button
                   type="button"
                   key={cat.value}
@@ -244,16 +265,20 @@ const CreateIssue = () => {
               center={mapCenter}
               zoom={16}
               scrollWheelZoom
-              maxZoom={20}
+              maxZoom={19}
+              zoomSnap={0.25}
+              zoomDelta={0.5}
               className="report-map-picker"
             >
               <TileLayer
                 attribution={TILE_ATTRIBUTION}
                 url={TILE_URL}
-                maxZoom={20}
-                detectRetina
+                maxZoom={19}
+                maxNativeZoom={19}
+                detectRetina={false}
               />
               <MapFocus lat={latNum} lng={lngNum} />
+              <MapZoomIndicator maxZoom={19} />
               <LocationPickerMarker lat={latNum} lng={lngNum} onSelect={handleMapSelect} />
             </MapContainer>
 
@@ -308,7 +333,7 @@ const CreateIssue = () => {
                 value={String(form.severity)}
                 onChange={(e) => setForm((prev) => ({ ...prev, severity: Number(e.target.value) }))}
               >
-                {SEVERITIES.map((sev) => (
+                {ISSUE_SEVERITY_OPTIONS.map((sev) => (
                   <option key={sev.value} value={sev.value}>{sev.label}</option>
                 ))}
               </select>
@@ -366,9 +391,13 @@ const CreateIssue = () => {
                     zoomControl={false}
                     attributionControl={false}
                     keyboard={false}
+                    maxZoom={19}
+                    zoomSnap={0.25}
+                    zoomDelta={0.5}
                     className="report-map-preview"
                   >
-                    <TileLayer url={TILE_URL} maxZoom={20} detectRetina />
+                    <TileLayer url={TILE_URL} maxZoom={19} maxNativeZoom={19} detectRetina={false} />
+                    <MapZoomIndicator maxZoom={19} />
                     <Marker position={[latNum, lngNum]} icon={MAP_ICON} />
                   </MapContainer>
                 ) : (
@@ -376,7 +405,7 @@ const CreateIssue = () => {
                 )}
               </div>
               <div><span>Title</span><strong>{form.title || '-'}</strong></div>
-              <div><span>Severity</span><strong>{SEVERITIES.find((sev) => sev.value === Number(form.severity))?.label}</strong></div>
+              <div><span>Severity</span><strong>{ISSUE_SEVERITY_OPTIONS.find((sev) => sev.value === Number(form.severity))?.label}</strong></div>
               <div><span>Description</span><strong>{form.description || '-'}</strong></div>
               <div>
                 <span>Photos</span>

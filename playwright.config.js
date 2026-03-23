@@ -1,87 +1,109 @@
 // @ts-check
-import { defineConfig, devices } from '@playwright/test';
+const { defineConfig, devices } = require('@playwright/test');
 
 /**
  * Playwright Test Configuration
- * https://playwright.dev/docs/test-configuration
+ * Production-grade configuration for civic issue tracking platform
  */
 
-export default defineConfig({
+module.exports = defineConfig({
+
+  /* Global setup to authenticate all roles */
+  // globalSetup: './global-setup.js',
 
   /* Directory where tests are located */
   testDir: './tests',
 
-  /* Run tests in parallel */
-  fullyParallel: false,
+  /* Run tests in parallel for speed */
+  fullyParallel: true,
 
-  /* Allow slower headed runs with slowMo */
-  timeout: 120000,
+  /* Timeout settings */
+  timeout: 30000, // 30 seconds per test
+  expect: {
+    timeout: 10000 // 10 seconds for assertions
+  },
 
   /* Fail the build on CI if test.only is left in code */
   forbidOnly: !!process.env.CI,
 
-  /* Retry failing tests on CI */
-  retries: process.env.CI ? 2 : 0,
+  /* Retry failing tests */
+  retries: process.env.CI ? 2 : 1,
 
-  /* Limit workers on CI */
-  workers: 1,
+  /* Limit workers */
+  workers: 1, // Force single worker
 
   /* Test reporter */
-  reporter: 'html',
+  reporter: process.env.CI
+    ? [['github'], ['html'], ['junit', { outputFile: 'test-results/junit.xml' }]]
+    : [['html'], ['list']],
 
   /* Shared settings for all tests */
   use: {
 
-    /* Base URL for your React Vite app */
+    /* Base URL for the React Vite app */
     baseURL: 'http://localhost:5173',
 
-    /* SHOW BROWSER UI */
-    headless: false,
-
-    /* Slow down actions so you can see them */
-    launchOptions: {
-      slowMo: 800
-    },
+    /* Run headless in CI, headed locally for debugging */
+    headless: !!process.env.CI,
 
     /* Capture screenshot on failure */
     screenshot: 'only-on-failure',
 
-    /* Record video for failed tests */
-    video: 'retain-on-failure',
+    /* Record video on failure in CI */
+    video: process.env.CI ? 'retain-on-failure' : 'off',
 
-    /* Collect trace for debugging */
-    trace: 'on-first-retry',
+    /* Browser context options */
+    viewport: { width: 1280, height: 720 },
+    ignoreHTTPSErrors: true,
 
     /* Action timeout */
     actionTimeout: 10000,
 
     /* Navigation timeout */
-    navigationTimeout: 15000
+    navigationTimeout: 30000,
 
+    /* Collect trace on failure */
+    trace: 'retain-on-failure'
   },
 
-  /* Configure browser projects */
+  /* Configure projects for different browsers and roles */
   projects: [
     {
-      name: 'chrome',
-      use: {
-        ...devices['Desktop Chrome'],
-        channel: 'chrome'
-      }
-    }
+      name: 'chromium',
+      use: { ...devices['Desktop Chrome'] }
+    },
+
+    // Uncomment for cross-browser testing
+    // {
+    //   name: 'firefox',
+    //   use: { ...devices['Desktop Firefox'] }
+    // },
+    // {
+    //   name: 'webkit',
+    //   use: { ...devices['Desktop Safari'] }
+    // }
   ],
 
-  /* Automatically start the dev server before running tests */
-  webServer: {
+  /* Test output directory */
+  outputDir: 'test-results/',
 
-    command: 'npm run dev --prefix frontend -- --host 127.0.0.1 --port 5173',
+  /* Test metadata */
+  metadata: {
+    platform: process.platform,
+    nodeVersion: process.version,
+    testEnvironment: process.env.NODE_ENV || 'test'
+  },
 
-    port: 5173,
+  /* Automatically start both backend and frontend servers before running tests */
+  // webServer: {
 
-    timeout: 120 * 1000,
+  //   command: 'node start-test-servers.js',
 
-    reuseExistingServer: !process.env.CI
+  //   port: 5173,
 
-  }
+  //   timeout: 120 * 1000,
 
+  //   reuseExistingServer: !process.env.CI
+
+  // }
 });

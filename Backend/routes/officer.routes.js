@@ -2,6 +2,7 @@ const router = require("express").Router();
 const { protect } = require("../middlewares/auth.middleware");
 const { canPerform, canPerformResourceAction } = require("../middlewares/permission.middleware");
 const { PERMISSIONS } = require("../config/permissions.config");
+const Issue = require("../models/issue");
 const {
   getDepartmentIssues,
   getDepartmentWorkers,
@@ -18,22 +19,22 @@ router.get("/issues", canPerform(PERMISSIONS.OFFICER_REVIEW_ISSUES), getDepartme
 
 router.patch(
   "/issues/:issueId/review",
-  canPerformResourceAction("ISSUE", "REVIEW"),
+  canPerformResourceAction("ISSUE", "REVIEW", async (req) => Issue.findById(req.params.issueId)),
   reviewIssue
 );
 
 router.patch(
   "/issues/:issueId/status",
-  canPerformResourceAction("ISSUE", "UPDATE_STATUS"),
+  canPerformResourceAction("ISSUE", "UPDATE_STATUS", async (req) => Issue.findById(req.params.issueId)),
   updateOfficerStatus
 );
 
 // ✅ Officer Worker Management
-router.get("/workers", canPerform(PERMISSIONS.OFFICER_MANAGE_VOLUNTEERS), getDepartmentWorkers);
+router.get("/workers", canPerform(PERMISSIONS.OFFICER_ASSIGN_WORKER), getDepartmentWorkers);
 
 router.patch(
   "/issues/:issueId/assign-worker",
-  canPerformResourceAction("ISSUE", "ASSIGN_WORKER"),
+  canPerformResourceAction("ISSUE", "ASSIGN_WORKER", async (req) => Issue.findById(req.params.issueId)),
   assignWorker
 );
 

@@ -9,6 +9,8 @@ import { mapBackendStatus, statusConfig } from '@/utils/statusConfig';
 import SafeImage from '../../common/SafeImage/SafeImage';
 import { useToast } from '../../../contexts/ToastContext';
 import { useModal } from '../../../contexts/ModalContext';
+import { ISSUE_CATEGORY_LABELS, ISSUE_SEVERITY_LABELS } from '../../../constants/issueOptions';
+import { ISSUE_STATUS_LABELS } from '../../../constants/issueStatus';
 import './IssueCard.css';
 
 function formatLocation(location, locationText) {
@@ -62,14 +64,14 @@ const IssueCard = ({ issue, onVote, onDeleted }) => {
   
   // ✅ Use permissions instead of role checks
   // Can delete if: admin OR (reporter AND in deletable status)
-  const canDelete = can('issue:delete') && (user?.role === 'admin' || (isReporter && (status === 'reported' || status === 'closed')));
+  const canDelete = can('issue:delete') && (user?.role === 'admin' || (isReporter && ['reported', 'under_review', 'closed'].includes(status)));
   
   const departmentName =
     issue?.assignedDepartment?.name ??
     (typeof issue?.assignedDepartment === 'string' ? issue.assignedDepartment : issue?.department);
 
   const severity = typeof issue.severity === 'number' ? issue.severity : Number(issue.severity || 0);
-  const priorityLabel = severity >= 5 ? 'Urgent' : severity === 4 ? 'Critical' : severity === 3 ? 'High' : severity === 2 ? 'Medium' : 'Low';
+  const priorityLabel = ISSUE_SEVERITY_LABELS[severity] || 'Low';
   const commentCount =
     typeof issue.commentCount === 'number'
       ? issue.commentCount
@@ -102,6 +104,11 @@ const IssueCard = ({ issue, onVote, onDeleted }) => {
   const normalizedStatus = mapBackendStatus(issue?.status);
   const config = statusConfig[normalizedStatus] || {};
   const badgeClass = config.color ? `status-${config.color}` : 'status-warning';
+  const statusLabel =
+    ISSUE_STATUS_LABELS[String(issue?.status || '').toLowerCase()] ||
+    ISSUE_STATUS_LABELS[normalizedStatus] ||
+    config.label ||
+    issue.status;
   const isVerified =
     issue?.verified === true ||
     issue?.verifiedByCitizen === true ||
@@ -109,13 +116,14 @@ const IssueCard = ({ issue, onVote, onDeleted }) => {
 
   // Category color mapping for glow effect
   const categoryColors = {
-    'Roads': '#F2B933',
-    'Electricity': '#2F8398',
-    'Garbage': '#87A83F',
-    'Drainage': '#C0C91E',
-    'Other': '#F27C54'
+    roads: '#F2B933',
+    electricity: '#2F8398',
+    garbage: '#87A83F',
+    drainage: '#C0C91E',
+    water: '#2F8398',
+    other: '#F27C54',
   };
-  const categoryColor = categoryColors[issue.category] || categoryColors['Other'];
+  const categoryColor = categoryColors[String(issue.category || '').toLowerCase()] || categoryColors.other;
 
   return (
     <article
@@ -140,13 +148,17 @@ const IssueCard = ({ issue, onVote, onDeleted }) => {
       <div className="issue-card__top">
         <span className="issue-card__category">
           <span className="issue-card__category-icon" aria-hidden="true">
-            {String(issue.category || '').slice(0, 1).toUpperCase() || 'O'}
+            {String(ISSUE_CATEGORY_LABELS[String(issue.category || '').toLowerCase()] || issue.category || '')
+              .slice(0, 1)
+              .toUpperCase() || 'O'}
           </span>
-          <span className="issue-card__category-text">{issue.category || 'Other'}</span>
+          <span className="issue-card__category-text">
+            {ISSUE_CATEGORY_LABELS[String(issue.category || '').toLowerCase()] || issue.category || 'Other'}
+          </span>
         </span>
         <div className="issue-card__badges">
           <span className={`badge-pill ${badgeClass}`}>
-            {config.label || issue.status}
+            {statusLabel}
           </span>
           {isVerified ? (
             <span className="badge-pill badge-pill--success" aria-label="Verified by citizen">

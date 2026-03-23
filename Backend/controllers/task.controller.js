@@ -16,6 +16,8 @@ const TASK_STATUS = Object.freeze({
   COMPLICATION_REPORTED: "complication_reported",
 });
 
+const ISSUE_TASK_FIELDS = "title category status locationText description severity images location assignedDepartment";
+
 const PROGRESSABLE_STATUSES = new Set([
   TASK_STATUS.ASSIGNED,
   TASK_STATUS.ACCEPTED,
@@ -92,7 +94,7 @@ exports.createTask = async (req, res) => {
         $set: { status: TASK_STATUS.ASSIGNED },
       },
       { upsert: true, new: true }
-    ).populate("issue", "title category status locationText");
+    ).populate("issue", ISSUE_TASK_FIELDS);
 
     issue.assignedWorker = worker._id;
     issue.status = ISSUE_STATUS.ASSIGNED_TO_DEPARTMENT;
@@ -116,7 +118,7 @@ exports.createTask = async (req, res) => {
 exports.getMyTasks = async (req, res) => {
   try {
     const tasks = await Task.find({ worker: req.user._id })
-      .populate("issue", "title category status locationText")
+      .populate("issue", ISSUE_TASK_FIELDS)
       .sort({ createdAt: -1 });
     return apiResponse(res, 200, "Tasks fetched", tasks);
   } catch (error) {
@@ -168,6 +170,9 @@ exports.updateTaskStatus = async (req, res) => {
     }
 
     if (nextStatus === TASK_STATUS.COMPLETED) {
+      if (!Array.isArray(task.progressImages) || task.progressImages.length === 0) {
+        return apiResponse(res, 400, "Upload at least one progress image before completing the task");
+      }
       if (!canTransition(task.issue.status, ISSUE_STATUS.RESOLVED)) {
         return apiResponse(res, 400, `Cannot move issue from ${task.issue.status} to ${ISSUE_STATUS.RESOLVED}`);
       }
@@ -187,7 +192,7 @@ exports.updateTaskStatus = async (req, res) => {
     }
 
     await task.save();
-    const populated = await Task.findById(task._id).populate("issue", "title category status locationText");
+    const populated = await Task.findById(task._id).populate("issue", ISSUE_TASK_FIELDS);
     return apiResponse(res, 200, "Task status updated", populated);
   } catch (error) {
     console.error("Update task status error:", error);
@@ -203,7 +208,10 @@ exports.addTaskProgress = async (req, res) => {
     if (!mongoose.Types.ObjectId.isValid(id)) {
       return apiResponse(res, 400, "Invalid task id");
     }
-    const task = await Task.findOne({ _id: id, worker: req.user._id }).populate("issue", "title category status locationText reportedBy");
+    const task = await Task.findOne({ _id: id, worker: req.user._id }).populate(
+      "issue",
+      `${ISSUE_TASK_FIELDS} reportedBy`
+    );
     if (!task) return apiResponse(res, 404, "Task not found");
     if (!PROGRESSABLE_STATUSES.has(task.status)) {
       return apiResponse(res, 400, "Task is not in a progressable state");

@@ -11,11 +11,14 @@ import { Bar } from 'react-chartjs-2';
 import { getAdminHeatmap, getAnalyticsTrends } from '@api/analytics.api';
 import { getErrorMessage } from '@api/utils';
 import Loader from '../../components/common/Loader/Loader';
+import { usePermission } from '../../hooks/usePermission';
 import './Analytics.css';
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, Tooltip, Legend);
 
 const Analytics = () => {
+  const { can } = usePermission();
+  const canViewAdminAnalytics = can('admin:view_analytics');
   const [trends, setTrends] = useState(null);
   const [heatmap, setHeatmap] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -28,7 +31,10 @@ const Analytics = () => {
       setLoading(true);
       setError('');
       try {
-        const [trendsData, heatmapData] = await Promise.all([getAnalyticsTrends(), getAdminHeatmap()]);
+        const [trendsData, heatmapData] = await Promise.all([
+          getAnalyticsTrends(),
+          canViewAdminAnalytics ? getAdminHeatmap() : Promise.resolve([]),
+        ]);
         if (!mounted) return;
         setTrends(trendsData || {});
         setHeatmap(Array.isArray(heatmapData) ? heatmapData : []);
@@ -108,7 +114,7 @@ const Analytics = () => {
     const textSecondary = read('--text-secondary', '#35585e');
     const gridColor = 'rgba(16, 24, 40, 0.08)';
     return { successRgb, textSecondary, gridColor };
-  }, []);
+  }, [canViewAdminAnalytics]);
 
   if (loading) return <Loader fullScreen />;
 
@@ -163,7 +169,7 @@ const Analytics = () => {
   return (
     <section className="admin-page page">
       <div className="container">
-        <h1 className="admin-title">Admin Analytics</h1>
+        <h1 className="admin-title">{canViewAdminAnalytics ? 'Admin Analytics' : 'Officer Analytics'}</h1>
         {error && <div className="issues-error">{error}</div>}
 
         <div className="stats-grid">

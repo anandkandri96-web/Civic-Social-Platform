@@ -7,8 +7,11 @@ const { recomputeIssuePriority } = require("../services/priority.service");
 exports.upvoteIssue = async (req, res) => {
   const { issueId } = req.params;
   try {
-    if (req.user.role === ROLES.ADMIN) {
-      return apiResponse(res, 403, "Admins cannot vote on issues");
+    if ([ROLES.ADMIN, ROLES.OFFICER].includes(req.user.role)) {
+      return apiResponse(res, 403, "Admins and officers cannot vote on issues");
+    }
+    if ([ROLES.ADMIN, ROLES.OFFICER].includes(req.user.role)) {
+      return apiResponse(res, 403, "Admins and officers cannot vote on issues");
     }
 
     const issue = await Issue.findById(issueId);

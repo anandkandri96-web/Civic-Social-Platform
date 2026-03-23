@@ -147,7 +147,12 @@ exports.assignWorker = async (req, res) => {
       return apiResponse(res, 400, "Worker belongs to a different department");
     }
 
-    if (!canTransition(issue.status, ISSUE_STATUS.ASSIGNED_TO_DEPARTMENT) && issue.status !== ISSUE_STATUS.ASSIGNED_TO_DEPARTMENT) {
+    const statusKey = String(issue.status || "").toLowerCase();
+    const canAssign =
+      canTransition(statusKey, ISSUE_STATUS.ASSIGNED_TO_DEPARTMENT) ||
+      statusKey === ISSUE_STATUS.ASSIGNED_TO_DEPARTMENT ||
+      statusKey === ISSUE_STATUS.REPORTED;
+    if (!canAssign) {
       return apiResponse(res, 400, `Cannot assign worker in current status: ${issue.status}`);
     }
 

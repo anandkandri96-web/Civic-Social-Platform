@@ -8,6 +8,11 @@ import { useAuth } from '../../hooks/useAuth';
 import { getDepartmentName, getOfficerDisplayId, getUserId, getWorkerDisplayId } from '../../utils/userDisplay';
 import { useToast } from '../../contexts/ToastContext';
 
+const getIssueId = (issue) => {
+  const id = issue?._id ?? issue?.id;
+  return id ? String(id) : '';
+};
+
 const OfficerDashboard = () => {
   const { user } = useAuth();
   const [issues, setIssues] = useState([]);
@@ -65,14 +70,22 @@ const OfficerDashboard = () => {
   }, []);
 
   const patchIssue = (updatedIssue) => {
-    setIssues((prev) => prev.map((issue) => (issue._id === updatedIssue._id ? updatedIssue : issue)));
+    const updatedId = getIssueId(updatedIssue);
+    if (!updatedId) return;
+    setIssues((prev) =>
+      prev.map((issue) => (getIssueId(issue) === updatedId ? { ...issue, ...updatedIssue } : issue))
+    );
   };
 
   const runAction = async (issueId, action) => {
+    if (!issueId) {
+      showToast('Issue not found.', { tone: 'error' });
+      return;
+    }
     setWorkingId(issueId);
     try {
       const updated = await action();
-      patchIssue(updated);
+      if (updated) patchIssue(updated);
     } catch (err) {
       showToast(getErrorMessage(err), { tone: 'error' });
     } finally {
@@ -85,6 +98,18 @@ const OfficerDashboard = () => {
     assigned: issues.filter((issue) => issue.status === 'assigned_to_department').length,
     progress: issues.filter((issue) => issue.status === 'work_in_progress').length,
     resolved: issues.filter((issue) => issue.status === 'resolved').length,
+  };
+
+  const chartStats = {
+    pending: grouped.underReview,
+    assigned: grouped.assigned + grouped.progress,
+    resolved: grouped.resolved,
+  };
+
+  const getBarHeight = (value) => {
+    const max = Math.max(chartStats.pending, chartStats.assigned, chartStats.resolved, 1);
+    const ratio = value / max;
+    return `${Math.max(16, Math.round(ratio * 100))}%`;
   };
 
   const officerStatuses = useMemo(
@@ -164,6 +189,31 @@ const OfficerDashboard = () => {
           </article>
         </div>
 
+        <section className="card role-dashboard__panel role-dashboard__chart">
+          <h2>Issue Status Distribution</h2>
+          <div className="role-dashboard__chart-wrap">
+            <div className="role-dashboard__chart-bars">
+              <div className="role-dashboard__bar">
+                <span>{chartStats.pending}</span>
+                <div className="role-dashboard__bar-fill pending" style={{ height: getBarHeight(chartStats.pending) }} />
+              </div>
+              <div className="role-dashboard__bar">
+                <span>{chartStats.assigned}</span>
+                <div className="role-dashboard__bar-fill assigned" style={{ height: getBarHeight(chartStats.assigned) }} />
+              </div>
+              <div className="role-dashboard__bar">
+                <span>{chartStats.resolved}</span>
+                <div className="role-dashboard__bar-fill resolved" style={{ height: getBarHeight(chartStats.resolved) }} />
+              </div>
+            </div>
+            <div className="role-dashboard__chart-labels">
+              <span>Pending</span>
+              <span>Assigned</span>
+              <span>Resolved</span>
+            </div>
+          </div>
+        </section>
+
         <section className="card role-dashboard__panel">
           <h2>Department Queue</h2>
           {!hasWorkerDirectory ? (
@@ -183,106 +233,110 @@ const OfficerDashboard = () => {
                   <tr>
                     <th>Issue</th>
                     <th>Status</th>
-                  <th>Category</th>
-                  <th>Reporter</th>
-                  <th>Worker ID</th>
-                  <th>Action</th>
-                </tr>
-              </thead>
-              <tbody>
-                {issues.map((issue) => (
-                  <tr key={issue._id}>
-                    <td>{issue.title}</td>
-                    <td>{issue.status}</td>
-                    <td>{issue.category}</td>
-                    <td>{issue.reportedBy?.name || '-'}</td>
-                    <td>{getWorkerDisplayId(issue.assignedWorker)}</td>
-                    <td>
-                      <div className="role-dashboard__actions">
-                        <button
-                          type="button"
-                          disabled={workingId === issue._id}
-                          onClick={() => runAction(issue._id, () => reviewOfficerIssue(issue._id))}
-                        >
-                          Review
-                        </button>
-                        {hasWorkerDirectory ? (
-                          <select
-                            value={workerInputs[issue._id] ?? ''}
-                            onChange={(e) =>
-                              setWorkerInputs((prev) => ({ ...prev, [issue._id]: e.target.value }))
-                            }
-                            disabled={workingId === issue._id}
-                          >
-                            <option value="">Select worker</option>
-                            {availableWorkers.map((worker) => (
-                              <option key={worker._id || worker.id || worker.email} value={worker._id || worker.id || ''}>
-                                {getWorkerOptionLabel(worker)}
-                              </option>
-                            ))}
-                          </select>
-                        ) : (
-                          <input
-                            type="text"
-                            placeholder="Worker ID"
-                            value={workerInputs[issue._id] ?? ''}
-                            onChange={(e) =>
-                              setWorkerInputs((prev) => ({ ...prev, [issue._id]: e.target.value }))
-                            }
-                          />
-                        )}
-                        <button
-                          type="button"
-                          disabled={workingId === issue._id || !(workerInputs[issue._id] || '').trim()}
-                          onClick={() =>
-                            runAction(issue._id, () =>
-                              assignOfficerWorker(issue._id, String(workerInputs[issue._id]).trim())
-                            )
-                          }
-                        >
-                          Assign
-                        </button>
-                        {hasWorkerDirectory && (workerInputs[issue._id] || '').trim() ? (
-                          (() => {
-                            const selectedId = String(workerInputs[issue._id]).trim();
-                            const selected = availableWorkers.find((w) => String(w?._id ?? w?.id) === selectedId);
-                            if (!selected) return null;
-                            const explicitLoad =
-                              selected?.activeTasks ?? selected?.activeTaskCount ?? selected?.currentTaskLoad ?? selected?.currentLoad;
-                            const computedLoad = selected?._id ? activeLoadByWorkerId.get(String(selected._id)) : undefined;
-                            const load =
-                              typeof explicitLoad === 'number'
-                                ? explicitLoad
-                                : typeof computedLoad === 'number'
-                                  ? computedLoad
-                                  : 'N/A';
-                            return (
-                              <span className="text-muted" style={{ width: '100%' }}>
-                                Worker ID: {getWorkerDisplayId(selected)} | Name: {selected?.name || '-'} | Department:{' '}
-                                {getDepartmentName(selected) || '-'} | Active Tasks: {load}
-                              </span>
-                            );
-                          })()
-                        ) : null}
-                        <select
-                          defaultValue={issue.status}
-                          disabled={workingId === issue._id}
-                          onChange={(e) =>
-                            runAction(issue._id, () => updateOfficerIssueStatus(issue._id, e.target.value))
-                          }
-                        >
-                          {officerStatuses
-                            .filter((status) => status === issue.status || canTransition(issue.status, status))
-                            .map((status) => (
-                              <option key={status} value={status}>
-                                {status}
-                              </option>
-                            ))}
-                        </select>
-                      </div>
-                    </td>
+                    <th>Category</th>
+                    <th>Reporter</th>
+                    <th>Worker ID</th>
+                    <th>Action</th>
                   </tr>
-                ))}
+                </thead>
+                <tbody>
+                  {issues.map((issue) => {
+                    const issueId = getIssueId(issue);
+                    const issueStatus = String(issue?.status || '').toLowerCase();
+                    return (
+                    <tr key={issueId || issue.title}>
+                      <td>{issue.title}</td>
+                      <td>{issue.status}</td>
+                      <td>{issue.category}</td>
+                      <td>{issue.reportedBy?.name || '-'}</td>
+                      <td>{getWorkerDisplayId(issue.assignedWorker)}</td>
+                      <td>
+                        <div className="role-dashboard__actions">
+                          <button
+                            type="button"
+                            disabled={workingId === issueId}
+                            onClick={() => runAction(issueId, () => reviewOfficerIssue(issueId))}
+                          >
+                            Review
+                          </button>
+                          {hasWorkerDirectory ? (
+                            <select
+                              value={workerInputs[issueId] ?? ''}
+                              onChange={(e) =>
+                                setWorkerInputs((prev) => ({ ...prev, [issueId]: e.target.value }))
+                              }
+                              disabled={workingId === issueId}
+                            >
+                              <option value="">Select worker</option>
+                              {availableWorkers.map((worker) => (
+                                <option key={worker._id || worker.id || worker.email} value={worker._id || worker.id || ''}>
+                                  {getWorkerOptionLabel(worker)}
+                                </option>
+                              ))}
+                            </select>
+                          ) : (
+                            <input
+                              type="text"
+                              placeholder="Worker ID"
+                              value={workerInputs[issueId] ?? ''}
+                              onChange={(e) =>
+                                setWorkerInputs((prev) => ({ ...prev, [issueId]: e.target.value }))
+                              }
+                            />
+                          )}
+                          <button
+                            type="button"
+                            disabled={workingId === issueId || !(workerInputs[issueId] || '').trim()}
+                            onClick={() =>
+                              runAction(issueId, () =>
+                                assignOfficerWorker(issueId, String(workerInputs[issueId]).trim())
+                              )
+                            }
+                          >
+                            Assign
+                          </button>
+                          {hasWorkerDirectory && (workerInputs[issueId] || '').trim() ? (
+                            (() => {
+                              const selectedId = String(workerInputs[issueId]).trim();
+                              const selected = availableWorkers.find((w) => String(w?._id ?? w?.id) === selectedId);
+                              if (!selected) return null;
+                              const explicitLoad =
+                                selected?.activeTasks ?? selected?.activeTaskCount ?? selected?.currentTaskLoad ?? selected?.currentLoad;
+                              const computedLoad = selected?._id ? activeLoadByWorkerId.get(String(selected._id)) : undefined;
+                              const load =
+                                typeof explicitLoad === 'number'
+                                  ? explicitLoad
+                                  : typeof computedLoad === 'number'
+                                    ? computedLoad
+                                    : 'N/A';
+                              return (
+                                <span className="text-muted" style={{ width: '100%' }}>
+                                  Worker ID: {getWorkerDisplayId(selected)} | Name: {selected?.name || '-'} | Department:{' '}
+                                  {getDepartmentName(selected) || '-'} | Active Tasks: {load}
+                                </span>
+                              );
+                            })()
+                          ) : null}
+                          <select
+                            defaultValue={issueStatus || 'reported'}
+                            disabled={workingId === issueId}
+                            onChange={(e) =>
+                              runAction(issueId, () => updateOfficerIssueStatus(issueId, e.target.value))
+                            }
+                          >
+                            {officerStatuses
+                              .filter((status) => status === issueStatus || canTransition(issueStatus, status))
+                              .map((status) => (
+                                <option key={status} value={status}>
+                                  {status}
+                                </option>
+                              ))}
+                          </select>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                  })}
                 </tbody>
               </table>
             </div>

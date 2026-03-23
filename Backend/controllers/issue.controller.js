@@ -19,6 +19,7 @@ const TITLE_MAX = 120;
 const DESC_MAX = 2000;
 const VALID_STATUSES = new Set(Object.values(ISSUE_STATUS));
 const CITIZEN_EDITABLE_STATUSES = new Set([ISSUE_STATUS.REPORTED, ISSUE_STATUS.UNDER_REVIEW]);
+const TITLE_RE = /[a-zA-Z]/;
 
 const escapeRegex = (value) => String(value).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 
@@ -126,6 +127,9 @@ exports.createIssue = async (req, res) => {
 
     if (safeTitle.length < 3 || safeTitle.length > TITLE_MAX) {
       return apiResponse(res, 400, `Title must be 3-${TITLE_MAX} characters`);
+    }
+    if (!TITLE_RE.test(safeTitle)) {
+      return apiResponse(res, 400, "Title must include at least one letter");
     }
 
     if (safeDesc.length < 10 || safeDesc.length > DESC_MAX) {
@@ -240,6 +244,9 @@ exports.updateIssue = async (req, res) => {
       const safeTitle = String(title).trim();
       if (safeTitle.length < 3 || safeTitle.length > TITLE_MAX) {
         return apiResponse(res, 400, `Title must be 3-${TITLE_MAX} characters`);
+      }
+      if (!TITLE_RE.test(safeTitle)) {
+        return apiResponse(res, 400, "Title must include at least one letter");
       }
       issue.title = safeTitle;
     }

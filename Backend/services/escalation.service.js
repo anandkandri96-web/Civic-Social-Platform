@@ -44,6 +44,7 @@ async function runEscalationSweep() {
       issue.escalationLevel = threshold.level;
       issue.priorityScore = (issue.priorityScore || 0) + threshold.priorityBoost;
       issue.escalatedAt = now;
+      issue.escalationHistory = Array.isArray(issue.escalationHistory) ? issue.escalationHistory : [];
       issue.escalationHistory.push({
         level: threshold.level,
         at: now,

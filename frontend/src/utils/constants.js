@@ -1,3 +1,6 @@
+import { ISSUE_STATUSES as ISSUE_STATUS_MAP } from '../constants/issueStatus';
+import { ISSUE_CATEGORIES as ISSUE_CATEGORY_OPTIONS } from '../constants/issueOptions';
+
 export const API_BASE_URL = import.meta.env.VITE_API_URL ?? '';
 
 export const ROLES = {
@@ -9,18 +12,5 @@ export const ROLES = {
   ADMIN: 'admin',
 };
 
-export const ISSUE_STATUSES = [
-  'reported',
-  'under_review',
-  'assigned_to_department',
-  'work_in_progress',
-  'resolved',
-  'citizen_verified',
-  'closed',
-  'volunteer_claimed',
-  'community_fix_in_progress',
-  'resolved_by_community',
-  'rejected',
-];
-
-export const ISSUE_CATEGORIES = ['roads', 'electricity', 'garbage', 'drainage', 'water', 'other'];
+export const ISSUE_STATUSES = Object.values(ISSUE_STATUS_MAP);
+export const ISSUE_CATEGORIES = ISSUE_CATEGORY_OPTIONS.map((cat) => cat.value);

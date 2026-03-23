@@ -8,6 +8,7 @@ const { apiResponse } = require("../utils/apiResponse");
 const ALLOWED_REGISTER_FIELDS = ["name", "email", "password", "role"];
 const PUBLIC_ROLES = new Set([ROLES.CITIZEN, ROLES.VOLUNTEER]);
 const EMAIL_RE = /^\S+@\S+\.\S+$/;
+const NAME_RE = /^[A-Za-z][A-Za-z\s.'-]{1,59}$/;
 const APPROVAL_ROLES = new Set([ROLES.VOLUNTEER, ROLES.OFFICER, ROLES.WORKER]);
 
 const normalizeRole = (role) => {
@@ -48,8 +49,8 @@ exports.register = async (req, res) => {
     // Only admins can elevate users to other roles via separate admin endpoint
     const requestedRole = ROLES.CITIZEN;
 
-    if (name.length < 2 || name.length > 60) {
-      return apiResponse(res, 400, "Name must be 2-60 characters");
+    if (!NAME_RE.test(name)) {
+      return apiResponse(res, 400, "Name must be 2-60 letters and spaces only");
     }
 
     if (!EMAIL_RE.test(email)) {
@@ -165,8 +166,8 @@ exports.updateMe = async (req, res) => {
 
     if (name !== undefined) {
       const safeName = String(name).trim();
-      if (safeName.length < 2 || safeName.length > 60) {
-        return apiResponse(res, 400, "Name must be 2-60 characters");
+      if (!NAME_RE.test(safeName)) {
+        return apiResponse(res, 400, "Name must be 2-60 letters and spaces only");
       }
       updates.name = safeName;
     }

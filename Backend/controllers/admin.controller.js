@@ -7,6 +7,8 @@ const { ROLES } = require("../utils/constants");
 const { generateNextOfficerId, generateNextWorkerId } = require("../services/serialId.service");
 
 const escapeRegex = (value) => String(value).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+const EMAIL_RE = /^\S+@\S+\.\S+$/;
+const NAME_RE = /^[A-Za-z][A-Za-z\s.'-]{1,59}$/;
 
 const buildIssueSearchFilter = (raw) => {
   const term = String(raw || "").trim();
@@ -164,6 +166,18 @@ exports.createUser = async (req, res) => {
 
     if (!name || !email || !password || !nextRole) {
       return apiResponse(res, 400, "name, email, password and role are required");
+    }
+
+    if (!NAME_RE.test(String(name).trim())) {
+      return apiResponse(res, 400, "Name must be 2-60 letters and spaces only");
+    }
+
+    if (!EMAIL_RE.test(String(email).trim().toLowerCase())) {
+      return apiResponse(res, 400, "Invalid email format");
+    }
+
+    if (String(password).length < 6 || String(password).length > 128) {
+      return apiResponse(res, 400, "Password must be 6-128 characters");
     }
 
     if (!allowedRoles.includes(nextRole)) {
