@@ -88,6 +88,7 @@
   text-align: left;
   padding: 12px 10px;
   font-size: 0.85rem;
+  vertical-align: middle;
 }
 
 .user-table tbody tr {
@@ -185,6 +186,50 @@ select option {
 
 .user-table .danger:hover {
   background: color-mix(in srgb, var(--color-danger) 20%, transparent);
+}
+
+/* =========================
+   SAVE BUTTON
+========================= */
+.user-table td.user-actions-cell {
+  vertical-align: middle;
+}
+
+.user-table .user-actions-cell button.save,
+.user-table .user-actions-cell button.danger {
+  width: 70px !important;
+  height: 34px !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  font-size: 0.78rem !important;
+  box-sizing: border-box !important;
+  line-height: 1 !important;
+  vertical-align: middle !important;
+}
+
+.user-table .user-actions-cell button.save {
+  border-color: var(--color-success);
+  color: #fff;
+  background: var(--color-success);
+}
+
+.user-table .user-actions-cell button.save:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--color-success) 20%, transparent);
+}
+
+.user-table .user-actions-cell button.save:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.user-actions-cell {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  justify-content: flex-start;
 }
 
 /* =========================

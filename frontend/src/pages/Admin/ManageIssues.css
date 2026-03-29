@@ -220,3 +220,52 @@
     min-height: auto;
   }
 }
+
+/* =========================
+   SEARCH BAR
+========================= */
+.manage-issues-search {
+  display: flex;
+  gap: 10px;
+  margin-bottom: var(--space-md);
+  margin-left: 5px;
+}
+
+.manage-issues-search input {
+  flex: 1;
+  padding: 10px 14px;
+  border-radius: 10px;
+  border: 1px solid var(--border-color);
+  background: var(--bg-surface);
+  color: var(--text-primary);
+  font-size: 0.9rem;
+  transition: border-color 0.2s;
+}
+
+.manage-issues-search input:focus {
+  outline: none;
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--color-primary) 20%, transparent);
+}
+
+.manage-issues-search button {
+  padding: 10px 18px;
+  border-radius: 10px;
+  border: 1px solid var(--border-color);
+  background: var(--bg-surface);
+  color: var(--text-primary);
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.manage-issues-search button[type="submit"] {
+  background: var(--color-primary);
+  color: #fff;
+  border-color: var(--color-primary);
+}
+
+.manage-issues-search button:hover {
+  opacity: 0.85;
+}

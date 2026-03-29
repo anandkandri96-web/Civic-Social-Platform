@@ -119,11 +119,6 @@
   background: rgba(var(--color-success-rgb), 0.12);
 }
 
-.issue-card__status--critical {
-  color: var(--color-danger);
-  background: rgba(var(--color-danger-rgb), 0.12);
-}
-
 .issue-card__title-link {
   text-decoration: none;
 }

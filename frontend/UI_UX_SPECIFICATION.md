@@ -1152,7 +1152,7 @@ Layout structure:
 
 ---
 
-# 6) 🔄 USER FLOWS (CRITICAL)
+# 6) 🔄 USER FLOWS (HIGH-PRIORITY)
 
 Flows are derived from:
 - Routes: `frontend/src/core/AppRoutes.jsx`

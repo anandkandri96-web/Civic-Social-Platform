@@ -9,7 +9,7 @@ const HEATMAP_COLORS = {
   low: '#5F7F1C',
   medium: '#1F6A7A',
   high: '#C98A12',
-  critical: '#C64C2B',
+  urgent: '#C64C2B',
 };
 const DEFAULT_CENTER = [12.7096, 77.6958];
 const TILE_URL = 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png';
@@ -25,15 +25,15 @@ const DOT_ICON_CACHE = new Map();
 
 const getSeverityColor = (severity) => {
   const safe = Number(severity || 1);
-  if (safe >= 4) return HEATMAP_COLORS.critical;
+  if (safe >= 4) return HEATMAP_COLORS.urgent;
   if (safe >= 3) return HEATMAP_COLORS.high;
   if (safe >= 2) return HEATMAP_COLORS.medium;
   return HEATMAP_COLORS.low;
 };
 
 const getDotIcon = (severity) => {
-  const safe = Math.min(5, Math.max(1, Number(severity || 1)));
-  const size = 10 + safe * 2; // 12-20px
+  const safe = Math.min(4, Math.max(1, Number(severity || 1)));
+  const size = 10 + safe * 2; // 12-18px
   const color = getSeverityColor(safe);
   const key = `${safe}-${size}-${color}`;
   if (DOT_ICON_CACHE.has(key)) return DOT_ICON_CACHE.get(key);
@@ -263,7 +263,7 @@ const IssueLeafletMap = ({
     const value = Number(point.count ?? point.weight ?? 1);
     return Math.max(max, Number.isFinite(value) ? value : 1);
   }, 1);
-  const maxSeverity = 5;
+  const maxSeverity = 4;
   const resolvedActiveIssue = (() => {
     if (!activeIssue) return null;
     const lat = Number(activeIssue?.lat);
@@ -311,8 +311,12 @@ const IssueLeafletMap = ({
 
       {dotMode
         ? data.map((point, index) => {
-            const severityValue = Number(
-              point.severity ?? point.priority ?? point.avgSeverity ?? point.maxSeverity ?? point.weight ?? 1
+            const severityValue = Math.min(
+              4,
+              Math.max(
+                1,
+                Number(point.severity ?? point.priority ?? point.avgSeverity ?? point.maxSeverity ?? point.weight ?? 1)
+              )
             );
             return (
               <Marker
@@ -325,8 +329,12 @@ const IssueLeafletMap = ({
           })
         : showHeatmap
         ? data.map((point, index) => {
-            const severityValue = Number(
-              point.severity ?? point.priority ?? point.avgSeverity ?? point.maxSeverity ?? point.weight ?? 1
+            const severityValue = Math.min(
+              4,
+              Math.max(
+                1,
+                Number(point.severity ?? point.priority ?? point.avgSeverity ?? point.maxSeverity ?? point.weight ?? 1)
+              )
             );
             const severityRatio = Math.max(0.05, Math.min(1, severityValue / maxSeverity));
             const densityValue = Number(point.count ?? point.weight ?? 1);

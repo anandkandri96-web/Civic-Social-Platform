@@ -70,7 +70,8 @@ const IssueCard = ({ issue, onVote, onDeleted }) => {
     issue?.assignedDepartment?.name ??
     (typeof issue?.assignedDepartment === 'string' ? issue.assignedDepartment : issue?.department);
 
-  const severity = typeof issue.severity === 'number' ? issue.severity : Number(issue.severity || 0);
+  const rawSeverity = typeof issue.severity === 'number' ? issue.severity : Number(issue.severity || 0);
+  const severity = Math.min(4, Math.max(1, Number.isFinite(rawSeverity) ? rawSeverity : 1));
   const priorityLabel = ISSUE_SEVERITY_LABELS[severity] || 'Low';
   const commentCount =
     typeof issue.commentCount === 'number'

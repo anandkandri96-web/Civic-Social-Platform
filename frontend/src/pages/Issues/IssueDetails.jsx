@@ -39,6 +39,7 @@ const IssueDetails = () => {
   const [commentText, setCommentText] = useState('');
   const [replyTo, setReplyTo] = useState(null);
   const [liked, setLiked] = useState(() => new Set());
+  const [editingComment, setEditingComment] = useState(null); // { id, text }
   const [loading, setLoading] = useState(true);
   const [deleteLoading, setDeleteLoading] = useState(false);
   const [actionLoading, setActionLoading] = useState(false);
@@ -217,7 +218,7 @@ const IssueDetails = () => {
       setEditError('Location text is required.');
       return;
     }
-    if (!Number.isFinite(severityNum) || severityNum < 1 || severityNum > 5) {
+    if (!Number.isFinite(severityNum) || severityNum < 1 || severityNum > 4) {
       setEditError('Please select a valid severity level.');
       return;
     }
@@ -261,12 +262,17 @@ const IssueDetails = () => {
     }
   };
 
-  const handleEditComment = async (commentId, currentText) => {
-    const nextMessage = window.prompt('Edit comment', currentText);
-    if (!nextMessage || !nextMessage.trim()) return;
+  const handleEditComment = (commentId, currentText) => {
+    setEditingComment({ id: commentId, text: currentText });
+  };
+
+  const handleCommentEditSave = async (commentId) => {
+    const editText = editingComment?.text?.trim();
+    if (!editText) return;
     try {
-      const updated = await updateIssueComment(commentId, { message: nextMessage.trim() });
+      const updated = await updateIssueComment(commentId, { message: editText });
       setComments((prev) => prev.map((c) => (c._id === commentId ? { ...c, ...updated } : c)));
+      setEditingComment(null);
     } catch (err) {
       showToast(getErrorMessage(err), { tone: 'error' });
     }
@@ -338,9 +344,13 @@ const IssueDetails = () => {
                 </span>
                 <span className="tag secondary">
                   Priority:{' '}
-                  {typeof issue.severity === 'number'
-                    ? ISSUE_SEVERITY_LABELS[issue.severity] || issue.severity
-                    : issue.severity}
+                  {(() => {
+                    const raw = typeof issue.severity === 'number'
+                      ? issue.severity
+                      : Number(issue.severity || 0);
+                    const normalized = Math.min(4, Math.max(1, Number.isFinite(raw) ? raw : 1));
+                    return ISSUE_SEVERITY_LABELS[normalized] || normalized;
+                  })()}
                 </span>
                 {isVerified ? (
                   <span className="tag verified" aria-label="Verified by citizen">
@@ -644,7 +654,23 @@ const IssueDetails = () => {
                               <strong>{name}</strong>
                               <small>{new Date(comment.createdAt).toLocaleString()}</small>
                             </div>
-                            <p className="issue-comment-text">{comment.message}</p>
+                            {editingComment?.id === comment._id ? (
+                              <div className="comment-edit-field">
+                                <textarea
+                                  value={editingComment.text}
+                                  onChange={(e) => setEditingComment((prev) => ({ ...prev, text: e.target.value }))}
+                                  rows={3}
+                                  autoFocus
+                                />
+                                <div className="comment-edit-actions">
+                                  <button type="button" className="btn-save" onClick={() => handleCommentEditSave(comment._id)}>Save</button>
+                                  <button type="button" className="btn-cancel" onClick={() => setEditingComment(null)}>Cancel</button>
+                                </div>
+                              </div>
+                            ) : (
+                              <p className="issue-comment-text">{comment.message}</p>
+                            )}
+                            {editingComment?.id !== comment._id && (
                             <div className="issue-comment-actions">
                               <button
                                 type="button"
@@ -679,6 +705,7 @@ const IssueDetails = () => {
                                 </>
                               )}
                             </div>
+                            )}
                           </div>
                         </li>
                       );

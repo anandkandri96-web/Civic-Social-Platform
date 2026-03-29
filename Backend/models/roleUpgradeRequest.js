@@ -56,6 +56,12 @@ const roleUpgradeRequestSchema = new mongoose.Schema(
       maxlength: 200,
       default: "",
     },
+    skills: {
+      type: String,
+      trim: true,
+      maxlength: 500,
+      default: "",
+    },
     supportingLinks: {
       type: [String],
       default: [],

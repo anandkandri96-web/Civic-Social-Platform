@@ -15,9 +15,14 @@ const ManageIssues = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [updatingId, setUpdatingId] = useState(null);
+  const [inputValue, setInputValue] = useState('');
   const { showToast } = useToast();
   const [searchParams, setSearchParams] = useSearchParams();
   const searchQuery = useMemo(() => String(searchParams.get('search') || '').trim(), [searchParams]);
+
+  useEffect(() => {
+    setInputValue(searchQuery);
+  }, [searchQuery]);
 
   useEffect(() => {
     let mounted = true;
@@ -66,12 +71,29 @@ const ManageIssues = () => {
 
         {error && <div className="issues-error">{error}</div>}
 
-        {searchQuery ? (
-          <div className="issues-search-pill">
-            <span>Search: {searchQuery}</span>
+        <form
+          className="manage-issues-search"
+          onSubmit={(e) => {
+            e.preventDefault();
+            const next = new URLSearchParams(searchParams);
+            const val = inputValue.trim();
+            if (val) next.set('search', val);
+            else next.delete('search');
+            setSearchParams(next);
+          }}
+        >
+          <input
+            type="search"
+            placeholder="Search by title, category, status..."
+            value={inputValue}
+            onChange={(e) => setInputValue(e.target.value)}
+          />
+          <button type="submit">Search</button>
+          {searchQuery && (
             <button
               type="button"
               onClick={() => {
+                setInputValue('');
                 const next = new URLSearchParams(searchParams);
                 next.delete('search');
                 setSearchParams(next);
@@ -79,8 +101,8 @@ const ManageIssues = () => {
             >
               Clear
             </button>
-          </div>
-        ) : null}
+          )}
+        </form>
 
         {loading ? (
           <Loader fullScreen />

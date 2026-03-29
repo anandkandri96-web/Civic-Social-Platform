@@ -100,7 +100,7 @@
 - Changed: `const requestedRole = normalizeRole(body.role || ROLES.CITIZEN);`
 - To: `const requestedRole = ROLES.CITIZEN;` (FORCED)
 - **Impact:** All new users MUST register as citizens
-  - Users can no longer self-assign elevated roles (CRITICAL SECURITY FIX)
+  - Users can no longer self-assign elevated roles (HIGH-IMPACT SECURITY FIX)
   - Only admins can change roles via the ADMIN_CHANGE_ROLE endpoint
   - Prevents self-service role assignment vulnerability
 - Also updated: `isApproved: true` for citizens (auto-approved as they're trusted)
@@ -315,7 +315,7 @@ npm start
 
 ### Security
 - ✅ Backend enforces all permissions (no more frontend-only auth)
-- ✅ Users cannot self-assign roles (critical vulnerability fixed)
+- ✅ Users cannot self-assign roles (high-impact vulnerability fixed)
 - ✅ Resource-level permissions prevent cross-department access
 - ✅ Centralized permission tracking (easier to audit)
 

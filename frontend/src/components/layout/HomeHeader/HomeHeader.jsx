@@ -1,10 +1,12 @@
 import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import ThemeToggle from "../../common/ThemeToggle/ThemeToggle";
 import "../../../pages/Home/Home.css";
 
 const HomeHeader = ({ isLoggedIn, isAdmin, dashboardPath, onLogout, showHowItWorks = true }) => {
   const [scrolled, setScrolled] = useState(false);
+  const location = useLocation();
+  const isHome = location.pathname === "/";
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 20);
@@ -33,16 +35,34 @@ const HomeHeader = ({ isLoggedIn, isAdmin, dashboardPath, onLogout, showHowItWor
           {!isLoggedIn && (
             <>
               {showHowItWorks && (
-                <a href="#how-it-works" className="header__nav-link">
-                  How It Works
-                </a>
+                isHome ? (
+                  <a href="#how-it-works" className="header__nav-link">
+                    How It Works
+                  </a>
+                ) : (
+                  <Link to="/#how-it-works" className="header__nav-link">
+                    How It Works
+                  </Link>
+                )
               )}
-              <a href="#issues" className="header__nav-link">
-                Issues
-              </a>
-              <a href="#map" className="header__nav-link">
-                Map
-              </a>
+              {isHome ? (
+                <a href="#issues" className="header__nav-link">
+                  Issues
+                </a>
+              ) : (
+                <Link to="/issues" className="header__nav-link">
+                  Issues
+                </Link>
+              )}
+              {isHome ? (
+                <a href="#map" className="header__nav-link">
+                  Map
+                </a>
+              ) : (
+                <Link to="/map" className="header__nav-link">
+                  Map
+                </Link>
+              )}
               <Link to="/workflow" className="header__nav-link">
                 Workflow
               </Link>

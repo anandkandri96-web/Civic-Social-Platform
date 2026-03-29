@@ -181,7 +181,7 @@ const CreateIssue = () => {
       setError('Description must be at least 10 characters.');
       return;
     }
-    if (!Number.isFinite(severityNum) || severityNum < 1 || severityNum > 5) {
+    if (!Number.isFinite(severityNum) || severityNum < 1 || severityNum > 4) {
       setError('Please select a valid severity level.');
       return;
     }

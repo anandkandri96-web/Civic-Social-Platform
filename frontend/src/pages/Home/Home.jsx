@@ -588,13 +588,19 @@ function PriorityIssuesSection({
   );
 }
 
-function MapPreviewSection({ mapIssues = [], heatmapData = [] }) {
+function MapPreviewSection({
+  mapIssues = [],
+  heatmapData = [],
+  refreshLabel,
+  isLive,
+  refreshing,
+  onToggleRefresh,
+}) {
   const severityPalette = {
     1: '#87A83F',
     2: '#2F8398',
     3: '#F2B933',
     4: '#F27C54',
-    5: '#F27C54',
   };
   const legendItems = [...ISSUE_SEVERITY_OPTIONS]
     .sort((a, b) => b.value - a.value)
@@ -604,10 +610,10 @@ function MapPreviewSection({ mapIssues = [], heatmapData = [] }) {
     }));
   const heatmapPoints = Array.isArray(heatmapData) ? heatmapData : [];
   const activeZones = heatmapPoints.length > 0 ? heatmapPoints.length : mapIssues.length;
-  const criticalClusters = heatmapPoints.length > 0
+  const highPriorityClusters = heatmapPoints.length > 0
     ? heatmapPoints.filter((point) => Number(point?.avgSeverity || point?.maxSeverity || point?.weight || 0) >= 4).length
     : mapIssues.filter((issue) => Number(issue?.priority || issue?.severity || 0) >= 4).length;
-  const refreshLabel = activeZones > 0 ? 'Live' : 'Waiting';
+  const displayRefreshLabel = refreshLabel || (activeZones > 0 ? 'Live' : 'Waiting');
 
   return (
     <section className="map-section" id="map">
@@ -636,13 +642,19 @@ function MapPreviewSection({ mapIssues = [], heatmapData = [] }) {
                 <span className="map-stat__label">Active Zones</span>
               </div>
               <div className="map-stat">
-                <span className="map-stat__value">{criticalClusters}</span>
-                <span className="map-stat__label">Critical Clusters</span>
+                <span className="map-stat__value">{highPriorityClusters}</span>
+                <span className="map-stat__label">High Priority Clusters</span>
               </div>
-              <div className="map-stat">
-                <span className="map-stat__value">{refreshLabel}</span>
+              <button
+                type="button"
+                className={`map-stat map-stat--refresh${isLive ? ' is-live' : ''}`}
+                onClick={onToggleRefresh}
+                aria-pressed={isLive}
+              >
+                <span className="map-stat__value">{displayRefreshLabel}</span>
                 <span className="map-stat__label">Data Refresh</span>
-              </div>
+                {refreshing ? <span className="map-stat__meta">Refreshing…</span> : null}
+              </button>
             </div>
 
             <Link to="/map" className="btn btn-primary map-info__cta">
@@ -790,6 +802,10 @@ const Home = () => {
   const [heatmapData, setHeatmapData] = useState([]);
   const [mapDotIssues, setMapDotIssues] = useState([]);
   const [filter, setFilter] = useState("all");
+  const [isLive, setIsLive] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+  const heatmapInFlightRef = useRef(false);
+  const mapDotsInFlightRef = useRef(false);
 
   useEffect(() => {
     let mounted = true;
@@ -818,46 +834,53 @@ const Home = () => {
     };
   }, []);
 
-  useEffect(() => {
-    let mounted = true;
+  const fetchHeatmap = useCallback(async (mode = "auto") => {
+    if (heatmapInFlightRef.current) return;
+    heatmapInFlightRef.current = true;
+    if (mode !== "auto") setRefreshing(true);
+    try {
+      const data = await getPublicHeatmap();
+      setHeatmapData(Array.isArray(data) ? data : []);
+    } catch {
+      setHeatmapData([]);
+    } finally {
+      heatmapInFlightRef.current = false;
+      if (mode !== "auto") setRefreshing(false);
+    }
+  }, []);
 
-    const fetchHeatmap = async () => {
-      try {
-        const data = await getPublicHeatmap();
-        if (!mounted) return;
-        setHeatmapData(Array.isArray(data) ? data : []);
-      } catch {
-        if (mounted) setHeatmapData([]);
-      }
-    };
-
-    fetchHeatmap();
-    return () => {
-      mounted = false;
-    };
+  const fetchMapDots = useCallback(async (mode = "auto") => {
+    if (mapDotsInFlightRef.current) return;
+    mapDotsInFlightRef.current = true;
+    try {
+      const data = await getIssues({ limit: 200, sort: "newest" });
+      const normalized = (Array.isArray(data) ? data : [])
+        .map(normalizeIssue)
+        .filter((issue) => Boolean(issue.id));
+      setMapDotIssues(normalized);
+    } catch {
+      if (mode !== "auto") setMapDotIssues([]);
+    } finally {
+      mapDotsInFlightRef.current = false;
+    }
   }, []);
 
   useEffect(() => {
-    let mounted = true;
+    fetchHeatmap("initial");
+  }, [fetchHeatmap]);
 
-    const fetchMapDots = async () => {
-      try {
-        const data = await getIssues({ limit: 200, sort: 'newest' });
-        if (!mounted) return;
-        const normalized = (Array.isArray(data) ? data : [])
-          .map(normalizeIssue)
-          .filter((issue) => Boolean(issue.id));
-        setMapDotIssues(normalized);
-      } catch {
-        if (mounted) setMapDotIssues([]);
-      }
-    };
+  useEffect(() => {
+    if (!isLive) return;
+    const interval = setInterval(() => {
+      fetchHeatmap("auto");
+      fetchMapDots("auto");
+    }, 5000);
+    return () => clearInterval(interval);
+  }, [fetchHeatmap, fetchMapDots, isLive]);
 
-    fetchMapDots();
-    return () => {
-      mounted = false;
-    };
-  }, []);
+  useEffect(() => {
+    fetchMapDots("initial");
+  }, [fetchMapDots]);
 
   const isLoggedIn = Boolean(user);
   const handleVoteUpdate = (issueId, result) => {
@@ -886,13 +909,14 @@ const Home = () => {
         const lat = Number(issue.coordinates[1]);
         if (Number.isNaN(lng) || Number.isNaN(lat)) return null;
 
+        const severity = Math.min(4, Math.max(1, Number(issue.raw?.severity || 3)));
         return {
           id: issue.id,
           title: issue.title,
           category: issue.categoryLabel || issue.category,
           status: issue.statusLabel,
-          priority: Math.min(5, Math.max(1, Number(issue.raw?.severity || 3))),
-          severity: Math.min(5, Math.max(1, Number(issue.raw?.severity || 3))),
+          priority: severity,
+          severity,
           locationText: issue.location,
           lat,
           lng,
@@ -900,6 +924,12 @@ const Home = () => {
       })
       .filter(Boolean);
   }, [issues, mapDotIssues]);
+
+  const handleRefreshToggle = useCallback(() => {
+    setIsLive((prev) => !prev);
+    fetchHeatmap("manual");
+    fetchMapDots("manual");
+  }, [fetchHeatmap, fetchMapDots]);
 
   return (
     <div className="home-page">
@@ -913,7 +943,14 @@ const Home = () => {
       <main>
         <HeroSection isLoggedIn={isLoggedIn} isAdmin={isAdmin} enableGlobe={!isLoggedIn} />
         <HowItWorksSection />
-        <MapPreviewSection mapIssues={mapPreviewIssues} heatmapData={heatmapData} />
+        <MapPreviewSection
+          mapIssues={mapPreviewIssues}
+          heatmapData={heatmapData}
+          refreshLabel={isLive ? 'Live' : 'Paused'}
+          isLive={isLive}
+          refreshing={refreshing}
+          onToggleRefresh={handleRefreshToggle}
+        />
         <PriorityIssuesSection
           issues={issues}
           loading={issuesLoading}

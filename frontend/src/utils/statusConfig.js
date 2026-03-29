@@ -46,7 +46,6 @@ const BACKEND_STATUS_MAP = {
   "in-progress": STATUS.IN_PROGRESS,
   open: STATUS.REPORTED,
   pending: STATUS.REPORTED,
-  critical: STATUS.REPORTED,
 };
 
 export const mapBackendStatus = (status) => {

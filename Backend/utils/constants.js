@@ -11,13 +11,15 @@ const ISSUE_CATEGORIES = Object.freeze([
 ]);
 
 const CATEGORY_DEPARTMENT_MAP = Object.freeze({
-  roads: "Road Maintenance",
-  electricity: "Electricity Services",
-  garbage: "Waste Management",
-  drainage: "Drainage Management",
-  water: "Water Supply",
-  other: "General Services",
+  roads: "Municipal Roads Department",
+  electricity: "Electricity Services Department",
+  garbage: "Waste Management Department",
+  drainage: "Drainage Management Department",
+  water: "Water Supply Department",
+  other: "General Services Department",
 });
+
+const DEPARTMENT_NAMES = Object.freeze(Object.values(CATEGORY_DEPARTMENT_MAP));
 
 const STATUS_TRANSITIONS = Object.freeze({
   [ISSUE_STATUS.REPORTED]: [
@@ -46,5 +48,6 @@ module.exports = {
   ISSUE_STATUS,
   ISSUE_CATEGORIES,
   CATEGORY_DEPARTMENT_MAP,
+  DEPARTMENT_NAMES,
   STATUS_TRANSITIONS,
 };

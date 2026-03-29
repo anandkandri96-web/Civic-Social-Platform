@@ -1,11 +1,12 @@
 ﻿import { useEffect, useMemo, useState } from 'react';
-import { Link } from 'react-router-dom';
 import { getAdminUsers, getAllIssuesAdmin } from '@api/admin.api';
+import { getAnalyticsTrends } from '@api/analytics.api';
 import { getErrorMessage } from '@api/utils';
 import Skeleton from '../../components/common/Skeleton/Skeleton';
 import DashboardCardSkeleton from '../../components/common/Skeleton/DashboardCardSkeleton';
 import PageHeader from '../../components/common/PageHeader/PageHeader';
 import { getActiveLabel, getDepartmentName, getOfficerDisplayId, getWorkerDisplayId } from '../../utils/userDisplay';
+
 import './AdminDashboard.css';
 
 const SAFE_ROLE_LIMIT = 100;
@@ -31,6 +32,7 @@ const AdminDashboard = () => {
   const [issues, setIssues] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [trends, setTrends] = useState(null);
   const [officers, setOfficers] = useState([]);
   const [workers, setWorkers] = useState([]);
   const [peopleLoading, setPeopleLoading] = useState(true);
@@ -49,8 +51,14 @@ const AdminDashboard = () => {
       setError('');
 
       try {
-        const payload = await getAllIssuesAdmin({ limit: 200 });
-        if (mounted) setIssues(Array.isArray(payload?.data) ? payload.data : []);
+        const [payload, trendsData] = await Promise.all([
+          getAllIssuesAdmin({ limit: 200 }),
+          getAnalyticsTrends(),
+        ]);
+        if (mounted) {
+          setIssues(Array.isArray(payload?.data) ? payload.data : []);
+          setTrends(trendsData || {});
+        }
       } catch (err) {
         if (mounted) setError(getErrorMessage(err));
       } finally {
@@ -100,12 +108,22 @@ const AdminDashboard = () => {
   }, []);
 
   const stats = useMemo(() => {
-    const total = issues.length;
-    const pending = issues.filter((i) => ['reported', 'under_review'].includes(i.status)).length;
-    const assigned = issues.filter((i) => ['assigned_to_department', 'work_in_progress'].includes(i.status)).length;
-    const resolved = issues.filter((i) => i.status === 'resolved').length;
-    return { total, pending, assigned, resolved };
-  }, [issues]);
+    const statusMap = (trends?.statusBreakdown || []).reduce((acc, item) => {
+      acc[item._id] = Number(item.count || 0);
+      return acc;
+    }, {});
+
+    const total = Object.values(statusMap).reduce((sum, n) => sum + n, 0);
+    const pending   = (statusMap.reported || 0) + (statusMap.under_review || 0);
+    const inProgress = (statusMap.assigned_to_department || 0) + (statusMap.work_in_progress || 0)
+                     + (statusMap.volunteer_claimed || 0) + (statusMap.community_fix_in_progress || 0);
+    const resolved  = (statusMap.resolved || 0) + (statusMap.resolved_by_community || 0)
+                     + (statusMap.citizen_verified || 0) + (statusMap.closed || 0);
+    const rejected  = (statusMap.rejected || 0);
+    // kept for bar chart backward compat
+    const assigned  = (statusMap.assigned_to_department || 0) + (statusMap.work_in_progress || 0);
+    return { total, pending, inProgress, assigned, resolved, rejected };
+  }, [trends]);
 
   const recentIssues = useMemo(
     () =>
@@ -209,7 +227,8 @@ const AdminDashboard = () => {
   }, [workerRows, workerQuery, workerSort]);
 
   const getBarHeight = (value) => {
-    const max = Math.max(stats.pending, stats.assigned, stats.resolved, 1);
+    if (!value) return '0%';
+    const max = Math.max(stats.pending, stats.inProgress, stats.resolved, stats.rejected, 1);
     const ratio = value / max;
     return `${Math.max(16, Math.round(ratio * 100))}%`;
   };
@@ -256,12 +275,16 @@ const AdminDashboard = () => {
             <h2>{stats.pending}</h2>
           </article>
           <article className="admin-stat-card card">
-            <span>Assigned</span>
-            <h2>{stats.assigned}</h2>
+            <span>In Progress</span>
+            <h2>{stats.inProgress}</h2>
           </article>
           <article className="admin-stat-card card">
             <span>Resolved</span>
             <h2>{stats.resolved}</h2>
+          </article>
+          <article className="admin-stat-card card">
+            <span>Rejected</span>
+            <h2>{stats.rejected}</h2>
           </article>
         </div>
 
@@ -275,19 +298,24 @@ const AdminDashboard = () => {
                   <div className="admin-bar pending" style={{ height: getBarHeight(stats.pending) }} />
                 </div>
                 <div className="admin-bar-wrapper">
-                  <span className="admin-bar-value">{stats.assigned}</span>
-                  <div className="admin-bar assigned" style={{ height: getBarHeight(stats.assigned) }} />
+                  <span className="admin-bar-value">{stats.inProgress}</span>
+                  <div className="admin-bar assigned" style={{ height: getBarHeight(stats.inProgress) }} />
                 </div>
                 <div className="admin-bar-wrapper">
                   <span className="admin-bar-value">{stats.resolved}</span>
                   <div className="admin-bar resolved" style={{ height: getBarHeight(stats.resolved) }} />
                 </div>
+                <div className="admin-bar-wrapper">
+                  <span className="admin-bar-value">{stats.rejected}</span>
+                  <div className="admin-bar rejected" style={{ height: getBarHeight(stats.rejected) }} />
+                </div>
               </div>
               <div className="admin-chart-baseline" />
               <div className="admin-chart-labels">
                 <span>Pending</span>
-                <span>Assigned</span>
+                <span>In Progress</span>
                 <span>Resolved</span>
+                <span>Rejected</span>
               </div>
             </div>
           </section>

@@ -2,11 +2,6 @@
   "name": "civic-social-platform",
   "version": "1.0.0",
   "main": "index.js",
-  "devDependencies": {
-    "@faker-js/faker": "^8.4.1",
-    "@playwright/test": "^1.58.2",
-    "@types/node": "^25.3.5"
-  },
   "scripts": {},
   "keywords": [],
   "author": "",

@@ -10,10 +10,10 @@
 
 | # | Issue | Impact | Severity |
 |---|---|---|---|
-| 1 | Users self-assign elevated roles on registration | User becomes admin without authorization | 🔴 CRITICAL |
-| 2 | Hardcoded role checks everywhere (`isAdmin \|\|`, `role ===`) | 47+ role checks scattered across components | 🔴 CRITICAL |
-| 3 | No centralized permission system | Permission logic duplicated in multiple places | 🔴 CRITICAL |
-| 4 | Backend doesn't validate authorizations | Frontend guards only; API completely open | 🔴 CRITICAL |
+| 1 | Users self-assign elevated roles on registration | User becomes admin without authorization | 🔴 HIGH |
+| 2 | Hardcoded role checks everywhere (`isAdmin \|\|`, `role ===`) | 47+ role checks scattered across components | 🔴 HIGH |
+| 3 | No centralized permission system | Permission logic duplicated in multiple places | 🔴 HIGH |
+| 4 | Backend doesn't validate authorizations | Frontend guards only; API completely open | 🔴 HIGH |
 | 5 | No resource-level permissions | Officer can modify issues outside their department | 🟠 HIGH |
 | 6 | Audit trail missing | No record of who changed what, when | 🟠 HIGH |
 
@@ -274,7 +274,7 @@ if (!req.checkResourcePermission(issue)) {
 ✅ **Result:** Frontend has new permission infrastructure
 
 ### Week 3: Component Migration
-- Refactor 1-2 critical pages per day (Header, IssueDetails, Dashboard)
+- Refactor 1-2 HIGH pages per day (Header, IssueDetails, Dashboard)
 - Remove hardcoded `isAdmin ||` checks
 - Replace with `PermissionGate` and `can()` calls
 - **Test:** Verify UI shows/hides features correctly
@@ -446,3 +446,4 @@ Your RBAC refactoring is complete when:
 ---
 
 **🚀 Ready to implement? Start with RBAC_REFACTORING_GUIDE.md**
+

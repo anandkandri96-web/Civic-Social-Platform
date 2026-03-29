@@ -169,6 +169,12 @@
   display: grid;
   grid-template-columns: 1fr 1fr auto;
   gap: 8px;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.report-location-row input {
+  margin-bottom: 0;
 }
 
 .report-location-row button {
@@ -176,9 +182,14 @@
   border-radius: var(--radius-button);
   background: var(--bg-card);
   color: var(--text-primary);
-  padding: 12px;
+  padding: 12px 16px;
   white-space: nowrap;
   cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.85rem;
+  height: 100%;
 }
 
 .report-severity-row {
@@ -280,3 +291,4 @@
     gap: 4px;
   }
 }
+

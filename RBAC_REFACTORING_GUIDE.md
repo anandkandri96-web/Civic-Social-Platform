@@ -427,7 +427,7 @@ After implementing this refactoring:
 
 **Week 2:**
 - Deploy frontend hooks & components
-- Refactor 1-2 critical pages
+- Refactor 1-2 high-priority pages
 
 **Week 3:**
 - Refactor remaining pages

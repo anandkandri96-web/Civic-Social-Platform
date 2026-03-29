@@ -153,7 +153,7 @@ const Header = () => {
           <span className="app-header__brand-text">Social Civic Platform</span>
         </Link>
 
-        {isIssuePage && (
+        {isIssuePage && !can('admin:view_analytics') && (
           <form className="app-header__search" onSubmit={handleSearchSubmit} role="search">
             <span className="app-header__search-icon">{ICONS.search}</span>
             <input

@@ -71,14 +71,6 @@ const Analytics = () => {
     return Math.round(sum / heatmap.length);
   }, [heatmap]);
 
-  const govtPath = Number(statusMap.assigned_to_department || 0) + Number(statusMap.work_in_progress || 0) + Number(statusMap.resolved || 0);
-  const communityPath = Number(statusMap.volunteer_claimed || 0) + Number(statusMap.community_fix_in_progress || 0) + Number(statusMap.resolved_by_community || 0);
-  const verifyPath = Number(statusMap.citizen_verified || 0);
-  const maxPath = Math.max(govtPath, communityPath, verifyPath, 1);
-  const govtPathHeight = `${Math.max(16, Math.round((govtPath / maxPath) * 100))}%`;
-  const communityPathHeight = `${Math.max(16, Math.round((communityPath / maxPath) * 100))}%`;
-  const verifyHeight = `${Math.max(16, Math.round((verifyPath / maxPath) * 100))}%`;
-
   const avgResolutionTime = Number(trends?.avgResolutionTime || 0).toFixed(1);
   const resolvedCount = Number(statusMap.resolved || 0) + Number(statusMap.resolved_by_community || 0) + Number(statusMap.closed || 0);
   const resolutionRate = totalIssues > 0 ? Math.round((resolvedCount / totalIssues) * 100) : 0;
@@ -207,24 +199,6 @@ const Analytics = () => {
         </div>
 
         <div className="admin-panels">
-          <div className="panel card">
-            <h3>Resolution Path Distribution</h3>
-            <div className="chart">
-              <div className="bar-wrapper">
-                <div className="bar progress" style={{ height: govtPathHeight }} />
-                <span>Government Path</span>
-              </div>
-              <div className="bar-wrapper">
-                <div className="bar resolved" style={{ height: communityPathHeight }} />
-                <span>Community Path</span>
-              </div>
-              <div className="bar-wrapper">
-                <div className="bar pending" style={{ height: verifyHeight }} />
-                <span>Citizen Verification</span>
-              </div>
-            </div>
-          </div>
-
           <div className="panel card">
             <h3>System Quality Metrics</h3>
             <ul className="metric-list">

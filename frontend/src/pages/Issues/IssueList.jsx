@@ -18,6 +18,12 @@ const SORT_OPTIONS = [
   { value: 'most_supported', label: 'Sort by Most Supported' },
 ];
 
+const SORT_MAP = {
+  priority: 'priority',
+  newest: 'newest',
+  most_supported: '-voteCount',
+};
+
 const IssueList = () => {
   // ✅ Use permissions instead of role checks
   const { can, loading: roleLoading } = usePermission();
@@ -35,7 +41,7 @@ const IssueList = () => {
     const params = {};
     if (category) params.category = category;
     if (status) params.status = status;
-    if (sort) params.sort = sort;
+    if (sort) params.sort = SORT_MAP[sort] || sort;
     if (searchQuery) params.search = searchQuery;
 
     const fetchIssues = async () => {

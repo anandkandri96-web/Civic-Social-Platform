@@ -104,6 +104,7 @@ const Login = () => {
               value={credentials.password}
               onChange={handleChange}
               placeholder="Enter password"
+              autoComplete="current-password"
               required
             />
             <button

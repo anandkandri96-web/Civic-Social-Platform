@@ -29,7 +29,7 @@ const issueSchema = new mongoose.Schema(
     severity: {
       type: Number,
       min: 1,
-      max: 5,
+      max: 4,
       required: true,
       index: true,
     },

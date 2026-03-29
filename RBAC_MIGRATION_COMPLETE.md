@@ -42,7 +42,7 @@
 
 | File | Changes | Impact |
 |------|---------|--------|
-| `Backend/controllers/auth.controller.js` | Force all registrations to 'citizen' role | 🔒 CRITICAL FIX: Prevents role self-assignment |
+| `Backend/controllers/auth.controller.js` | Force all registrations to 'citizen' role | 🔒 HIGH-IMPACT FIX: Prevents role self-assignment |
 
 ### FRONTEND Pages (11 files - ALL UPDATED ✅)
 
@@ -331,7 +331,7 @@ if (isAdmin) { /* ... */ }
 This refactoring has successfully:
 - ✅ Eliminated all scattered role checks across frontend
 - ✅ Implemented permission-based authorization throughout backend
-- ✅ Fixed critical security vulnerability (role self-assignment)
+- ✅ Fixed high-impact security vulnerability (role self-assignment)
 - ✅ Created scalable, maintainable permission system
 - ✅ Maintained backward compatibility
 - ✅ Provided clear migration path for team

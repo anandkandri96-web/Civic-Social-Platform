@@ -138,9 +138,10 @@ function normalizeStatus(input) {
 
 function inferSeverity(priorityText) {
   const p = String(priorityText || "").trim().toLowerCase();
-  if (p === "high") return 5;
-  if (p === "medium") return 3;
-  return 2;
+  if (p === "urgent") return 4;
+  if (p === "high") return 3;
+  if (p === "medium") return 2;
+  return 1;
 }
 
 function coordinatesFor(locationText) {

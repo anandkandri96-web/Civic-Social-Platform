@@ -172,7 +172,7 @@ Use this checklist to verify all RBAC fixes are in place before deployment.
 
 ## Rollback Plan (If Issues Arise)
 
-If any critical issues are found:
+If any high-impact issues are found:
 
 ```bash
 # Step 1: Identify the issue

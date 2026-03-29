@@ -14,7 +14,6 @@
   --color-status-open: var(--color-brand);
   --color-status-progress: var(--color-highlight);
   --color-status-resolved: var(--color-primary);
-  --color-status-critical: var(--color-danger);
   --header-height: 64px;
   --banner-height: 44px;
   --section-pad: 32px;
@@ -807,10 +806,6 @@
   background: rgba(var(--color-success-rgb), 0.12);
 }
 
-.home-page .issue-card__status--critical {
-  color: var(--color-danger);
-  background: rgba(var(--color-danger-rgb), 0.12);
-}
 
 .home-page .issue-card__title-link {
   text-decoration: none;
@@ -955,12 +950,46 @@
   display: flex;
   gap: 24px;
   margin-bottom: 24px;
+  flex-wrap: wrap;
+}
+
+.home-page .map-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 120px;
+}
+
+.home-page .map-stat--refresh {
+  background: transparent;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-card);
+  padding: 10px 14px;
+  cursor: pointer;
+  text-align: left;
+  transition: border-color var(--trans-fast), box-shadow var(--trans-fast), transform var(--trans-fast);
+}
+
+.home-page .map-stat--refresh:hover {
+  border-color: var(--color-primary);
+  box-shadow: 0 6px 16px rgba(var(--color-primary-rgb), 0.18);
+  transform: translateY(-1px);
+}
+
+.home-page .map-stat--refresh.is-live .map-stat__value {
+  color: var(--color-success);
 }
 
 .home-page .map-stat__value {
   font-family: var(--font-base);
   font-size: var(--font-size-h2);
   font-weight: 700;
+  line-height: 1;
+}
+
+.home-page .map-stat__meta {
+  font-size: 0.72rem;
+  color: var(--color-text-secondary);
 }
 
 .home-page .map-canvas {
@@ -1284,8 +1313,14 @@
   }
 
   .home-page .map-stats {
-    flex-wrap: wrap;
     gap: 12px;
+  }
+}
+
+@media (max-width: 520px) {
+  .home-page .map-stats {
+    flex-direction: column;
+    align-items: flex-start;
   }
 }
 

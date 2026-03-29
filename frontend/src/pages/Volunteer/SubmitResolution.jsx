@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, useCallback } from 'react';
 import { Link, Navigate, useNavigate, useParams } from 'react-router-dom';
 import { getIssueById } from '@api/issues.api';
 import { resolveVolunteerIssue } from '@api/volunteer.api';
@@ -9,10 +9,12 @@ import Loader from '../../components/common/Loader/Loader';
 import SafeImage from '../../components/common/SafeImage/SafeImage';
 import './SubmitResolution.css';
 
+const MAX_AFTER_IMAGES = 5;
+const MIN_REPORT_LENGTH = 10;
+
 const SubmitResolution = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  // ✅ Use permissions instead of role checks
   const { can, loading: roleLoading } = usePermission();
 
   const [issue, setIssue] = useState(null);
@@ -20,54 +22,105 @@ const SubmitResolution = () => {
   const [error, setError] = useState('');
   const [reportText, setReportText] = useState('');
   const [afterFiles, setAfterFiles] = useState([]);
+  const [previewUrls, setPreviewUrls] = useState([]);
   const [submitting, setSubmitting] = useState(false);
-  const MAX_AFTER_IMAGES = 5;
 
+  // =========================
+  // FETCH ISSUE
+  // =========================
   useEffect(() => {
     let mounted = true;
+
     const load = async () => {
-      setLoading(true);
-      setError('');
       try {
+        setLoading(true);
         const data = await getIssueById(id);
-        if (!mounted) return;
-        setIssue(data);
+        if (mounted) setIssue(data);
       } catch (err) {
-        if (!mounted) return;
-        setError(getErrorMessage(err));
+        if (mounted) setError(getErrorMessage(err));
       } finally {
         if (mounted) setLoading(false);
       }
     };
 
     if (id) load();
-    return () => {
-      mounted = false;
-    };
+
+    return () => (mounted = false);
   }, [id]);
 
-  const beforeImages = useMemo(() => (Array.isArray(issue?.images) ? issue.images : []).filter(Boolean), [issue]);
+  // =========================
+  // MEMO DATA
+  // =========================
+  const beforeImages = useMemo(
+    () => (Array.isArray(issue?.images) ? issue.images.filter(Boolean) : []),
+    [issue]
+  );
+
   const canSubmit = issue?.status === 'community_fix_in_progress';
 
-  const handleSubmit = async () => {
-    const text = reportText.trim();
-    if (!text) {
-      setError('Community resolution report is required.');
-      return;
-    }
-    if (text.length < 10) {
-      setError('Report must be at least 10 characters.');
-      return;
-    }
-    if (afterFiles.length === 0) {
-      setError('Please upload at least one after-fix photo.');
-      return;
+  // =========================
+  // IMAGE HANDLER
+  // =========================
+  const handleFileChange = useCallback((e) => {
+    setError('');
+    const files = Array.from(e.target.files || []);
+
+    const imagesOnly = files.filter((f) =>
+      String(f?.type || '').startsWith('image/')
+    );
+
+    if (imagesOnly.length !== files.length) {
+      setError('Only image files are allowed.');
     }
 
-    setSubmitting(true);
-    setError('');
+    const limited = imagesOnly.slice(0, MAX_AFTER_IMAGES);
+
+    if (imagesOnly.length > MAX_AFTER_IMAGES) {
+      setError(`Max ${MAX_AFTER_IMAGES} images allowed.`);
+    }
+
+    setAfterFiles(limited);
+
+    // Create preview URLs
+    const urls = limited.map((file) => URL.createObjectURL(file));
+    setPreviewUrls(urls);
+  }, []);
+
+  // Cleanup previews
+  useEffect(() => {
+    return () => previewUrls.forEach((url) => URL.revokeObjectURL(url));
+  }, [previewUrls]);
+
+  // Remove image
+  const removeImage = (index) => {
+    const newFiles = afterFiles.filter((_, i) => i !== index);
+    const newPreviews = previewUrls.filter((_, i) => i !== index);
+
+    setAfterFiles(newFiles);
+    setPreviewUrls(newPreviews);
+  };
+
+  // =========================
+  // SUBMIT
+  // =========================
+  const handleSubmit = async () => {
+    const text = reportText.trim();
+
+    if (!text) return setError('Report is required.');
+    if (text.length < MIN_REPORT_LENGTH)
+      return setError(`Minimum ${MIN_REPORT_LENGTH} characters required.`);
+    if (afterFiles.length === 0)
+      return setError('Upload at least one after image.');
+
     try {
-      await resolveVolunteerIssue(id, { reportText: text, proofFiles: afterFiles });
+      setSubmitting(true);
+      setError('');
+
+      await resolveVolunteerIssue(id, {
+        reportText: text,
+        proofFiles: afterFiles,
+      });
+
       navigate(`/issues/${id}`, { replace: true });
     } catch (err) {
       setError(getErrorMessage(err));
@@ -76,8 +129,14 @@ const SubmitResolution = () => {
     }
   };
 
+  // =========================
+  // STATES
+  // =========================
   if (roleLoading || loading) return <Loader fullScreen />;
-  if (!can('volunteer:submit_resolution')) return <Navigate to="/dashboard" replace />;
+
+  if (!can('volunteer:submit_resolution'))
+    return <Navigate to="/dashboard" replace />;
+
   if (!issue) {
     return (
       <section className="submit-resolution page">
@@ -92,6 +151,9 @@ const SubmitResolution = () => {
     );
   }
 
+  // =========================
+  // UI
+  // =========================
   return (
     <section className="submit-resolution page">
       <div className="container">
@@ -108,68 +170,72 @@ const SubmitResolution = () => {
 
           {!canSubmit && (
             <div className="submit-resolution__notice">
-              This issue must be in <strong>community_fix_in_progress</strong> before you can submit a resolution.
+              Issue must be in <strong>community_fix_in_progress</strong>.
             </div>
           )}
 
           {error && <div className="submit-resolution__error">{error}</div>}
 
+          {/* BEFORE IMAGES */}
           <div className="submit-resolution__section">
-            <h2>Before Photos (Citizen Report)</h2>
+            <h2>Before Photos</h2>
             {beforeImages.length === 0 ? (
-              <p className="text-muted">No before photos uploaded.</p>
+              <p className="text-muted">No images</p>
             ) : (
               <div className="submit-resolution__grid">
-                {beforeImages.map((img, idx) => (
-                  <a key={`${img}-${idx}`} href={resolveMediaUrl(img)} target="_blank" rel="noreferrer">
-                    <SafeImage src={img} alt={`Before ${idx + 1}`} showSkeleton style={{ width: '100%', height: 110 }} />
+                {beforeImages.map((img, i) => (
+                  <a key={i} href={resolveMediaUrl(img)} target="_blank" rel="noreferrer">
+                    <SafeImage src={img} alt="" style={{ height: 110 }} />
                   </a>
                 ))}
               </div>
             )}
           </div>
 
+          {/* AFTER IMAGES */}
           <div className="submit-resolution__section">
             <h2>After Photos</h2>
+
             <input
               type="file"
               accept="image/*"
               multiple
               disabled={!canSubmit || submitting}
-              onChange={(e) => {
-                setError('');
-                const files = Array.from(e.target.files || []);
-                const imagesOnly = files.filter((f) => String(f?.type || '').startsWith('image/'));
-                if (imagesOnly.length !== files.length) {
-                  setError('Only image files are allowed.');
-                }
-                if (imagesOnly.length > MAX_AFTER_IMAGES) {
-                  setError(`You can upload up to ${MAX_AFTER_IMAGES} photos.`);
-                  setAfterFiles(imagesOnly.slice(0, MAX_AFTER_IMAGES));
-                  return;
-                }
-                setAfterFiles(imagesOnly);
-              }}
+              onChange={handleFileChange}
             />
-            <small className="text-muted">
-              Upload clear photos showing the completed fix.
-            </small>
+
+            <div className="submit-resolution__preview">
+              {previewUrls.map((url, i) => (
+                <div key={i} className="preview-item">
+                  <img src={url} alt="preview" />
+                  <button onClick={() => removeImage(i)}>✕</button>
+                </div>
+              ))}
+            </div>
           </div>
 
+          {/* REPORT */}
           <div className="submit-resolution__section">
-            <h2>Community Resolution Report</h2>
+            <h2>Report</h2>
+
             <textarea
               value={reportText}
               onChange={(e) => setReportText(e.target.value)}
-              placeholder="Describe what work was done, who participated, materials used, and time taken."
               disabled={!canSubmit || submitting}
               rows={6}
             />
-            <small className="text-muted">Minimum 10 characters.</small>
+
+            <div className="char-count">
+              {reportText.length}/{MIN_REPORT_LENGTH} min
+            </div>
           </div>
 
+          {/* ACTION */}
           <div className="submit-resolution__actions">
-            <button type="button" onClick={handleSubmit} disabled={!canSubmit || submitting}>
+            <button
+              onClick={handleSubmit}
+              disabled={!canSubmit || submitting}
+            >
               {submitting ? 'Submitting...' : 'Submit Resolution'}
             </button>
           </div>

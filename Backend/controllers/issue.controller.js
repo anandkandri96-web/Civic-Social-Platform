@@ -141,7 +141,7 @@ exports.createIssue = async (req, res) => {
     }
 
     const severityNum = Number(severity);
-    if (![1, 2, 3, 4, 5].includes(severityNum)) {
+    if (![1, 2, 3, 4].includes(severityNum)) {
       return apiResponse(res, 400, "Severity must be between 1 and 5");
     }
 
@@ -261,7 +261,7 @@ exports.updateIssue = async (req, res) => {
 
     if (severity !== undefined) {
       const severityNum = Number(severity);
-      if (![1, 2, 3, 4, 5].includes(severityNum)) {
+      if (![1, 2, 3, 4].includes(severityNum)) {
         return apiResponse(res, 400, "Severity must be between 1 and 5");
       }
       issue.severity = severityNum;

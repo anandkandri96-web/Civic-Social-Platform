@@ -2,7 +2,6 @@ import { useEffect, useState } from 'react';
 import {
   approveUserAdmin,
   assignUserDepartmentAdmin,
-  createDepartmentAdmin,
   deleteUserAdmin,
   getAdminUsers,
   getDepartmentsAdmin,
@@ -23,7 +22,7 @@ const UserManagement = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [working, setWorking] = useState('');
-  const [newDepartmentName, setNewDepartmentName] = useState('');
+  const [drafts, setDrafts] = useState({});
   const { showToast } = useToast();
   const { confirm } = useModal();
 
@@ -60,20 +59,50 @@ const UserManagement = () => {
     };
 
     fetchData();
-    return () => {
-      mounted = false;
-    };
+    return () => { mounted = false; };
   }, []);
 
   const patchUser = (nextUser) => {
     setUsers((prev) => prev.map((u) => (u._id === nextUser._id ? { ...u, ...nextUser } : u)));
   };
 
-  const runUserAction = async (userId, action) => {
-    setWorking(userId);
+  const setDraft = (userId, field, value) => {
+    setDrafts((prev) => ({
+      ...prev,
+      [userId]: { ...prev[userId], [field]: value },
+    }));
+  };
+
+  const getDraft = (user, field) => {
+    return drafts[user._id]?.[field] ?? (
+      field === 'role' ? user.role :
+      field === 'department' ? (user.department?._id || user.department || '') :
+      null
+    );
+  };
+
+  const hasDraft = (user) => {
+    const draft = drafts[user._id];
+    if (!draft) return false;
+    const roleChanged = draft.role !== undefined && draft.role !== user.role;
+    const deptChanged = draft.department !== undefined && draft.department !== (user.department?._id || user.department || '');
+    return roleChanged || deptChanged;
+  };
+
+  const handleSave = async (user) => {
+    if (!hasDraft(user)) return;
+    const draft = drafts[user._id];
+    setWorking(user._id);
     try {
-      const updated = await action();
-      if (updated?._id) patchUser(updated);
+      const actions = [];
+      if (draft.role !== undefined && draft.role !== user.role)
+        actions.push(updateUserRoleAdmin(user._id, draft.role));
+      if (draft.department !== undefined && draft.department !== (user.department?._id || user.department || ''))
+        actions.push(assignUserDepartmentAdmin(user._id, draft.department));
+      const results = await Promise.all(actions);
+      results.forEach((r) => { if (r?._id) patchUser(r); });
+      setDrafts((prev) => { const next = { ...prev }; delete next[user._id]; return next; });
+      showToast('User updated', { tone: 'success' });
     } catch (err) {
       showToast(getErrorMessage(err), { tone: 'error' });
     } finally {
@@ -81,15 +110,11 @@ const UserManagement = () => {
     }
   };
 
-  const handleCreateDepartment = async () => {
-    const name = newDepartmentName.trim();
-    if (!name) return;
-
-    setWorking('create-dept');
+  const runUserAction = async (userId, action) => {
+    setWorking(userId);
     try {
-      const created = await createDepartmentAdmin({ name });
-      setDepartments((prev) => [...prev, created].sort((a, b) => a.name.localeCompare(b.name)));
-      setNewDepartmentName('');
+      const updated = await action();
+      if (updated?._id) patchUser(updated);
     } catch (err) {
       showToast(getErrorMessage(err), { tone: 'error' });
     } finally {
@@ -126,17 +151,6 @@ const UserManagement = () => {
             <h1>User & Department Management</h1>
             <p>Manage roles, approval status, account status, and department assignments.</p>
           </div>
-          <div className="dept-create">
-            <input
-              type="text"
-              placeholder="New department name"
-              value={newDepartmentName}
-              onChange={(e) => setNewDepartmentName(e.target.value)}
-            />
-            <button type="button" onClick={handleCreateDepartment} disabled={working === 'create-dept'}>
-              Add Department
-            </button>
-          </div>
         </header>
 
         {error && <div className="issues-error">{error}</div>}
@@ -161,14 +175,12 @@ const UserManagement = () => {
                   <td>{user.email}</td>
                   <td>
                     <select
-                      value={user.role}
+                      value={getDraft(user, 'role')}
                       disabled={working === user._id}
-                      onChange={(e) => runUserAction(user._id, () => updateUserRoleAdmin(user._id, e.target.value))}
+                      onChange={(e) => setDraft(user._id, 'role', e.target.value)}
                     >
                       {ROLE_OPTIONS.map((role) => (
-                        <option key={role} value={role}>
-                          {role}
-                        </option>
+                        <option key={role} value={role}>{role}</option>
                       ))}
                     </select>
                   </td>
@@ -192,31 +204,35 @@ const UserManagement = () => {
                   </td>
                   <td>
                     <select
-                      value={user.department?._id || user.department || ''}
+                      value={getDraft(user, 'department')}
                       disabled={working === user._id}
-                      onChange={(e) =>
-                        runUserAction(user._id, () => assignUserDepartmentAdmin(user._id, e.target.value))
-                      }
+                      onChange={(e) => setDraft(user._id, 'department', e.target.value)}
                     >
-                      <option value="" disabled>
-                        Select department
-                      </option>
+                      <option value="" disabled>Select department</option>
                       {departments.map((dept) => (
-                        <option key={dept._id} value={dept._id}>
-                          {dept.name}
-                        </option>
+                        <option key={dept._id} value={dept._id}>{dept.name}</option>
                       ))}
                     </select>
                   </td>
                   <td>
-                    <button
-                      type="button"
-                      className="danger"
-                      disabled={working === user._id}
-                      onClick={() => handleDeleteUser(user._id)}
-                    >
-                      Delete
-                    </button>
+                    <div className="user-actions-cell">
+                      <button
+                        type="button"
+                        className="save"
+                        disabled={working === user._id || !hasDraft(user)}
+                        onClick={() => handleSave(user)}
+                      >
+                        {working === user._id ? 'Saving…' : 'Save'}
+                      </button>
+                      <button
+                        type="button"
+                        className="danger"
+                        disabled={working === user._id}
+                        onClick={() => handleDeleteUser(user._id)}
+                      >
+                        Delete
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))}
@@ -229,4 +245,3 @@ const UserManagement = () => {
 };
 
 export default UserManagement;
-

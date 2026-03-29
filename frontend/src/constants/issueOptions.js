@@ -1,12 +1,12 @@
 import { ISSUE_STATUSES, ISSUE_STATUS_LABELS } from './issueStatus';
 
 export const ISSUE_CATEGORIES = [
-  { value: 'roads', label: 'Roads', icon: 'RD' },
-  { value: 'electricity', label: 'Electricity', icon: 'EL' },
-  { value: 'garbage', label: 'Garbage', icon: 'WS' },
-  { value: 'drainage', label: 'Drainage', icon: 'DR' },
-  { value: 'water', label: 'Water', icon: 'WT' },
-  { value: 'other', label: 'Other', icon: 'OT' },
+  { value: 'roads', label: 'Roads', icon: '🛣️' },
+  { value: 'electricity', label: 'Electricity', icon: '⚡' },
+  { value: 'garbage', label: 'Garbage', icon: '🗑️' },
+  { value: 'drainage', label: 'Drainage', icon: '🌊' },
+  { value: 'water', label: 'Water', icon: '💧' },
+  { value: 'other', label: 'Other', icon: '📋' },
 ];
 
 export const ISSUE_CATEGORY_LABELS = ISSUE_CATEGORIES.reduce((acc, item) => {
@@ -23,8 +23,7 @@ export const ISSUE_SEVERITY_OPTIONS = [
   { value: 1, label: 'Low' },
   { value: 2, label: 'Medium' },
   { value: 3, label: 'High' },
-  { value: 4, label: 'Critical' },
-  { value: 5, label: 'Urgent' },
+  { value: 4, label: 'Urgent' },
 ];
 
 export const ISSUE_SEVERITY_LABELS = ISSUE_SEVERITY_OPTIONS.reduce((acc, item) => {

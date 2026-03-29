@@ -52,6 +52,7 @@ exports.createRoleUpgradeRequest = async (req, res) => {
     const motivation = String(req.body?.motivation || "").trim();
     const experience = String(req.body?.experience || "").trim();
     const availability = String(req.body?.availability || "").trim();
+    const skills = String(req.body?.skills || "").trim();
     const preferredDepartment = String(req.body?.preferredDepartment || "").trim();
 
     if (!motivation || motivation.length < 10) {
@@ -79,6 +80,7 @@ exports.createRoleUpgradeRequest = async (req, res) => {
       motivation,
       experience,
       availability,
+      skills,
       supportingLinks: parseLinks(req.body?.supportingLinks),
     };
 

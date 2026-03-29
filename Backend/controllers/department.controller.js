@@ -1,5 +1,6 @@
 const Department = require("../models/department");
 const { apiResponse } = require("../utils/apiResponse");
+const { DEPARTMENT_NAMES } = require("../utils/constants");
 
 const escapeRegex = (value) => String(value).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 
@@ -12,6 +13,13 @@ exports.createDepartment = async (req, res) => {
     }
 
     const normalizedName = String(name).trim().replace(/\s+/g, " ");
+    if (!DEPARTMENT_NAMES.includes(normalizedName)) {
+      return apiResponse(
+        res,
+        400,
+        `Department name must be one of: ${DEPARTMENT_NAMES.join(", ")}`
+      );
+    }
     const existing = await Department.findOne({
       name: { $regex: new RegExp(`^${escapeRegex(normalizedName)}$`, "i") },
     });
@@ -62,6 +70,13 @@ exports.updateDepartment = async (req, res) => {
       const trimmedName = String(name).trim().replace(/\s+/g, " ");
       if (!trimmedName) {
         return apiResponse(res, 400, "Department name cannot be empty");
+      }
+      if (!DEPARTMENT_NAMES.includes(trimmedName)) {
+        return apiResponse(
+          res,
+          400,
+          `Department name must be one of: ${DEPARTMENT_NAMES.join(", ")}`
+        );
       }
 
       const existing = await Department.findOne({

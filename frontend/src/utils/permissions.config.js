@@ -149,6 +149,7 @@ export const ROLE_PERMISSIONS = Object.freeze({
     Object.values(PERMISSIONS).filter(
       (perm) =>
         ![
+          PERMISSIONS.ISSUE_CREATE,
           PERMISSIONS.VOTE_CREATE,
           PERMISSIONS.VOTE_DELETE,
           PERMISSIONS.VOLUNTEER_ACCESS,

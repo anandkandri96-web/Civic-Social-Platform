@@ -3,7 +3,7 @@ const Task = require("../models/task");
 const User = require("../models/user");
 const Department = require("../models/department");
 const { apiResponse } = require("../utils/apiResponse");
-const { ROLES } = require("../utils/constants");
+const { ROLES, DEPARTMENT_NAMES } = require("../utils/constants");
 const { generateNextOfficerId, generateNextWorkerId } = require("../services/serialId.service");
 
 const escapeRegex = (value) => String(value).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
@@ -433,11 +433,20 @@ exports.createDepartment = async (req, res) => {
       return apiResponse(res, 400, "Department name is required");
     }
 
-    const existing = await Department.findOne({ name: String(name).trim() });
+    const trimmedName = String(name).trim();
+    if (!DEPARTMENT_NAMES.includes(trimmedName)) {
+      return apiResponse(
+        res,
+        400,
+        `Department name must be one of: ${DEPARTMENT_NAMES.join(", ")}`
+      );
+    }
+
+    const existing = await Department.findOne({ name: trimmedName });
     if (existing) return apiResponse(res, 400, "Department already exists");
 
     const data = {
-      name: String(name).trim(),
+      name: trimmedName,
       description: String(description).trim(),
       categories: Array.isArray(categories) ? categories.map((c) => String(c).toLowerCase()) : [],
     };

@@ -55,6 +55,7 @@ const RoleUpgrade = () => {
     motivation: '',
     experience: '',
     availability: '',
+    skills: '',
     supportingLinks: '',
   });
 
@@ -123,6 +124,7 @@ const RoleUpgrade = () => {
         motivation: trimmedMotivation,
         experience: form.experience.trim(),
         availability: form.availability.trim(),
+        skills: form.skills.trim(),
         supportingLinks: form.supportingLinks,
       };
       const created = await createRoleUpgradeRequest(payload);
@@ -134,6 +136,7 @@ const RoleUpgrade = () => {
         motivation: '',
         experience: '',
         availability: '',
+        skills: '',
         supportingLinks: '',
       });
     } catch (err) {
@@ -222,6 +225,22 @@ const RoleUpgrade = () => {
                       value={form.preferredDepartment}
                       onChange={handleChange}
                     />
+                  </label>
+                )}
+
+                {form.requestedRole === 'volunteer' && (
+                  <label>
+                    Skills
+                    <input
+                      type="text"
+                      name="skills"
+                      placeholder="Example: Plumbing, Electrical, Carpentry, First Aid"
+                      value={form.skills}
+                      onChange={handleChange}
+                    />
+                    <span className="role-upgrade__helper">
+                      List skills relevant to community issue resolution, separated by commas.
+                    </span>
                   </label>
                 )}
 

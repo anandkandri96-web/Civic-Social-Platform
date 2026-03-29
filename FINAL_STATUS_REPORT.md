@@ -57,9 +57,9 @@ Total: 30 files changed/created, ~2,500 lines of code
 ### Security Fixes Applied
 | Vulnerability | Fix | Impact |
 |---|---|---|
-| 🔴 Users self-assign elevated roles | Force citizen role on registration | Critical |
-| 🔴 Scattered role checks (47+) | Centralized permission system | Critical |
-| 🔴 Backend doesn't validate permissions | Permission middleware on all routes | Critical |
+| 🔴 Users self-assign elevated roles | Force citizen role on registration | High |
+| 🔴 Scattered role checks (47+) | Centralized permission system | High |
+| 🔴 Backend doesn't validate permissions | Permission middleware on all routes | High |
 | 🟠 Cross-department access possible | Resource-level permission checks | High |
 | 🟠 Implicit god-mode admin | Explicit permission mapping | High |
 | 🟡 Permission logic duplicated | Single source of truth (permissions.config.js) | Medium |
@@ -269,7 +269,7 @@ See root directory for detailed guides:
 ## 🎉 CONCLUSION
 
 This comprehensive RBAC refactoring:
-- ✅ **Eliminates critical security vulnerabilities**
+- ✅ **Eliminates high-impact security vulnerabilities**
 - ✅ **Implements production-grade authorization**
 - ✅ **Provides clear migration path** for team
 - ✅ **Maintains backward compatibility** during transition
