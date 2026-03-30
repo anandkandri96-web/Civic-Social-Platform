@@ -5,6 +5,9 @@ const { canPerform, canPerformResourceAction, canPerformAny } = require("../midd
 const { validatePagination, validateSort, validateLatitudeLongitude } = require("../middlewares/validation.middleware");
 const { uploadIssueImage } = require("../middlewares/upload.middleware");
 const { PERMISSIONS } = require("../config/permissions.config");
+const { validateRequest } = require("../middlewares/validateRequest.middleware");
+const schemas = require("../validators/joi.schemas");
+const { issueCreateRateLimit, issueCreateIdempotency } = require("../middlewares/issueCreateGuards.middleware");
 const {
   createIssue,
   updateIssue,
@@ -29,7 +32,10 @@ router.post(
   "/",
   protect,
   canPerform(PERMISSIONS.ISSUE_CREATE),
+  issueCreateRateLimit,
+  issueCreateIdempotency,
   uploadIssueImage,
+  validateRequest(schemas.issueCreate),
   createIssue
 );
 
@@ -39,6 +45,7 @@ router.patch(
   protect,
   canPerformResourceAction("ISSUE", "UPDATE", async (req) => Issue.findById(req.params.id)),
   uploadIssueImage,
+  validateRequest(schemas.issueUpdate),
   updateIssue
 );
 
@@ -48,6 +55,7 @@ router.patch(
   protect,
   canPerformAny([PERMISSIONS.ADMIN_UPDATE_ISSUE_STATUS, PERMISSIONS.OFFICER_UPDATE_ISSUE_STATUS]),
   canPerformResourceAction("ISSUE", "UPDATE_STATUS", async (req) => Issue.findById(req.params.id)),
+  validateRequest(schemas.issueStatusBody),
   updateStatus
 );
 

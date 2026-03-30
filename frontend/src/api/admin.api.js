@@ -16,8 +16,10 @@ export const getAdminUsers = async (params = {}) => {
   return getResponseData(res) || { data: [], pagination: {} };
 };
 
-export const updateUserRoleAdmin = async (userId, role) => {
-  const res = await api.patch(`/admin/users/${userId}/role`, { role });
+export const updateUserRoleAdmin = async (userId, roleOrPayload) => {
+  // Accept either a plain role string or a full payload object { role, departmentId? }
+  const payload = typeof roleOrPayload === 'object' ? roleOrPayload : { role: roleOrPayload };
+  const res = await api.patch(`/admin/users/${userId}/role`, payload);
   return getResponseData(res);
 };
 

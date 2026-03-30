@@ -40,6 +40,81 @@ const formatRole = (role) => {
   return `${value.charAt(0).toUpperCase()}${value.slice(1)}`;
 };
 
+const DetailField = ({ label, value }) => {
+  if (!value) return null;
+  return (
+    <div className="ru-detail__row">
+      <span className="ru-detail__label">{label}</span>
+      <span className="ru-detail__value">{value}</span>
+    </div>
+  );
+};
+
+const RecentRequestCard = ({ req }) => {
+  const [expanded, setExpanded] = useState(false);
+  const links = Array.isArray(req.supportingLinks)
+    ? req.supportingLinks.filter(Boolean)
+    : typeof req.supportingLinks === 'string' && req.supportingLinks.trim()
+      ? req.supportingLinks.split(/[,\n]/).map((s) => s.trim()).filter(Boolean)
+      : [];
+
+  return (
+    <div className={`role-upgrade__item role-upgrade__item--${req.status}`}>
+      <div className="ru-item__top">
+        <div>
+          <h3>{formatRole(req.requestedRole)}</h3>
+          <p className="role-upgrade__meta">
+            Submitted {new Date(req.createdAt).toLocaleDateString()}
+            {req.preferredDepartment ? ` · ${req.preferredDepartment}` : ''}
+          </p>
+        </div>
+        <div className="ru-item__right">
+          <span className="role-upgrade__status">{STATUS_LABELS[req.status] || req.status}</span>
+          <button
+            type="button"
+            className="ru-item__toggle"
+            onClick={() => setExpanded((p) => !p)}
+            aria-expanded={expanded}
+          >
+            {expanded ? '▲ Hide' : '▼ Details'}
+          </button>
+        </div>
+      </div>
+
+      {expanded && (
+        <div className="ru-detail">
+          <DetailField label="Motivation" value={req.motivation} />
+          <DetailField label="Experience" value={req.experience} />
+          <DetailField label="Availability" value={req.availability} />
+          <DetailField label="Skills" value={req.skills} />
+          {links.length > 0 && (
+            <div className="ru-detail__row">
+              <span className="ru-detail__label">Links</span>
+              <div className="ru-detail__links">
+                {links.map((link, i) => (
+                  <a key={i} href={link} target="_blank" rel="noreferrer">{link}</a>
+                ))}
+              </div>
+            </div>
+          )}
+          {req.adminNotes && (
+            <div className="ru-detail__admin-notes">
+              <span className="ru-detail__label">Admin notes</span>
+              <p>{req.adminNotes}</p>
+            </div>
+          )}
+          {req.reviewedAt && (
+            <DetailField
+              label="Reviewed"
+              value={new Date(req.reviewedAt).toLocaleString()}
+            />
+          )}
+        </div>
+      )}
+    </div>
+  );
+};
+
 const RoleUpgrade = () => {
   const { user } = useAuth();
   const { can } = usePermission();
@@ -278,11 +353,11 @@ const RoleUpgrade = () => {
                 </label>
 
                 <label>
-                  Supporting links (URLs, optional)
+                  Supporting links (optional)
                   <input
                     type="text"
                     name="supportingLinks"
-                    placeholder="Paste URLs separated by commas or new lines"
+                    placeholder="Paste URLs separated by commas (optional)"
                     value={form.supportingLinks}
                     onChange={handleChange}
                   />
@@ -292,7 +367,7 @@ const RoleUpgrade = () => {
                 </label>
 
                 <div className="role-upgrade__actions">
-                  <Button type="submit" loading={submitting} disabled={submitting}>
+                  <Button type="submit" loading={submitting} disabled={submitting} variant="sunny-yellow">
                     Submit request
                   </Button>
                 </div>
@@ -301,28 +376,13 @@ const RoleUpgrade = () => {
           </article>
 
           <article className="role-upgrade__card card">
-            <h2>Your requests</h2>
+            <h2>Recent requests</h2>
             {requests.length === 0 ? (
               <div className="role-upgrade__empty">No role upgrade requests yet.</div>
             ) : (
               <div className="role-upgrade__list">
                 {requests.map((req) => (
-                  <div key={req._id} className={`role-upgrade__item role-upgrade__item--${req.status}`}>
-                    <div>
-                      <h3>{formatRole(req.requestedRole)}</h3>
-                      <p className="role-upgrade__meta">
-                        Submitted {new Date(req.createdAt).toLocaleDateString()} •
-                        {STATUS_LABELS[req.status] || req.status}
-                      </p>
-                      {req.preferredDepartment ? (
-                        <p className="role-upgrade__meta">Preferred department: {req.preferredDepartment}</p>
-                      ) : null}
-                      {req.adminNotes ? (
-                        <p className="role-upgrade__notes">Admin notes: {req.adminNotes}</p>
-                      ) : null}
-                    </div>
-                    <span className="role-upgrade__status">{STATUS_LABELS[req.status] || req.status}</span>
-                  </div>
+                  <RecentRequestCard key={req._id} req={req} />
                 ))}
               </div>
             )}

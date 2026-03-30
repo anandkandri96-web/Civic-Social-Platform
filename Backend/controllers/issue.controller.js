@@ -5,20 +5,24 @@ const Vote = require("../models/vote");
 const User = require("../models/user");
 const Comment = require("../models/comment");
 const Notification = require("../models/notification");
-const ImageAsset = require("../models/imageAsset");
-const AuditLog = require("../models/auditLog");
+const Resolution = require("../models/resolution");
+const IdempotencyRecord = require("../models/idempotencyRecord");
 const { apiResponse } = require("../utils/apiResponse");
 const { ISSUE_CATEGORIES, ISSUE_STATUS, ROLES } = require("../utils/constants");
 const { getOrCreateDepartmentByCategory, normalizeCategory } = require("../services/routing.service");
 const { recomputeIssuePriority } = require("../services/priority.service");
 const { createNotificationsBulk, createNotification, notifyCitizenVerificationRequest } = require("../services/notification.service");
-const { normalizeMulterFiles, persistUploadedFiles } = require("../services/imageAsset.service");
-const { canTransition } = require("../utils/statusFlow");
+const { normalizeMulterFiles, persistUploadedFiles, deleteCloudinaryAssets } = require("../services/imageAsset.service");
+const { assertIssueStatusChange, HANDLING_MODE } = require("../config/issueStatusMachine");
+const { normalizeImageArray, collectCloudinaryIdsFromImages } = require("../utils/imageNormalize");
+const appConfig = require("../config/appConfig");
+const logger = require("../utils/logger");
+const { logAudit } = require("../services/audit.service");
 
 const TITLE_MAX = 120;
 const DESC_MAX = 2000;
 const VALID_STATUSES = new Set(Object.values(ISSUE_STATUS));
-const CITIZEN_EDITABLE_STATUSES = new Set([ISSUE_STATUS.REPORTED, ISSUE_STATUS.UNDER_REVIEW]);
+const CITIZEN_CORE_EDITABLE_STATUSES = new Set([ISSUE_STATUS.REPORTED]);
 const TITLE_RE = /[a-zA-Z]/;
 
 const escapeRegex = (value) => String(value).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
@@ -37,17 +41,6 @@ function buildIssueSearchFilter(raw) {
   };
 }
 
-function extractImageAssetId(url) {
-  if (!url) return null;
-  const s = String(url);
-  const marker = "/api/images/";
-  const idx = s.indexOf(marker);
-  if (idx === -1) return null;
-  const tail = s.slice(idx + marker.length);
-  const id = tail.split(/[?#/]/)[0];
-  return id || null;
-}
-
 function parseCoords(lat, lng) {
   const latitude = Number(lat);
   const longitude = Number(lng);
@@ -60,7 +53,7 @@ function parseCoords(lat, lng) {
 
 function normalizeImageInput(rawImages) {
   if (Array.isArray(rawImages)) {
-    return rawImages.filter((img) => typeof img === "string" && img.trim()).map((img) => img.trim());
+    return normalizeImageArray(rawImages);
   }
 
   if (typeof rawImages !== "string") return [];
@@ -71,15 +64,17 @@ function normalizeImageInput(rawImages) {
     try {
       const parsed = JSON.parse(trimmed);
       if (Array.isArray(parsed)) {
-        return parsed.filter((img) => typeof img === "string" && img.trim()).map((img) => img.trim());
+        return normalizeImageArray(parsed);
       }
     } catch (_) {}
   }
 
-  return trimmed
-    .split(",")
-    .map((img) => img.trim())
-    .filter(Boolean);
+  return normalizeImageArray(
+    trimmed
+      .split(",")
+      .map((img) => img.trim())
+      .filter(Boolean)
+  );
 }
 
 function appendStatusHistory(issue, fromStatus, toStatus, userId, note = "") {
@@ -94,19 +89,13 @@ function appendStatusHistory(issue, fromStatus, toStatus, userId, note = "") {
   });
 }
 
-async function createAuditLog(issueId, userId, action, fromStatus, toStatus, detail = "") {
-  try {
-    await AuditLog.create({
-      issue: issueId,
-      user: userId,
-      action,
-      fromStatus,
-      targetStatus: toStatus,
-      detail,
-    });
-  } catch (e) {
-    console.error("Audit log error:", e);
-  }
+function auditCtx(req) {
+  return {
+    ip: req.ip || req.headers["x-forwarded-for"] || "",
+    userAgent: String(req.headers["user-agent"] || "").slice(0, 512),
+    requestPath: req.originalUrl || "",
+    requestMethod: req.method || "",
+  };
 }
 
 exports.createIssue = async (req, res) => {
@@ -156,10 +145,12 @@ exports.createIssue = async (req, res) => {
 
     const safeImages = normalizeImageInput(images);
     const uploadedFiles = normalizeMulterFiles(req, ["image", "images"]);
+    let mergedImages = [...safeImages];
     if (uploadedFiles.length > 0) {
-      const uploadedUrls = await persistUploadedFiles(req, uploadedFiles, req.user?._id || null);
-      safeImages.unshift(...uploadedUrls);
+      const uploadedItems = await persistUploadedFiles(req, uploadedFiles, req.user?._id || null);
+      mergedImages = [...uploadedItems, ...mergedImages];
     }
+    mergedImages = normalizeImageArray(mergedImages).slice(0, 10);
 
     const location = { type: "Point", coordinates: [coords.longitude, coords.latitude] };
 
@@ -185,12 +176,13 @@ exports.createIssue = async (req, res) => {
       description: safeDesc,
       category: normalizedCategory,
       severity: severityNum,
-      images: safeImages,
+      images: mergedImages,
       location,
       locationText: String(locationText).trim().slice(0, 200),
       reportedBy: req.user._id,
       assignedDepartment: department._id,
       status: ISSUE_STATUS.REPORTED,
+      handlingMode: HANDLING_MODE.UNASSIGNED,
       statusHistory: [
         {
           from: "new",
@@ -204,6 +196,24 @@ exports.createIssue = async (req, res) => {
 
     await recomputeIssuePriority(issue);
     await issue.save();
+
+    if (req.idempotencyKey) {
+      try {
+        await IdempotencyRecord.create({ user: req.user._id, key: req.idempotencyKey, issue: issue._id });
+      } catch (e) {
+        if (e.code !== 11000) logger.warn("Idempotency record failed", { message: e.message });
+      }
+    }
+
+    logAudit({
+      issue: issue._id,
+      user: req.user._id,
+      action: "issue.create",
+      resourceType: "issue",
+      resourceId: issue._id,
+      detail: "Issue created",
+      ...auditCtx(req),
+    });
 
     // Notify admins/officers about new issue intake.
     const reviewers = await User.find({ role: { $in: [ROLES.ADMIN, ROLES.OFFICER] }, isActive: true })
@@ -220,7 +230,8 @@ exports.createIssue = async (req, res) => {
 
     return apiResponse(res, 201, "Issue created successfully", issue);
   } catch (error) {
-    console.error("CreateIssue Error:", error);
+    const logger = require("../utils/logger");
+    logger.error("CreateIssue Error:", error);
     return apiResponse(res, 500, "Failed to create issue");
   }
 };
@@ -230,15 +241,24 @@ exports.updateIssue = async (req, res) => {
     const issue = await Issue.findById(req.params.id);
     if (!issue) return apiResponse(res, 404, "Issue not found");
 
-    if (String(issue.reportedBy) !== String(req.user._id)) {
+    const isAdmin = req.user.role === ROLES.ADMIN;
+    const isReporter = String(issue.reportedBy) === String(req.user._id);
+    if (!isReporter && !isAdmin) {
       return apiResponse(res, 403, "You can only update your own issues");
     }
 
-    if (!CITIZEN_EDITABLE_STATUSES.has(issue.status)) {
-      return apiResponse(res, 400, "Issue can only be edited before assignment");
-    }
-
     const { title, description, category, severity, lat, lng, locationText, images } = req.body;
+
+    const coreLocked = !CITIZEN_CORE_EDITABLE_STATUSES.has(issue.status);
+    const attemptsCoreChange =
+      category !== undefined || severity !== undefined || lat !== undefined || lng !== undefined;
+    if (!isAdmin && coreLocked && attemptsCoreChange) {
+      return apiResponse(
+        res,
+        403,
+        "Category, location, and severity can no longer be changed because this issue is already being triaged or handled. Add a comment instead if you need to provide more context."
+      );
+    }
 
     if (title !== undefined) {
       const safeTitle = String(title).trim();
@@ -295,13 +315,13 @@ exports.updateIssue = async (req, res) => {
     }
 
     if (images !== undefined) {
-      issue.images = normalizeImageInput(images);
+      issue.images = normalizeImageArray(normalizeImageInput(images));
     }
 
     const uploadedFiles = normalizeMulterFiles(req, ["image", "images"]);
     if (uploadedFiles.length > 0) {
-      const uploadedUrls = await persistUploadedFiles(req, uploadedFiles, req.user?._id || null);
-      issue.images = [...uploadedUrls, ...(issue.images || [])];
+      const uploadedItems = await persistUploadedFiles(req, uploadedFiles, req.user?._id || null);
+      issue.images = normalizeImageArray([...(uploadedItems || []), ...(issue.images || [])]).slice(0, 10);
     }
 
     if (categoryChanged || locationChanged) {
@@ -314,7 +334,8 @@ exports.updateIssue = async (req, res) => {
 
     return apiResponse(res, 200, "Issue updated", issue);
   } catch (error) {
-    console.error("UpdateIssue Error:", error);
+    const logger = require("../utils/logger");
+    logger.error("UpdateIssue Error:", error);
     return apiResponse(res, 500, "Failed to update issue");
   }
 };
@@ -403,7 +424,12 @@ exports.getIssues = async (req, res) => {
       const map = new Map();
       for (const t of tasks) {
         const key = String(t.issue);
-        const imgs = Array.isArray(t.progressImages) ? t.progressImages.filter(Boolean).slice(0, 10) : [];
+        const imgs = Array.isArray(t.progressImages)
+          ? t.progressImages
+              .map((p) => (typeof p === "string" ? p : p?.url))
+              .filter(Boolean)
+              .slice(0, 10)
+          : [];
         if (!map.has(key)) map.set(key, imgs);
       }
 
@@ -420,7 +446,8 @@ exports.getIssues = async (req, res) => {
       pages: Math.ceil(total / limitNum),
     });
   } catch (error) {
-    console.error("GetIssues Error:", error);
+    const logger = require("../utils/logger");
+    logger.error("GetIssues Error:", error);
     return apiResponse(res, 500, "Failed to fetch issues");
   }
 };
@@ -451,7 +478,8 @@ exports.getNearbyIssues = async (req, res) => {
 
     return apiResponse(res, 200, "Nearby issues retrieved", issues);
   } catch (error) {
-    console.error("Nearby issues error:", error);
+    const logger = require("../utils/logger");
+    logger.error("Nearby issues error:", error);
     return apiResponse(res, 500, "Failed to fetch nearby issues");
   }
 };
@@ -466,11 +494,39 @@ exports.getIssue = async (req, res) => {
 
     if (!issue) return apiResponse(res, 404, "Issue not found");
 
+    // Populate images with _id and url for each image asset
+    let images = [];
+    if (Array.isArray(issue.images) && issue.images.length > 0) {
+      const ids = issue.images
+        .map(img => (img && typeof img === 'object' && img._id ? img._id : null))
+        .filter(Boolean);
+      if (ids.length > 0) {
+        const assets = await require("../models/imageAsset").find({ _id: { $in: ids } }).select('_id url cloudinaryPublicId').lean();
+        const assetMap = new Map(assets.map(a => [String(a._id), a]));
+        images = issue.images.map(img => {
+          if (img && typeof img === 'object' && img._id && assetMap.has(String(img._id))) {
+            const asset = assetMap.get(String(img._id));
+            return { _id: asset._id, url: asset.url, cloudinaryId: asset.cloudinaryPublicId };
+          }
+          if (typeof img === 'string') return { url: img };
+          return img;
+        });
+      } else {
+        images = issue.images.map(img => (typeof img === 'string' ? { url: img } : img));
+      }
+    }
+
     const task = await Task.findOne({ issue: issue._id }).select("status progressImages completionReport completedAt").lean();
+
+    const mapImg = (p) => (typeof p === "string" ? p : p?.url);
+    const workerProgressImages = Array.isArray(task?.progressImages)
+      ? task.progressImages.map(mapImg).filter(Boolean)
+      : [];
 
     let result = {
       ...issue.toObject(),
-      workerProgressImages: Array.isArray(task?.progressImages) ? task.progressImages.filter(Boolean) : [],
+      images,
+      workerProgressImages,
       workerTask: task || null,
     };
     if (req.user) {
@@ -480,7 +536,8 @@ exports.getIssue = async (req, res) => {
 
     return apiResponse(res, 200, "Issue retrieved successfully", result);
   } catch (error) {
-    console.error("GetIssue Error:", error);
+    const logger = require("../utils/logger");
+    logger.error("GetIssue Error:", error);
     return apiResponse(res, 500, "Failed to fetch issue");
   }
 };
@@ -500,12 +557,6 @@ exports.updateStatus = async (req, res) => {
     const issue = await Issue.findById(req.params.id);
     if (!issue) return apiResponse(res, 404, "Issue not found");
 
-    // Citizen cannot change status from this endpoint
-    if (req.user.role === ROLES.CITIZEN) {
-      return apiResponse(res, 403, "Citizens are not allowed to change issue status");
-    }
-
-    // Officer restricted to own department issues
     if (req.user.role === ROLES.OFFICER) {
       if (!req.user.department) {
         return apiResponse(res, 403, "Officer must belong to a department");
@@ -515,45 +566,40 @@ exports.updateStatus = async (req, res) => {
       }
     }
 
-    // Volunteer restrictions: community flow only
-    if (req.user.role === ROLES.VOLUNTEER) {
-      const volunteerAllowed = new Set([
-        ISSUE_STATUS.VOLUNTEER_CLAIMED,
-        ISSUE_STATUS.COMMUNITY_FIX_IN_PROGRESS,
-        ISSUE_STATUS.RESOLVED_BY_COMMUNITY,
-        ISSUE_STATUS.CITIZEN_VERIFIED,
-        ISSUE_STATUS.CLOSED,
-      ]);
-      if (!volunteerAllowed.has(nextStatus)) {
-        return apiResponse(res, 403, "Volunteer can only update community-flow statuses");
-      }
-      if (String(issue.volunteer) !== String(req.user._id)) {
-        return apiResponse(res, 403, "Volunteer can only update their claimed issue");
-      }
+    const check = assertIssueStatusChange({ issue, nextStatus, user: req.user, context: {} });
+    if (!check.ok) {
+      return apiResponse(res, check.statusCode, check.message);
     }
 
-    // Validate transition according to workflow graph (same for all roles)
-    if (!canTransition(issue.status, nextStatus)) {
-      return apiResponse(res, 400, `Invalid transition from ${issue.status} to ${nextStatus}`);
-    }
-
-    appendStatusHistory(issue, issue.status, nextStatus, req.user._id, 'Status updated');
-    await createAuditLog(issue._id, req.user._id, 'status_update', issue.status, nextStatus, 'Status updated through updateStatus endpoint');
+    appendStatusHistory(issue, issue.status, nextStatus, req.user._id, "Status updated");
+    logAudit({
+      issue: issue._id,
+      user: req.user._id,
+      action: "issue.status_update",
+      fromStatus: issue.status,
+      targetStatus: nextStatus,
+      detail: "Status updated through updateStatus endpoint",
+      ...auditCtx(req),
+    });
 
     issue.status = nextStatus;
 
     if ([ISSUE_STATUS.RESOLVED, ISSUE_STATUS.RESOLVED_BY_COMMUNITY].includes(nextStatus)) {
       issue.resolvedAt = new Date();
+      const deadline = new Date(Date.now() + appConfig.citizenVerificationDays * appConfig.dayMs);
+      issue.verificationDeadline = deadline;
     }
 
     if (nextStatus === ISSUE_STATUS.CLOSED) {
       issue.closedAt = new Date();
     }
 
+    await recomputeIssuePriority(issue);
     await issue.save();
     return apiResponse(res, 200, "Issue status updated", issue);
   } catch (error) {
-    console.error("UpdateStatus Error:", error);
+    const logger = require("../utils/logger");
+    logger.error("UpdateStatus Error:", error);
     return apiResponse(res, 500, "Failed to update issue status");
   }
 };
@@ -571,14 +617,29 @@ exports.verifyIssueResolution = async (req, res) => {
       return apiResponse(res, 400, "Issue cannot be verified in current status");
     }
 
-    if (!canTransition(issue.status, ISSUE_STATUS.CITIZEN_VERIFIED)) {
-      return apiResponse(res, 400, `Invalid transition from ${issue.status} to ${ISSUE_STATUS.CITIZEN_VERIFIED}`);
+    const vcheck = assertIssueStatusChange({
+      issue,
+      nextStatus: ISSUE_STATUS.CITIZEN_VERIFIED,
+      user: req.user,
+      context: { isReporter: String(issue.reportedBy) === String(req.user._id) },
+    });
+    if (!vcheck.ok) {
+      return apiResponse(res, vcheck.statusCode, vcheck.message);
     }
 
-    appendStatusHistory(issue, issue.status, ISSUE_STATUS.CITIZEN_VERIFIED, req.user._id, 'Verified by citizen');
-    await createAuditLog(issue._id, req.user._id, 'verify_resolution', issue.status, ISSUE_STATUS.CITIZEN_VERIFIED, 'Citizen resolution verification');
+    appendStatusHistory(issue, issue.status, ISSUE_STATUS.CITIZEN_VERIFIED, req.user._id, "Verified by citizen");
+    logAudit({
+      issue: issue._id,
+      user: req.user._id,
+      action: "issue.verify_resolution",
+      fromStatus: issue.status,
+      targetStatus: ISSUE_STATUS.CITIZEN_VERIFIED,
+      detail: "Citizen resolution verification",
+      ...auditCtx(req),
+    });
     issue.status = ISSUE_STATUS.CITIZEN_VERIFIED;
     issue.verifiedByCitizen = true;
+    issue.verificationDeadline = null;
     await issue.save();
 
     if (issue.volunteer) {
@@ -601,7 +662,8 @@ exports.verifyIssueResolution = async (req, res) => {
 
     return apiResponse(res, 200, "Issue verified by citizen", issue);
   } catch (error) {
-    console.error("Verify issue error:", error);
+    const logger = require("../utils/logger");
+    logger.error("Verify issue error:", error);
     return apiResponse(res, 500, "Failed to verify issue");
   }
 };
@@ -615,19 +677,29 @@ exports.rejectIssue = async (req, res) => {
       return apiResponse(res, 400, "Issue can only be rejected while reported or under review");
     }
 
-    if (!canTransition(issue.status, ISSUE_STATUS.REJECTED)) {
-      return apiResponse(res, 400, `Invalid transition from ${issue.status} to ${ISSUE_STATUS.REJECTED}`);
+    const rj = assertIssueStatusChange({ issue, nextStatus: ISSUE_STATUS.REJECTED, user: req.user, context: {} });
+    if (!rj.ok) {
+      return apiResponse(res, rj.statusCode, rj.message);
     }
 
-    appendStatusHistory(issue, issue.status, ISSUE_STATUS.REJECTED, req.user._id, 'Issue rejected by officer/admin');
-    await createAuditLog(issue._id, req.user._id, 'reject_issue', issue.status, ISSUE_STATUS.REJECTED, 'Issue rejected');
+    appendStatusHistory(issue, issue.status, ISSUE_STATUS.REJECTED, req.user._id, "Issue rejected by officer/admin");
+    logAudit({
+      issue: issue._id,
+      user: req.user._id,
+      action: "issue.reject",
+      fromStatus: issue.status,
+      targetStatus: ISSUE_STATUS.REJECTED,
+      detail: "Issue rejected",
+      ...auditCtx(req),
+    });
 
     issue.status = ISSUE_STATUS.REJECTED;
     await issue.save();
 
     return apiResponse(res, 200, 'Issue rejected', issue);
   } catch (error) {
-    console.error('Reject issue error:', error);
+    const logger = require("../utils/logger");
+    logger.error('Reject issue error:', error);
     return apiResponse(res, 500, 'Failed to reject issue');
   }
 };
@@ -641,19 +713,29 @@ exports.closeIssue = async (req, res) => {
       return apiResponse(res, 400, "Issue must be in verify-ready state before closing");
     }
 
-    if (!canTransition(issue.status, ISSUE_STATUS.CLOSED)) {
-      return apiResponse(res, 400, `Invalid transition from ${issue.status} to ${ISSUE_STATUS.CLOSED}`);
+    const cl = assertIssueStatusChange({ issue, nextStatus: ISSUE_STATUS.CLOSED, user: req.user, context: {} });
+    if (!cl.ok) {
+      return apiResponse(res, cl.statusCode, cl.message);
     }
 
-    appendStatusHistory(issue, issue.status, ISSUE_STATUS.CLOSED, req.user._id, 'Issue closed');
-    await createAuditLog(issue._id, req.user._id, 'close_issue', issue.status, ISSUE_STATUS.CLOSED, 'Issue closed by user');
+    appendStatusHistory(issue, issue.status, ISSUE_STATUS.CLOSED, req.user._id, "Issue closed");
+    logAudit({
+      issue: issue._id,
+      user: req.user._id,
+      action: "issue.close",
+      fromStatus: issue.status,
+      targetStatus: ISSUE_STATUS.CLOSED,
+      detail: "Issue closed",
+      ...auditCtx(req),
+    });
     issue.status = ISSUE_STATUS.CLOSED;
     issue.closedAt = new Date();
     await issue.save();
 
     return apiResponse(res, 200, "Issue closed", issue);
   } catch (error) {
-    console.error("Close issue error:", error);
+    const logger = require("../utils/logger");
+    logger.error("Close issue error:", error);
     return apiResponse(res, 500, "Failed to close issue");
   }
 };
@@ -671,22 +753,85 @@ exports.reopenIssue = async (req, res) => {
       return apiResponse(res, 400, "Issue can only be reopened from closed status");
     }
 
-    if (!canTransition(issue.status, ISSUE_STATUS.REPORTED)) {
-      return apiResponse(res, 400, `Invalid transition from ${issue.status} to ${ISSUE_STATUS.REPORTED}`);
+    const op = assertIssueStatusChange({
+      issue,
+      nextStatus: ISSUE_STATUS.REPORTED,
+      user: req.user,
+      context: { isReporter: String(issue.reportedBy) === String(req.user._id) },
+    });
+    if (!op.ok) {
+      return apiResponse(res, op.statusCode, op.message);
     }
 
-    appendStatusHistory(issue, issue.status, ISSUE_STATUS.REPORTED, req.user._id, 'Issue reopened');
-    await createAuditLog(issue._id, req.user._id, 'reopen_issue', issue.status, ISSUE_STATUS.REPORTED, 'Issue reopened by user');
+    appendStatusHistory(issue, issue.status, ISSUE_STATUS.REPORTED, req.user._id, "Issue reopened");
+    logAudit({
+      issue: issue._id,
+      user: req.user._id,
+      action: "issue.reopen",
+      fromStatus: issue.status,
+      targetStatus: ISSUE_STATUS.REPORTED,
+      detail: "Issue reopened",
+      ...auditCtx(req),
+    });
     issue.status = ISSUE_STATUS.REPORTED;
     issue.verifiedByCitizen = false;
     issue.resolvedAt = null;
     issue.closedAt = null;
+    issue.verificationDeadline = null;
+    issue.handlingMode = HANDLING_MODE.UNASSIGNED;
     await issue.save();
 
     return apiResponse(res, 200, "Issue reopened", issue);
   } catch (error) {
-    console.error("Reopen issue error:", error);
+    const logger = require("../utils/logger");
+    logger.error("Reopen issue error:", error);
     return apiResponse(res, 500, "Failed to reopen issue");
+  }
+};
+
+/** Admin: force-close when verification is impossible (e.g. reporter account gone). */
+exports.forceCloseIssue = async (req, res) => {
+  try {
+    if (req.user.role !== ROLES.ADMIN) {
+      return apiResponse(res, 403, "Admin only");
+    }
+    const issue = await Issue.findById(req.params.id);
+    if (!issue) return apiResponse(res, 404, "Issue not found");
+
+    if (![ISSUE_STATUS.RESOLVED, ISSUE_STATUS.RESOLVED_BY_COMMUNITY].includes(issue.status)) {
+      return apiResponse(res, 400, "Force close applies only to resolved issues awaiting verification");
+    }
+
+    const check = assertIssueStatusChange({
+      issue,
+      nextStatus: ISSUE_STATUS.CLOSED,
+      user: req.user,
+      context: {},
+    });
+    if (!check.ok) {
+      return apiResponse(res, check.statusCode, check.message);
+    }
+
+    appendStatusHistory(issue, issue.status, ISSUE_STATUS.CLOSED, req.user._id, "Force closed by admin");
+    issue.status = ISSUE_STATUS.CLOSED;
+    issue.closedAt = new Date();
+    await issue.save();
+
+    logAudit({
+      issue: issue._id,
+      user: req.user._id,
+      action: "issue.force_close",
+      resourceType: "issue",
+      resourceId: issue._id,
+      detail: "Admin force close",
+      ...auditCtx(req),
+    });
+
+    return apiResponse(res, 200, "Issue force-closed", issue);
+  } catch (error) {
+    const logger = require("../utils/logger");
+    logger.error("Force close error:", error);
+    return apiResponse(res, 500, "Failed to force-close issue");
   }
 };
 
@@ -711,24 +856,25 @@ exports.deleteIssue = async (req, res) => {
 
     const issueId = issue._id;
 
-    // Collect image assets for best-effort cleanup so we don't leave broken media around.
-    const [tasks, comments] = await Promise.all([
+    const [tasks, comments, resolutions] = await Promise.all([
       Task.find({ issue: issueId }).select("progressImages").lean(),
       Comment.find({ issue: issueId }).select("images").lean(),
+      Resolution.find({ issue: issueId }).select("proofImages").lean(),
     ]);
 
-    const candidateUrls = [
-      ...(Array.isArray(issue.images) ? issue.images : []),
-      ...(Array.isArray(issue.communityProof) ? issue.communityProof : []),
-      ...tasks.flatMap((t) => (Array.isArray(t?.progressImages) ? t.progressImages : [])),
-      ...comments.flatMap((c) => (Array.isArray(c?.images) ? c.images : [])),
-    ]
-      .map((u) => String(u || "").trim())
-      .filter(Boolean);
+    const cloudinaryIds = [
+      ...collectCloudinaryIdsFromImages(issue.images),
+      ...collectCloudinaryIdsFromImages(issue.communityProof),
+      ...tasks.flatMap((t) => collectCloudinaryIdsFromImages(t.progressImages)),
+      ...comments.flatMap((c) => collectCloudinaryIdsFromImages(c.images)),
+      ...resolutions.flatMap((r) => collectCloudinaryIdsFromImages(r.proofImages)),
+    ];
 
-    const assetIds = Array.from(
-      new Set(candidateUrls.map(extractImageAssetId).filter((id) => id && mongoose.Types.ObjectId.isValid(id)))
-    );
+    try {
+      await deleteCloudinaryAssets(cloudinaryIds);
+    } catch (e) {
+      logger.warn("Cloudinary cleanup on issue delete", { message: e.message });
+    }
 
     await Promise.all([
       Issue.deleteOne({ _id: issueId }),
@@ -736,15 +882,23 @@ exports.deleteIssue = async (req, res) => {
       Comment.deleteMany({ issue: issueId }),
       Task.deleteMany({ issue: issueId }),
       Notification.deleteMany({ issue: issueId }),
+      Resolution.deleteMany({ issue: issueId }),
     ]);
 
-    if (assetIds.length > 0) {
-      await ImageAsset.deleteMany({ _id: { $in: assetIds } });
-    }
+    logAudit({
+      issue: issueId,
+      user: req.user._id,
+      action: "issue.delete",
+      resourceType: "issue",
+      resourceId: issueId,
+      detail: "Issue deleted",
+      ...auditCtx(req),
+    });
 
     return apiResponse(res, 200, "Issue deleted successfully");
   } catch (error) {
-    console.error("DeleteIssue Error:", error);
+    const logger = require("../utils/logger");
+    logger.error("DeleteIssue Error:", error);
     return apiResponse(res, 500, "Failed to delete issue");
   }
 };

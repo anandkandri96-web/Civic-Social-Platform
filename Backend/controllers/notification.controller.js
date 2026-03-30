@@ -27,10 +27,12 @@ exports.getNotifications = async (req, res) => {
       total,
       page: pageNum,
       limit: limitNum,
+      pages: Math.ceil(total / limitNum),
       unreadCount,
     });
   } catch (error) {
-    console.error("Get notifications error:", error);
+    const logger = require("../utils/logger");
+    logger.error("Get notifications error:", error);
     return apiResponse(res, 500, "Failed to fetch notifications");
   }
 };
@@ -49,7 +51,8 @@ exports.markNotificationRead = async (req, res) => {
 
     return apiResponse(res, 200, "Notification marked as read", notification);
   } catch (error) {
-    console.error("Mark notification read error:", error);
+    const logger = require("../utils/logger");
+    logger.error("Mark notification read error:", error);
     return apiResponse(res, 500, "Failed to update notification");
   }
 };
@@ -65,7 +68,8 @@ exports.markAllNotificationsRead = async (req, res) => {
       modifiedCount: result.modifiedCount || 0,
     });
   } catch (error) {
-    console.error("Mark all notifications read error:", error);
+    const logger = require("../utils/logger");
+    logger.error("Mark all notifications read error:", error);
     return apiResponse(res, 500, "Failed to update notifications");
   }
 };

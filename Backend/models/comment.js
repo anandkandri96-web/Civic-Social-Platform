@@ -20,12 +20,19 @@ const commentSchema = new mongoose.Schema(
       type: String,
       required: true,
       trim: true,
+      minlength: 2,
       maxlength: 1000,
     },
 
     images: {
-      type: [String],
+      type: [mongoose.Schema.Types.Mixed],
       default: [],
+      validate: {
+        validator(arr) {
+          return !Array.isArray(arr) || arr.length <= 3;
+        },
+        message: "At most 3 images allowed",
+      },
     },
   },
   { timestamps: true }

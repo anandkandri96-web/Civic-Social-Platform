@@ -22,8 +22,13 @@ export const getResponseData = (res) => {
 export const getErrorMessage = (error) => {
   if (!error) return 'An error occurred';
   if (error.response && error.response.data) {
-    if (typeof error.response.data.message === 'string' && error.response.data.message) {
-      return error.response.data.message;
+    const data = error.response.data;
+    // Handle validateRequest middleware shape: { errors: [{ field, message }] }
+    if (Array.isArray(data.errors) && data.errors.length > 0) {
+      return data.errors.map((e) => e.message).join(', ');
+    }
+    if (typeof data.message === 'string' && data.message) {
+      return data.message;
     }
   }
   if (error.message) return error.message;

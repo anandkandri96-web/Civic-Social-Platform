@@ -25,9 +25,13 @@ export const getIssueById = async (id) => {
  * Create issue
  * Returns: Issue
  */
-export const createIssue = async (issueData) => {
+export const createIssue = async (issueData, options = {}) => {
   if (!issueData) throw new Error("Issue data is required");
-  const res = await api.post("/issues", issueData);
+  const headers = {};
+  if (options.idempotencyKey) {
+    headers["X-Idempotency-Key"] = options.idempotencyKey;
+  }
+  const res = await api.post("/issues", issueData, { headers });
   return getResponseData(res);
 };
 

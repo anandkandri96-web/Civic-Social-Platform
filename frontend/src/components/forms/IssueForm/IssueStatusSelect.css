@@ -1,6 +1,6 @@
 .issue-status-select {
   min-width: 130px;
-  border: 1px solid var(--border-color);
+  border: 1.5px solid var(--border-color);
   border-radius: var(--radius-input);
   background: var(--bg-surface);
   color: var(--text-primary);

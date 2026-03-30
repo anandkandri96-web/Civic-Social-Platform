@@ -88,7 +88,7 @@
 .report-panel textarea,
 .report-panel select {
   width: 100%;
-  border: 1px solid var(--border-color);
+  border: 1.5px solid var(--border-color);
   border-radius: var(--radius-input);
   background: var(--bg-surface);
   color: var(--text-primary);
@@ -103,7 +103,7 @@
 }
 
 .report-category {
-  border: 1px solid var(--border-color);
+  border: 1.5px solid var(--border-color);
   border-radius: var(--radius-card);
   background: var(--bg-surface);
   color: var(--text-secondary);
@@ -128,7 +128,7 @@
   position: relative;
   height: 320px;
   margin-bottom: 12px;
-  border: 1px solid var(--border-color);
+  border: 1.5px solid var(--border-color);
   border-radius: var(--radius-card);
   overflow: hidden;
   background: #071324;
@@ -140,7 +140,7 @@
   position: relative;
   height: 160px;
   border-radius: var(--radius-card);
-  border: 1px solid var(--border-color);
+  border: 1.5px solid var(--border-color);
   overflow: hidden;
   background: #071324;
 }
@@ -178,7 +178,7 @@
 }
 
 .report-location-row button {
-  border: 1px solid var(--border-color);
+  border: 1.5px solid var(--border-color);
   border-radius: var(--radius-button);
   background: var(--bg-card);
   color: var(--text-primary);
@@ -212,7 +212,7 @@
 }
 
 .report-review-list {
-  border: 1px solid var(--border-color);
+  border: 1.5px solid var(--border-color);
   border-radius: var(--radius-card);
   background: rgba(var(--color-brand-rgb), 0.06);
 }
@@ -222,7 +222,7 @@
   grid-template-columns: 140px 1fr;
   gap: 12px;
   padding: 12px 16px;
-  border-bottom: 1px solid var(--border-color);
+  border-bottom: 1.5px solid var(--border-color);
 }
 
 .report-review-list > div:last-child {
@@ -249,7 +249,7 @@
 }
 
 .report-actions button {
-  border: 1px solid var(--border-color);
+  border: 1.5px solid var(--border-color);
   border-radius: var(--radius-button);
   background: var(--bg-surface);
   color: var(--text-primary);

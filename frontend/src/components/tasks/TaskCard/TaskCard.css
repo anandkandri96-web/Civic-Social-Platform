@@ -1,5 +1,5 @@
 .task-card {
-  border: 1px solid var(--border-color);
+  border: 1.5px solid var(--border-color);
   background: var(--bg-card);
   padding: 16px;
   border-radius: var(--radius-card);
@@ -22,7 +22,7 @@
   font-family: var(--font-mono);
   font-size: 12px;
   color: var(--text-secondary);
-  border: 1px solid var(--border-color);
+  border: 1.5px solid var(--border-color);
   background: var(--bg-surface);
   border-radius: 999px;
   padding: 4px 12px;
@@ -54,7 +54,7 @@
   height: 64px;
   border-radius: var(--radius-card);
   overflow: hidden;
-  border: 1px solid var(--border-color);
+  border: 1.5px solid var(--border-color);
   background: var(--bg-surface);
 }
 
@@ -71,7 +71,7 @@
 
 .task-card button {
   margin-top: 12px;
-  border: 1px solid var(--border-color);
+  border: 1.5px solid var(--border-color);
   border-radius: var(--radius-button);
   background: var(--bg-surface);
   color: var(--text-primary);

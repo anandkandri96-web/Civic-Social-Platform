@@ -1,4 +1,4 @@
-﻿import { useState } from 'react';
+import { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
 import { normalizeRole } from '../../utils/roleCheck';
@@ -93,6 +93,7 @@ const Login = () => {
             value={credentials.email}
             onChange={handleChange}
             placeholder="Enter email"
+            autoComplete="username"
             required
           />
 

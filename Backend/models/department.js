@@ -1,4 +1,5 @@
 const mongoose = require("mongoose");
+const { ISSUE_CATEGORIES } = require("../utils/constants");
 
 const departmentSchema = new mongoose.Schema(
   {
@@ -12,10 +13,18 @@ const departmentSchema = new mongoose.Schema(
       type: String,
       trim: true,
       default: "",
+      maxlength: 500,
     },
     categories: {
       type: [String],
       default: [],
+      validate: {
+        validator(arr) {
+          if (!Array.isArray(arr) || !arr.length) return true;
+          return arr.every((c) => ISSUE_CATEGORIES.includes(String(c).toLowerCase()));
+        },
+        message: "Each category must be a valid issue category",
+      },
     },
     officers: {
       type: [mongoose.Schema.Types.ObjectId],

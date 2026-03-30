@@ -17,6 +17,7 @@ const VoteButton = ({
   const [userVoted, setUserVoted] = useState(initialVoted);
   const [loading, setLoading] = useState(false);
   const [bump, setBump] = useState(false);
+  const [success, setSuccess] = useState(false);
 
   useEffect(() => {
     setVoteCount(initialCount);
@@ -45,6 +46,9 @@ const VoteButton = ({
         setVoteCount(result.voteCount);
         setUserVoted(true);
         onVote?.(result);
+        // Show success animation for new votes
+        setSuccess(true);
+        setTimeout(() => setSuccess(false), 800);
       }
     } catch (err) {
       console.error('Vote error:', err);
@@ -81,13 +85,18 @@ const VoteButton = ({
   return (
     <button
       type="button"
-      className={`vote-button ${userVoted ? 'voted' : ''} ${loading ? 'loading' : ''}`}
+      className={`vote-button ${userVoted ? 'voted' : ''} ${loading ? 'loading' : ''} ${success ? 'vote-success' : ''}`}
       onClick={handleVote}
       disabled={loading}
       aria-pressed={userVoted}
+      aria-label={userVoted ? `Remove vote (${voteCount} votes)` : `Vote for this issue (${voteCount} votes)`}
     >
-      <span className="vote-icon">Vote</span>
-      <span className={`vote-count-num${bump ? ' is-bump' : ''}`}>{voteCount}</span>
+      <span className="vote-icon">
+        {userVoted ? 'Voted' : 'Vote'}
+      </span>
+      <span className={`vote-count-num${bump ? ' is-bump' : ''}`}>
+        {voteCount}
+      </span>
     </button>
   );
 };

@@ -6,9 +6,9 @@
   width: 40px;
   height: 40px;
   border-radius: var(--radius-button);
-  border: 1px solid var(--border-color);
-  background: var(--bg-surface);
-  color: var(--text-primary);
+  border: 1px solid var(--color-primary);
+  background: var(--color-primary);
+  color: var(--text-on-accent);
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -16,8 +16,8 @@
 }
 
 .icon-button:hover {
-  background: var(--bg-hover);
-  border-color: var(--border-bright);
+  background: var(--color-secondary);
+  border-color: var(--color-secondary);
   transform: translateY(-1px);
 }
 
@@ -48,8 +48,8 @@
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  border: 1px solid var(--border-color);
-  background: rgba(var(--color-brand-rgb), 0.10);
+  border: 1.5px solid var(--border-color);
+  background: rgba(var(--color-brand-rgb), 0.14);
   color: var(--text-primary);
   border-radius: 999px;
   height: 24px;
@@ -61,19 +61,19 @@
 }
 
 .badge-pill--success {
-  background: rgba(var(--color-success-rgb), 0.12);
+  background: rgba(var(--color-success-rgb), 0.18);
   border-color: rgba(var(--color-success-rgb), 0.28);
   color: var(--color-success);
 }
 
 .badge-pill--warning {
-  background: rgba(var(--color-warning-rgb), 0.18);
+  background: rgba(var(--color-warning-rgb), 0.24);
   border-color: rgba(var(--color-warning-rgb), 0.35);
   color: var(--color-warning);
 }
 
 .badge-pill--danger {
-  background: rgba(var(--color-danger-rgb), 0.18);
+  background: rgba(var(--color-danger-rgb), 0.24);
   border-color: rgba(var(--color-danger-rgb), 0.35);
   color: var(--color-danger);
 }
@@ -81,17 +81,23 @@
 /* Leaflet refinements */
 .leaflet-container {
   font-family: var(--font-body);
+  z-index: 0;
+}
+
+.leaflet-top,
+.leaflet-bottom {
+  z-index: 400;
 }
 
 .leaflet-bar {
   box-shadow: var(--shadow-card);
-  border: 1px solid var(--border-color);
+  border: 1.5px solid var(--border-color);
 }
 
 .leaflet-bar a {
   background: var(--bg-surface);
   color: var(--text-primary);
-  border-bottom: 1px solid var(--border-color);
+  border-bottom: 1.5px solid var(--border-color);
 }
 
 .leaflet-bar a:hover {
@@ -161,7 +167,7 @@
   position: relative;
   overflow: hidden;
   background: rgba(16, 24, 40, 0.06);
-  border: 1px solid var(--border-color);
+  border: 1.5px solid var(--border-color);
   border-radius: var(--radius-card);
 }
 

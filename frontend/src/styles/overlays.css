@@ -11,10 +11,10 @@
   width: 280px;
   padding: var(--space-3) var(--space-4);
   border-radius: var(--radius-md);
-  border: 1px solid var(--border-color);
-  background: var(--bg-card);
+  border: 1.5px solid var(--border-color);
+  background: transparent;
   color: var(--text-primary);
-  box-shadow: var(--shadow-card);
+  box-shadow: none;
   display: grid;
   gap: var(--space-2);
   transition: all 0.2s ease;
@@ -40,19 +40,16 @@
 }
 
 .toast--error {
-  background: rgba(var(--color-danger-rgb), 0.12);
   border-color: rgba(var(--color-danger-rgb), 0.35);
   color: var(--color-danger);
 }
 
 .toast--success {
-  background: rgba(var(--color-success-rgb), 0.12);
   border-color: rgba(var(--color-success-rgb), 0.35);
   color: var(--color-success);
 }
 
 .toast--info {
-  background: rgba(var(--color-brand-rgb), 0.12);
   border-color: rgba(var(--color-brand-rgb), 0.35);
   color: var(--text-primary);
 }
@@ -70,10 +67,10 @@
 
 .modal {
   width: min(420px, 100%);
-  background: var(--bg-card);
-  border: 1px solid var(--border-color);
+  background: transparent;
+  border: 1px solid var(--color-primary);
   border-radius: var(--radius-card);
-  box-shadow: var(--shadow-card);
+  box-shadow: none;
   padding: var(--space-4);
   display: grid;
   gap: var(--space-3);
@@ -99,10 +96,10 @@
 }
 
 .modal__btn {
-  border: 1px solid var(--border-color);
+  border: 1px solid var(--color-primary);
   border-radius: var(--radius-button);
-  background: var(--bg-surface);
-  color: var(--text-primary);
+  background: var(--color-primary);
+  color: var(--text-on-accent);
   padding: 0 var(--space-4);
   height: 40px;
   font-weight: 700;
@@ -111,19 +108,20 @@
 }
 
 .modal__btn--primary {
-  background: var(--color-primary);
   border-color: var(--color-primary);
+  background: var(--color-primary);
   color: var(--text-on-accent);
 }
 
 .modal__btn--danger {
-  background: var(--color-danger);
   border-color: var(--color-danger);
+  background: var(--color-danger);
   color: var(--text-on-accent);
 }
 
 .modal__btn--ghost {
-  background: transparent;
+  background: var(--bg-surface);
+  color: var(--text-primary);
 }
 
 @media (max-width: 640px) {

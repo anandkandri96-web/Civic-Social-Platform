@@ -47,13 +47,13 @@ const VolunteerPanel = ({ issue, onIssueUpdate }) => {
     <div className="volunteer-panel">
       <h3>Volunteer Actions</h3>
       {canClaim && (
-        <button onClick={handleClaim} disabled={loading}>
-          Claim Issue
+          <button onClick={handleClaim} disabled={loading} className="volunteer-action-btn btn-sky-blue">
+            Claim
         </button>
       )}
       {canProgress && (
-        <button onClick={handleProgress} disabled={loading}>
-          {issue.status === 'volunteer_claimed' ? 'Start Fix' : 'Confirm In Progress'}
+          <button onClick={handleProgress} disabled={loading} className="volunteer-action-btn btn-mint-green">
+            {issue.status === 'volunteer_claimed' ? 'Start Fix' : 'Confirm In Progress'}
         </button>
       )}
       {canComplete && (

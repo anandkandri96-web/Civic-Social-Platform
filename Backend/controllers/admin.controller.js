@@ -2,9 +2,18 @@ const Issue = require("../models/issue");
 const Task = require("../models/task");
 const User = require("../models/user");
 const Department = require("../models/department");
+const Vote = require("../models/vote");
+const Comment = require("../models/comment");
+const Notification = require("../models/notification");
+const RoleUpgradeRequest = require("../models/roleUpgradeRequest");
 const { apiResponse } = require("../utils/apiResponse");
 const { ROLES, DEPARTMENT_NAMES } = require("../utils/constants");
 const { generateNextOfficerId, generateNextWorkerId } = require("../services/serialId.service");
+const { getOrCreateDeletedUserPlaceholder } = require("../services/systemUser.service");
+const { logAudit } = require("../services/audit.service");
+const { collectCloudinaryIdsFromImages } = require("../utils/imageNormalize");
+const { deleteCloudinaryAssets } = require("../services/imageAsset.service");
+const { createNotificationsBulk } = require("../services/notification.service");
 
 const escapeRegex = (value) => String(value).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 const EMAIL_RE = /^\S+@\S+\.\S+$/;
@@ -55,7 +64,8 @@ exports.getStats = async (_req, res) => {
       avgResolutionHours: avgResolution[0]?.avgHours || 0,
     });
   } catch (error) {
-    console.error("Admin Stats Error:", error);
+    const logger = require("../utils/logger");
+    logger.error("Admin Stats Error:", error);
     return apiResponse(res, 500, "Failed to load admin stats");
   }
 };
@@ -98,7 +108,12 @@ exports.getAllIssues = async (req, res) => {
       const map = new Map();
       for (const t of tasks) {
         const key = String(t.issue);
-        const imgs = Array.isArray(t.progressImages) ? t.progressImages.filter(Boolean).slice(0, 10) : [];
+        const imgs = Array.isArray(t.progressImages)
+          ? t.progressImages
+              .map((p) => (typeof p === "string" ? p : p?.url))
+              .filter(Boolean)
+              .slice(0, 10)
+          : [];
         if (!map.has(key)) map.set(key, imgs);
       }
 
@@ -112,11 +127,13 @@ exports.getAllIssues = async (req, res) => {
       pagination: {
         total,
         page: Number(page),
+        limit: Number(limit),
         pages: Math.ceil(total / Number(limit)),
       },
     });
   } catch (error) {
-    console.error("Admin Issues Error:", error);
+    const logger = require("../utils/logger");
+    logger.error("Admin Issues Error:", error);
     return apiResponse(res, 500, "Failed to fetch issues");
   }
 };
@@ -153,7 +170,8 @@ exports.getUsers = async (req, res) => {
       },
     });
   } catch (error) {
-    console.error("Get users error:", error);
+    const logger = require("../utils/logger");
+    logger.error("Get users error:", error);
     return apiResponse(res, 500, "Failed to fetch users");
   }
 };
@@ -204,7 +222,7 @@ exports.createUser = async (req, res) => {
       password: String(password),
       role: nextRole,
       isActive: true,
-      isApproved: typeof isApproved === "boolean" ? isApproved : nextRole === ROLES.CITIZEN,
+      isApproved: true,
       department: department ? department._id : null,
     });
 
@@ -246,14 +264,15 @@ exports.createUser = async (req, res) => {
       officerId: user.officerId,
     });
   } catch (error) {
-    console.error("Create user error:", error);
+    const logger = require("../utils/logger");
+    logger.error("Create user error:", error);
     return apiResponse(res, 500, "Failed to create user");
   }
 };
 
 exports.updateUserRole = async (req, res) => {
   try {
-    const { role } = req.body;
+    const { role, departmentId } = req.body;
     const nextRole = String(role || "").toLowerCase();
     const allowedRoles = [ROLES.CITIZEN, ROLES.VOLUNTEER, ROLES.OFFICER, ROLES.WORKER, ROLES.ADMIN];
     if (!allowedRoles.includes(nextRole)) {
@@ -262,6 +281,13 @@ exports.updateUserRole = async (req, res) => {
 
     const user = await User.findById(req.params.id);
     if (!user) return apiResponse(res, 404, "User not found");
+
+    // If a departmentId is provided alongside the role change, assign it first
+    if (departmentId) {
+      const department = await Department.findById(departmentId);
+      if (!department) return apiResponse(res, 404, "Department not found");
+      user.department = department._id;
+    }
 
     user.role = nextRole;
     if ([ROLES.OFFICER, ROLES.WORKER].includes(nextRole) && !user.department) {
@@ -304,7 +330,8 @@ exports.updateUserRole = async (req, res) => {
       officerId: user.officerId,
     });
   } catch (error) {
-    console.error("Update user role error:", error);
+    const logger = require("../utils/logger");
+    logger.error("Update user role error:", error);
     return apiResponse(res, 500, "Failed to update user role");
   }
 };
@@ -332,7 +359,8 @@ exports.updateUserStatus = async (req, res) => {
       department: user.department,
     });
   } catch (error) {
-    console.error("Update user status error:", error);
+    const logger = require("../utils/logger");
+    logger.error("Update user status error:", error);
     return apiResponse(res, 500, "Failed to update user status");
   }
 };
@@ -363,7 +391,8 @@ exports.approveUser = async (req, res) => {
       department: user.department,
     });
   } catch (error) {
-    console.error("Approve user error:", error);
+    const logger = require("../utils/logger");
+    logger.error("Approve user error:", error);
     return apiResponse(res, 500, "Failed to update user approval");
   }
 };
@@ -394,7 +423,8 @@ exports.assignUserDepartment = async (req, res) => {
       department: user.department,
     });
   } catch (error) {
-    console.error("Assign user department error:", error);
+    const logger = require("../utils/logger");
+    logger.error("Assign user department error:", error);
     return apiResponse(res, 500, "Failed to assign user department");
   }
 };
@@ -408,10 +438,75 @@ exports.deleteUser = async (req, res) => {
       return apiResponse(res, 400, "Admin cannot delete own account");
     }
 
-    await User.findByIdAndDelete(req.params.id);
+    const placeholder = await getOrCreateDeletedUserPlaceholder();
+
+    const [issues, tasks, comments] = await Promise.all([
+      Issue.find({ reportedBy: user._id }).select("_id images communityProof").lean(),
+      Task.find({ $or: [{ worker: user._id }, { assignedBy: user._id }] })
+        .populate("issue", "_id title reportedBy")
+        .lean(),
+      Comment.find({ user: user._id }).select("_id images").lean(),
+    ]);
+
+    await Issue.updateMany({ reportedBy: user._id }, { $set: { reportedBy: placeholder._id } });
+
+    for (const t of tasks) {
+      if (String(t.worker) === String(user._id)) {
+        await Task.findByIdAndDelete(t._id);
+        if (t.issue?._id) {
+          await Issue.findByIdAndUpdate(t.issue._id, {
+            $unset: { assignedWorker: "" },
+          });
+          if (t.issue.reportedBy) {
+            await createNotificationsBulk([
+              {
+                userId: t.issue.reportedBy,
+                title: "Task released",
+                message: "An assigned task was released because the worker account was removed.",
+                issueId: t.issue._id,
+              },
+            ]);
+          }
+        }
+      }
+    }
+
+    await Comment.updateMany({ user: user._id }, { $set: { user: placeholder._id } });
+
+    const extraIds = [];
+    for (const i of issues) {
+      extraIds.push(...collectCloudinaryIdsFromImages(i.images), ...collectCloudinaryIdsFromImages(i.communityProof));
+    }
+    for (const c of comments) {
+      extraIds.push(...collectCloudinaryIdsFromImages(c.images));
+    }
+    try {
+      await deleteCloudinaryAssets(extraIds);
+    } catch (_) {}
+
+    await Vote.deleteMany({ user: user._id });
+    await Notification.deleteMany({ user: user._id });
+    await RoleUpgradeRequest.deleteMany({ user: user._id });
+
+    await User.findByIdAndDelete(user._id);
+
+    logAudit({
+      issue: null,
+      user: req.user._id,
+      action: "admin.user_delete",
+      resourceType: "user",
+      resourceId: user._id,
+      detail: `Deleted user ${user.email}`,
+      ip: req.ip || "",
+      userAgent: String(req.headers["user-agent"] || "").slice(0, 512),
+      requestPath: req.originalUrl || "",
+      requestMethod: req.method || "",
+    });
+
     return apiResponse(res, 200, "User deleted");
   } catch (error) {
-    console.error("Delete user error:", error);
+    const logger = require("../utils/logger");
+    logger.error("Delete user error:", error);
     return apiResponse(res, 500, "Failed to delete user");
   }
 };
@@ -421,7 +516,8 @@ exports.getDepartments = async (_req, res) => {
     const departments = await Department.find({}).sort({ name: 1 });
     return apiResponse(res, 200, "Departments retrieved", departments);
   } catch (error) {
-    console.error("Get departments error:", error);
+    const logger = require("../utils/logger");
+    logger.error("Get departments error:", error);
     return apiResponse(res, 500, "Failed to fetch departments");
   }
 };
@@ -458,7 +554,8 @@ exports.createDepartment = async (req, res) => {
 
     return apiResponse(res, 201, "Department created", department);
   } catch (error) {
-    console.error("Create department error:", error);
+    const logger = require("../utils/logger");
+    logger.error("Create department error:", error);
     return apiResponse(res, 500, "Failed to create department");
   }
 };

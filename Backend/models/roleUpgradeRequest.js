@@ -1,5 +1,6 @@
-﻿const mongoose = require("mongoose");
+const mongoose = require("mongoose");
 const { ROLES } = require("../config/roles");
+const { REQUESTABLE_UPGRADE_ROLES } = require("../constants/roleUpgrade");
 
 const ROLE_UPGRADE_STATUSES = Object.freeze(["pending", "approved", "rejected", "cancelled"]);
 
@@ -20,7 +21,7 @@ const roleUpgradeRequestSchema = new mongoose.Schema(
     },
     requestedRole: {
       type: String,
-      enum: Object.values(ROLES),
+      enum: [...REQUESTABLE_UPGRADE_ROLES, ROLES.WORKER],
       required: true,
       lowercase: true,
       trim: true,
@@ -42,13 +43,21 @@ const roleUpgradeRequestSchema = new mongoose.Schema(
       required: true,
       trim: true,
       minlength: 10,
-      maxlength: 1200,
+      maxlength: 1000,
     },
     experience: {
       type: String,
       trim: true,
-      maxlength: 2000,
+      maxlength: 500,
       default: "",
+      validate: {
+        validator(v) {
+          if (!v || String(v).trim() === "") return true;
+          const t = String(v).trim();
+          return t.length >= 10 && t.length <= 500;
+        },
+        message: "experience must be 10–500 characters when provided",
+      },
     },
     availability: {
       type: String,
@@ -65,6 +74,12 @@ const roleUpgradeRequestSchema = new mongoose.Schema(
     supportingLinks: {
       type: [String],
       default: [],
+      validate: {
+        validator(arr) {
+          return !Array.isArray(arr) || arr.length <= 3;
+        },
+        message: "At most 3 supporting links allowed",
+      },
     },
     status: {
       type: String,
@@ -75,7 +90,7 @@ const roleUpgradeRequestSchema = new mongoose.Schema(
     adminNotes: {
       type: String,
       trim: true,
-      maxlength: 1200,
+      maxlength: 500,
       default: "",
     },
     reviewedBy: {

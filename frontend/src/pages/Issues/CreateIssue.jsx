@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { MapContainer, Marker, TileLayer, useMap, useMapEvents } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
@@ -8,6 +8,7 @@ import { Link, Navigate, useNavigate } from 'react-router-dom';
 import { createIssue as createIssueApi } from '@api/issues.api';
 import { getErrorMessage } from '@api/utils';
 import { usePermission } from '../../hooks/usePermission';
+import MapAutoSizer from '../../components/map/MapAutoSizer';
 import { ISSUE_CATEGORIES, ISSUE_SEVERITY_OPTIONS } from '../../constants/issueOptions';
 import './CreateIssue.css';
 
@@ -82,6 +83,9 @@ const CreateIssue = () => {
   const [step, setStep] = useState(1);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
+  const idempotencyKeyRef = useRef(
+    typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : `issue-${Date.now()}-${Math.random()}`
+  );
   const [form, setForm] = useState({
     category: 'roads',
     lat: '12.9716',
@@ -201,8 +205,9 @@ const CreateIssue = () => {
       if (imageFiles.length > 0) {
         imageFiles.forEach((file) => payload.append('images', file));
       }
+      payload.append('idempotencyKey', idempotencyKeyRef.current);
 
-      const issue = await createIssueApi(payload);
+      const issue = await createIssueApi(payload, { idempotencyKey: idempotencyKeyRef.current });
       navigate(`/issues/${issue._id}`, { replace: true });
     } catch (err) {
       setError(getErrorMessage(err));
@@ -277,6 +282,7 @@ const CreateIssue = () => {
                 maxNativeZoom={19}
                 detectRetina={false}
               />
+              <MapAutoSizer />
               <MapFocus lat={latNum} lng={lngNum} />
               <MapZoomIndicator maxZoom={19} />
               <LocationPickerMarker lat={latNum} lng={lngNum} onSelect={handleMapSelect} />
@@ -397,6 +403,7 @@ const CreateIssue = () => {
                     className="report-map-preview"
                   >
                     <TileLayer url={TILE_URL} maxZoom={19} maxNativeZoom={19} detectRetina={false} />
+                    <MapAutoSizer />
                     <MapZoomIndicator maxZoom={19} />
                     <Marker position={[latNum, lngNum]} icon={MAP_ICON} />
                   </MapContainer>
@@ -435,7 +442,7 @@ const CreateIssue = () => {
             </button>
           ) : (
             <button type="button" className="primary" disabled={submitting} onClick={handleSubmit}>
-              {submitting ? 'Submitting...' : '📝 Submit Issue'}
+              {submitting ? 'Submitting…' : '📝 Submit Issue'}
             </button>
           )}
         </div>

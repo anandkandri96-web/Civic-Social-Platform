@@ -3,10 +3,10 @@
   top: 52px;
   right: 0;
   width: min(420px, calc(100vw - 32px));
-  background: var(--bg-card);
-  border: 1px solid var(--border-color);
+  background: var(--bg-surface);
+  border: 1px solid var(--color-primary);
   border-radius: var(--radius-card);
-  box-shadow: var(--shadow-card);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
   overflow: hidden;
   z-index: 40;
 }
@@ -16,7 +16,7 @@
   align-items: center;
   justify-content: space-between;
   padding: 12px 16px;
-  border-bottom: 1px solid var(--border-color);
+  border-bottom: 1.5px solid var(--border-color);
 }
 
 .notif-panel__title {
@@ -28,15 +28,15 @@
   height: 36px;
   width: 36px;
   border-radius: var(--radius-button);
-  border: 1px solid var(--border-color);
-  background: var(--bg-surface);
-  color: var(--text-secondary);
+  border: 1px solid var(--color-primary);
+  background: var(--color-primary);
+  color: var(--text-on-accent);
 }
 
 .notif-panel__close:hover {
-  background: var(--bg-hover);
-  border-color: var(--border-bright);
-  color: var(--text-primary);
+  background: var(--color-secondary);
+  border-color: var(--color-secondary);
+  color: var(--text-on-accent);
 }
 
 .notif-panel__list {
@@ -54,9 +54,9 @@
 }
 
 .notif-item {
-  border: 1px solid var(--border-color);
+  border: 1.5px solid var(--border-color);
   border-radius: var(--radius-card);
-  background: var(--bg-surface);
+  background: var(--bg-card);
   padding: 12px;
   display: grid;
   gap: 8px;
@@ -64,7 +64,7 @@
 
 .notif-item.is-unread {
   border-color: rgba(var(--color-brand-rgb), 0.25);
-  background: rgba(var(--color-brand-rgb), 0.06);
+  background: var(--bg-card);
 }
 
 .notif-item__top {
@@ -103,21 +103,21 @@
 }
 
 .notif-item__btn {
-  border: 1px solid var(--border-color);
+  border: 1px solid var(--color-primary);
   border-radius: var(--radius-button);
-  background: var(--bg-hover);
-  color: var(--text-primary);
+  background: var(--color-primary);
+  color: var(--text-on-accent);
   padding: 8px 12px;
   font-size: 12px;
   font-weight: 700;
 }
 
 .notif-item__btn:hover {
-  border-color: var(--border-bright);
+  border-color: var(--color-primary);
 }
 
 .notif-item__btn--ghost {
-  background: transparent;
-  color: var(--text-secondary);
+  background: var(--bg-surface);
+  color: var(--text-primary);
 }
 

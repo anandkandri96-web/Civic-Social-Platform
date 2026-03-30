@@ -201,7 +201,9 @@ const RESOURCE_PERMISSIONS = Object.freeze({
         const isReporter =
           String(user._id) === String(issue.reportedBy) ||
           String(user._id) === String(issue.reportedBy?._id);
-        return isReporter && ['reported', 'under_review'].includes(issue.status);
+        const st = String(issue.status || "").toLowerCase();
+        const terminal = ["closed", "rejected"].includes(st);
+        return isReporter && !terminal;
       }
 
       if (user.role === ROLES.ADMIN) return true;
@@ -243,8 +245,10 @@ const RESOURCE_PERMISSIONS = Object.freeze({
       if (!user || !issue) return false;
 
       if (user.role === ROLES.OFFICER) {
-        const userDeptId = String(user.department || '');
-        const issueDeptId = String(issue.assignedDepartment || issue.assignedDepartment?._id || '');
+        const userDeptId = String(user.department?._id || user.department || '');
+        const issueDeptId = String(issue.assignedDepartment?._id || issue.assignedDepartment || '');
+        // If issue has no department assigned yet, officer can still act on it
+        if (!issueDeptId || issueDeptId === 'null' || issueDeptId === 'undefined') return true;
         return userDeptId === issueDeptId;
       }
 
@@ -261,8 +265,9 @@ const RESOURCE_PERMISSIONS = Object.freeze({
       if (!user || !issue) return false;
       if (user.role === ROLES.ADMIN) return true;
       if (user.role === ROLES.OFFICER) {
-        const userDeptId = String(user.department || '');
-        const issueDeptId = String(issue.assignedDepartment || issue.assignedDepartment?._id || '');
+        const userDeptId = String(user.department?._id || user.department || '');
+        const issueDeptId = String(issue.assignedDepartment?._id || issue.assignedDepartment || '');
+        if (!issueDeptId || issueDeptId === 'null' || issueDeptId === 'undefined') return true;
         return userDeptId === issueDeptId;
       }
       return false;
@@ -272,8 +277,9 @@ const RESOURCE_PERMISSIONS = Object.freeze({
       if (!user || !issue) return false;
       if (user.role === ROLES.ADMIN) return true;
       if (user.role === ROLES.OFFICER) {
-        const userDeptId = String(user.department || '');
-        const issueDeptId = String(issue.assignedDepartment || issue.assignedDepartment?._id || '');
+        const userDeptId = String(user.department?._id || user.department || '');
+        const issueDeptId = String(issue.assignedDepartment?._id || issue.assignedDepartment || '');
+        if (!issueDeptId || issueDeptId === 'null' || issueDeptId === 'undefined') return true;
         return userDeptId === issueDeptId;
       }
       return false;

@@ -79,8 +79,10 @@ select {
 }
 
 button {
-  border: none;
-  background: none;
+  border: 1px solid var(--color-primary);
+  background: var(--color-primary);
+  color: var(--text-on-accent);
+  border-radius: var(--radius-button);
   cursor: pointer;
 }
 

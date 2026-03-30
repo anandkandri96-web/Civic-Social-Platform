@@ -1,4 +1,4 @@
-﻿const mongoose = require("mongoose");
+const mongoose = require("mongoose");
 const RoleUpgradeRequest = require("../models/roleUpgradeRequest");
 const Department = require("../models/department");
 const User = require("../models/user");
@@ -6,8 +6,10 @@ const { apiResponse } = require("../utils/apiResponse");
 const { ROLES } = require("../config/roles");
 const { generateNextOfficerId, generateNextWorkerId } = require("../services/serialId.service");
 
-const REQUESTABLE_ROLES = Object.freeze([ROLES.VOLUNTEER, ROLES.OFFICER, ROLES.WORKER]);
+const { REQUESTABLE_UPGRADE_ROLES } = require("../constants/roleUpgrade");
+const REQUESTABLE_ROLES = REQUESTABLE_UPGRADE_ROLES;
 const STAFF_ROLES = new Set([ROLES.OFFICER, ROLES.WORKER]);
+const OFFICER_REQUEST_ROLES = new Set([ROLES.OFFICER]);
 
 const parseLinks = (raw) => {
   if (!raw) return [];
@@ -15,13 +17,13 @@ const parseLinks = (raw) => {
     return raw
       .map((item) => String(item || "").trim())
       .filter(Boolean)
-      .slice(0, 6);
+      .slice(0, 3);
   }
   return String(raw)
     .split(/[,\n]/)
     .map((item) => item.trim())
     .filter(Boolean)
-    .slice(0, 6);
+    .slice(0, 3);
 };
 
 const normalizeRole = (role) => String(role || "").toLowerCase();
@@ -37,7 +39,7 @@ exports.createRoleUpgradeRequest = async (req, res) => {
     }
 
     if (!REQUESTABLE_ROLES.includes(requestedRole)) {
-      return apiResponse(res, 400, "Invalid requested role");
+      return apiResponse(res, 400, "You may only request volunteer or officer roles. Worker accounts are created by an administrator.");
     }
 
     const currentRole = normalizeRole(user.role);
@@ -55,12 +57,8 @@ exports.createRoleUpgradeRequest = async (req, res) => {
     const skills = String(req.body?.skills || "").trim();
     const preferredDepartment = String(req.body?.preferredDepartment || "").trim();
 
-    if (!motivation || motivation.length < 10) {
-      return apiResponse(res, 400, "Motivation must be at least 10 characters");
-    }
-
-    if (STAFF_ROLES.has(requestedRole) && !preferredDepartment) {
-      return apiResponse(res, 400, "Preferred department is required for officer or worker requests");
+    if (OFFICER_REQUEST_ROLES.has(requestedRole) && !preferredDepartment) {
+      return apiResponse(res, 400, "Preferred department is required for officer requests");
     }
 
     const existing = await RoleUpgradeRequest.findOne({
@@ -88,7 +86,8 @@ exports.createRoleUpgradeRequest = async (req, res) => {
 
     return apiResponse(res, 201, "Role upgrade request submitted", created);
   } catch (error) {
-    console.error("Create role upgrade request error:", error);
+    const logger = require("../utils/logger");
+    logger.error("Create role upgrade request error:", error);
     return apiResponse(res, 500, "Failed to submit role upgrade request");
   }
 };
@@ -105,7 +104,8 @@ exports.getMyRoleUpgradeRequests = async (req, res) => {
 
     return apiResponse(res, 200, "Role upgrade requests retrieved", items || []);
   } catch (error) {
-    console.error("Get my role upgrade requests error:", error);
+    const logger = require("../utils/logger");
+    logger.error("Get my role upgrade requests error:", error);
     return apiResponse(res, 500, "Failed to fetch role upgrade requests");
   }
 };
@@ -170,7 +170,8 @@ exports.getRoleUpgradeRequests = async (req, res) => {
       },
     });
   } catch (error) {
-    console.error("Get role upgrade requests error:", error);
+    const logger = require("../utils/logger");
+    logger.error("Get role upgrade requests error:", error);
     return apiResponse(res, 500, "Failed to fetch role upgrade requests");
   }
 };
@@ -203,10 +204,10 @@ const applyStaffSerialIds = async (user, role) => {
 
 exports.reviewRoleUpgradeRequest = async (req, res) => {
   try {
-    const { decision, adminNotes = "", departmentId } = req.body || {};
-    const nextStatus = String(decision || "").toLowerCase();
+    const { decision, status, adminNotes = "", departmentId } = req.body || {};
+    const nextStatus = String(status || decision || "").toLowerCase();
 
-    if (!['approved', 'rejected'].includes(nextStatus)) {
+    if (!["approved", "rejected"].includes(nextStatus)) {
       return apiResponse(res, 400, "Decision must be approved or rejected");
     }
 
@@ -263,7 +264,8 @@ exports.reviewRoleUpgradeRequest = async (req, res) => {
 
     return apiResponse(res, 200, "Role upgrade request updated", populated);
   } catch (error) {
-    console.error("Review role upgrade request error:", error);
+    const logger = require("../utils/logger");
+    logger.error("Review role upgrade request error:", error);
     return apiResponse(res, 500, "Failed to review role upgrade request");
   }
 };

@@ -7,12 +7,14 @@ const {
   updateDepartment,
   deleteDepartment,
 } = require("../controllers/department.controller");
+const { validateRequest } = require("../middlewares/validateRequest.middleware");
+const schemas = require("../validators/joi.schemas");
 
 router.use(protect, checkRole([ROLES.ADMIN]));
 
-router.post("/", createDepartment);
+router.post("/", validateRequest(schemas.departmentCreate), createDepartment);
 router.get("/", getDepartments);
-router.put("/:id", updateDepartment);
+router.put("/:id", validateRequest(schemas.departmentUpdate), updateDepartment);
 router.delete("/:id", deleteDepartment);
 
 module.exports = router;

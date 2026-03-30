@@ -2,7 +2,7 @@
  * CENTRALIZED PERMISSION CONFIGURATION (Frontend)
  * 
  * This is the same configuration used by the backend.
- * Export CommonJS for Node.js compatibility, but can be used in both contexts.
+ * Export ES module, but logic is identical to backend's CommonJS module.
  */
 
 export const ROLES = Object.freeze({
@@ -13,6 +13,10 @@ export const ROLES = Object.freeze({
   ADMIN: 'admin',
 });
 
+/**
+ * PERMISSIONS: All possible actions in the system
+ * Naming convention: resource:action
+ */
 export const PERMISSIONS = Object.freeze({
   // Issue actions
   ISSUE_CREATE: 'issue:create',
@@ -23,18 +27,6 @@ export const PERMISSIONS = Object.freeze({
   ISSUE_CLOSE: 'issue:close',
   ISSUE_REOPEN: 'issue:reopen',
   ISSUE_VIEW_ANALYTICS: 'issue:view_analytics',
-
-  // Backward-compatible issue actions used in routes/components
-  ADMIN_CLOSE_ISSUE: 'issue:close',
-  OFFICER_CLOSE_ISSUE: 'issue:close',
-  ADMIN_UPDATE_ISSUE_STATUS: 'issue:update',
-  OFFICER_UPDATE_ISSUE_STATUS: 'officer:update_status',
-  ADMIN_VIEW_ISSUES: 'admin:view_all_issues',
-  OFFICER_REVIEW_ISSUES: 'officer:review_issues',
-
-  // Access controls
-  VOLUNTEER_ACCESS: 'volunteer:access',
-  OFFICER_ACCESS: 'officer:access',
 
   // Comment actions
   COMMENT_CREATE: 'comment:create',
@@ -49,17 +41,29 @@ export const PERMISSIONS = Object.freeze({
   ROLE_UPGRADE_REQUEST: 'role:upgrade_request',
 
   // Volunteer actions
+  VOLUNTEER_ACCESS: 'volunteer:access',
   VOLUNTEER_CLAIM_ISSUE: 'volunteer:claim_issue',
   VOLUNTEER_SUBMIT_RESOLUTION: 'volunteer:submit_resolution',
   VOLUNTEER_UPDATE_PROGRESS: 'volunteer:update_progress',
 
   // Officer actions
+  OFFICER_ACCESS: 'officer:access',
   OFFICER_REVIEW_ISSUE: 'officer:review_issue',
+  OFFICER_REVIEW_ISSUES: 'officer:review_issues',
   OFFICER_ASSIGN_WORKER: 'officer:assign_worker',
   OFFICER_UPDATE_STATUS: 'officer:update_status',
+  OFFICER_UPDATE_ISSUE_STATUS: 'issue:update',
   OFFICER_MANAGE_VOLUNTEERS: 'officer:manage_volunteers',
   OFFICER_VIEW_QUEUE: 'officer:view_queue',
   OFFICER_VIEW_DEPARTMENT: 'officer:view_department',
+  OFFICER_CLOSE_ISSUE: 'issue:close', // Backward compatibility
+
+  // Admin actions
+  ADMIN_UPDATE_ISSUE_STATUS: 'issue:update',
+  ADMIN_CLOSE_ISSUE: 'issue:close', // Backward compatibility
+  ADMIN_REVIEW_ISSUE: 'officer:review_issue',
+  ADMIN_ASSIGN_WORKER: 'officer:assign_worker',
+  ADMIN_VIEW_ALL_ISSUES: 'admin:view_all_issues',
 
   // Worker/Task actions
   WORKER_ACCEPT_TASK: 'worker:accept_task',
@@ -67,13 +71,14 @@ export const PERMISSIONS = Object.freeze({
   WORKER_COMPLETE_TASK: 'worker:complete_task',
   WORKER_VIEW_TASKS: 'worker:view_tasks',
   TASK_VIEW_OWN: 'worker:view_tasks', // Backward compatibility
-  TASK_CREATE: 'worker:accept_task', // Backward compatibility
+  TASK_CREATE: 'worker:accept_task', // Backward compatibility for task creation (officer assigns)
   TASK_UPDATE_STATUS: 'worker:update_progress', // Backward compatibility
   TASK_ADD_PROGRESS: 'worker:update_progress', // Backward compatibility
 
   // Admin actions
   ADMIN_MANAGE_USERS: 'admin:manage_users',
-  ADMIN_VIEW_ALL_ISSUES: 'admin:view_all_issues',
+  ADMIN_VIEW_ISSUES: 'admin:view_all_issues',
+  ADMIN_APPROVE_USERS: 'admin:approve_users',
   ADMIN_APPROVE_USER: 'admin:approve_user',
   ADMIN_DISABLE_ACCOUNT: 'admin:disable_account',
   ADMIN_CHANGE_ROLE: 'admin:change_role',
@@ -83,6 +88,9 @@ export const PERMISSIONS = Object.freeze({
   ADMIN_MANAGE_ROLE_UPGRADES: 'admin:manage_role_upgrades',
 });
 
+/**
+ * ROLE_PERMISSIONS: Maps each role to their allowed permissions
+ */
 export const ROLE_PERMISSIONS = Object.freeze({
   [ROLES.CITIZEN]: new Set([
     PERMISSIONS.ISSUE_CREATE,
@@ -99,6 +107,7 @@ export const ROLE_PERMISSIONS = Object.freeze({
   ]),
 
   [ROLES.VOLUNTEER]: new Set([
+    // Extends citizen permissions
     PERMISSIONS.ISSUE_CREATE,
     PERMISSIONS.ISSUE_READ,
     PERMISSIONS.ISSUE_UPDATE,
@@ -111,6 +120,7 @@ export const ROLE_PERMISSIONS = Object.freeze({
     PERMISSIONS.VOTE_DELETE,
     PERMISSIONS.ROLE_UPGRADE_REQUEST,
     PERMISSIONS.VOLUNTEER_ACCESS,
+    // Plus volunteer-specific
     PERMISSIONS.VOLUNTEER_CLAIM_ISSUE,
     PERMISSIONS.VOLUNTEER_SUBMIT_RESOLUTION,
     PERMISSIONS.VOLUNTEER_UPDATE_PROGRESS,
@@ -120,8 +130,11 @@ export const ROLE_PERMISSIONS = Object.freeze({
     PERMISSIONS.ISSUE_READ,
     PERMISSIONS.OFFICER_ACCESS,
     PERMISSIONS.OFFICER_REVIEW_ISSUES,
+    PERMISSIONS.OFFICER_REVIEW_ISSUE,
     PERMISSIONS.OFFICER_ASSIGN_WORKER,
     PERMISSIONS.OFFICER_UPDATE_STATUS,
+    PERMISSIONS.OFFICER_UPDATE_ISSUE_STATUS,
+    PERMISSIONS.OFFICER_CLOSE_ISSUE,
     PERMISSIONS.OFFICER_VIEW_QUEUE,
     PERMISSIONS.OFFICER_VIEW_DEPARTMENT,
     PERMISSIONS.COMMENT_CREATE,
@@ -145,11 +158,11 @@ export const ROLE_PERMISSIONS = Object.freeze({
     PERMISSIONS.WORKER_VIEW_TASKS,
   ]),
 
-  [ROLES.ADMIN]: new Set(
-    Object.values(PERMISSIONS).filter(
+  [ROLES.ADMIN]: new Set([
+    // Admin has most permissions (exclude voting + volunteer actions)
+    ...Object.values(PERMISSIONS).filter(
       (perm) =>
         ![
-          PERMISSIONS.ISSUE_CREATE,
           PERMISSIONS.VOTE_CREATE,
           PERMISSIONS.VOTE_DELETE,
           PERMISSIONS.VOLUNTEER_ACCESS,
@@ -157,15 +170,49 @@ export const ROLE_PERMISSIONS = Object.freeze({
           PERMISSIONS.VOLUNTEER_SUBMIT_RESOLUTION,
           PERMISSIONS.VOLUNTEER_UPDATE_PROGRESS,
         ].includes(perm)
-    )
-  ),
+    ),
+  ]),
 });
 
+/**
+ * RESOURCE_PERMISSIONS: Fine-grained permissions for specific resources
+ */
 export const RESOURCE_PERMISSIONS = Object.freeze({
   ISSUE: {
+    UPDATE: (user, issue) => {
+      if (!user || !issue) return false;
+
+      // Reporters can update own issues before assignment; admins can update all.
+      if ([ROLES.CITIZEN, ROLES.VOLUNTEER, ROLES.WORKER].includes(user.role)) {
+        const isReporter =
+          String(user._id) === String(issue.reportedBy) ||
+          String(user._id) === String(issue.reportedBy?._id);
+        const st = String(issue.status || "").toLowerCase();
+        const terminal = ["closed", "rejected"].includes(st);
+        return isReporter && !terminal;
+      }
+
+      if (user.role === ROLES.ADMIN) return true;
+
+      // Officers can update in their department only
+      if (user.role === ROLES.OFFICER) {
+        const userDeptId = String(user.department || '');
+        const issueDeptId = String(issue.assignedDepartment || issue.assignedDepartment?._id || '');
+        return userDeptId === issueDeptId;
+      }
+
+      // Volunteers can only update issues they claimed via community flow
+      if (user.role === ROLES.VOLUNTEER) {
+        return String(issue.volunteer) === String(user._id);
+      }
+
+      return false;
+    },
+
     DELETE: (user, issue) => {
       if (!user || !issue) return false;
 
+      // Reporter can delete own issue if in 'reported'/'under_review'/'closed' status
       if ([ROLES.CITIZEN, ROLES.VOLUNTEER, ROLES.WORKER].includes(user.role)) {
         const isReporter =
           String(user._id) === String(issue.reportedBy) ||
@@ -174,7 +221,9 @@ export const RESOURCE_PERMISSIONS = Object.freeze({
         return isReporter && isDeletableStatus;
       }
 
+      // Admin can delete any issue
       if (user.role === ROLES.ADMIN) return true;
+
       return false;
     },
 
@@ -182,28 +231,66 @@ export const RESOURCE_PERMISSIONS = Object.freeze({
       if (!user || !issue) return false;
 
       if (user.role === ROLES.OFFICER) {
-        const userDeptId = String(user.department || '');
-        const issueDeptId = String(issue.assignedDepartment || issue.assignedDepartment?._id || '');
+        const userDeptId = String(user.department?._id || user.department || '');
+        const issueDeptId = String(issue.assignedDepartment?._id || issue.assignedDepartment || '');
+        // If issue has no department assigned yet, officer can still act on it
+        if (!issueDeptId || issueDeptId === 'null' || issueDeptId === 'undefined') return true;
         return userDeptId === issueDeptId;
       }
 
       if (user.role === ROLES.ADMIN) return true;
+
+      if (user.role === ROLES.VOLUNTEER) {
+        return String(issue.volunteer) === String(user._id);
+      }
+
       return false;
     },
 
-    CLOSE: (user) => {
+    REVIEW: (user, issue) => {
+      if (!user || !issue) return false;
+      if (user.role === ROLES.ADMIN) return true;
+      if (user.role === ROLES.OFFICER) {
+        const userDeptId = String(user.department?._id || user.department || '');
+        const issueDeptId = String(issue.assignedDepartment?._id || issue.assignedDepartment || '');
+        if (!issueDeptId || issueDeptId === 'null' || issueDeptId === 'undefined') return true;
+        return userDeptId === issueDeptId;
+      }
+      return false;
+    },
+
+    ASSIGN_WORKER: (user, issue) => {
+      if (!user || !issue) return false;
+      if (user.role === ROLES.ADMIN) return true;
+      if (user.role === ROLES.OFFICER) {
+        const userDeptId = String(user.department?._id || user.department || '');
+        const issueDeptId = String(issue.assignedDepartment?._id || issue.assignedDepartment || '');
+        if (!issueDeptId || issueDeptId === 'null' || issueDeptId === 'undefined') return true;
+        return userDeptId === issueDeptId;
+      }
+      return false;
+    },
+
+    CLOSE: (user, issue) => {
       if (!user) return false;
       return [ROLES.OFFICER, ROLES.ADMIN].includes(user.role);
     },
 
     REOPEN: (user, issue) => {
       if (!user || !issue) return false;
-
       if (user.role === ROLES.CITIZEN) {
         const isReporter = String(user._id) === String(issue.reportedBy || issue.reportedBy?._id);
         return isReporter;
       }
+      if (user.role === ROLES.ADMIN) return true;
+      return false;
+    },
 
+    VERIFY_RESOLUTION: (user, issue) => {
+      if (!user || !issue) return false;
+      if (user.role === ROLES.CITIZEN) {
+        return String(user._id) === String(issue.reportedBy || issue.reportedBy?._id);
+      }
       if (user.role === ROLES.ADMIN) return true;
       return false;
     },
@@ -213,16 +300,24 @@ export const RESOURCE_PERMISSIONS = Object.freeze({
     DELETE: (user, comment) => {
       if (!user || !comment) return false;
 
+      // User can delete own comment
       if (String(user._id) === String(comment.user || comment.user?._id)) return true;
+
+      // Admin can delete any comment
       if (user.role === ROLES.ADMIN) return true;
+
       return false;
     },
 
     EDIT: (user, comment) => {
       if (!user || !comment) return false;
 
+      // User can edit own comment
       if (String(user._id) === String(comment.user || comment.user?._id)) return true;
+
+      // Admin can edit any comment
       if (user.role === ROLES.ADMIN) return true;
+
       return false;
     },
   },

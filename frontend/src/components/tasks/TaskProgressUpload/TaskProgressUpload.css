@@ -29,3 +29,35 @@
   font-size: 0.78rem;
   color: var(--text-secondary);
 }
+
+.task-progress-upload__report-area {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.task-progress-upload__report-area textarea {
+  width: 100%;
+  border: 1.5px solid var(--border-color);
+  border-radius: var(--radius-input);
+  padding: 12px;
+  background: var(--bg-surface);
+  color: var(--text-primary);
+  font-size: 0.9rem;
+  resize: vertical;
+  min-height: 80px;
+  max-height: 250px;
+  transition: border-color 0.2s;
+}
+
+.task-progress-upload__report-area textarea:focus {
+  border-color: var(--color-primary);
+  outline: none;
+}
+
+.task-progress-upload__char-count {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  text-align: right;
+  font-family: var(--font-mono);
+}

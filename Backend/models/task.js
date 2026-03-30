@@ -1,4 +1,5 @@
 const mongoose = require("mongoose");
+const { TASK_STATUSES } = require("../constants/taskStatus");
 
 const taskSchema = new mongoose.Schema(
   {
@@ -24,13 +25,13 @@ const taskSchema = new mongoose.Schema(
 
     status: {
       type: String,
-      enum: ["assigned", "accepted", "in_progress", "completed", "complication_reported"],
+      enum: [...TASK_STATUSES],
       default: "assigned",
       index: true,
     },
 
     progressImages: {
-      type: [String],
+      type: [mongoose.Schema.Types.Mixed],
       default: [],
     },
 
@@ -38,12 +39,14 @@ const taskSchema = new mongoose.Schema(
       type: String,
       default: "",
       trim: true,
+      maxlength: 2000,
     },
 
     complicationReport: {
       type: String,
       default: "",
       trim: true,
+      maxlength: 2000,
     },
 
     completedAt: {

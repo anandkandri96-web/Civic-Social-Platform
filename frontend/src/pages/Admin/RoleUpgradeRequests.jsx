@@ -16,23 +16,48 @@ const STATUS_OPTIONS = [
 ];
 
 const formatRole = (role) => {
-  const value = String(role || '').trim();
-  if (!value) return '-';
-  return `${value.charAt(0).toUpperCase()}${value.slice(1)}`;
+  const v = String(role || '').trim();
+  return v ? v.charAt(0).toUpperCase() + v.slice(1) : '-';
 };
+
+const DetailRow = ({ label, value }) => {
+  if (!value) return null;
+  return (
+    <div className="rr-detail__row">
+      <span className="rr-detail__label">{label}</span>
+      <span className="rr-detail__value">{value}</span>
+    </div>
+  );
+};
+
+const RecentCard = ({ req, onClick }) => (
+  <button type="button" className={`rr-recent__card rr-recent__card--${req.status}`} onClick={() => onClick(req)}>
+    <div className="rr-recent__top">
+      <strong>{req?.user?.name || 'Unknown'}</strong>
+      <span className={`role-requests__status role-requests__status--${req.status}`}>{req.status}</span>
+    </div>
+    <div className="rr-recent__meta">
+      {formatRole(req.currentRole)} → {formatRole(req.requestedRole)}
+    </div>
+    <div className="rr-recent__meta">{new Date(req.createdAt).toLocaleDateString()}</div>
+    {req.adminNotes && <div className="rr-recent__notes">"{req.adminNotes}"</div>}
+  </button>
+);
 
 const RoleUpgradeRequests = () => {
   const { showToast } = useToast();
   const { confirm } = useModal();
 
   const [requests, setRequests] = useState([]);
+  const [recentReviewed, setRecentReviewed] = useState([]);
   const [departments, setDepartments] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [workingId, setWorkingId] = useState('');
   const [filters, setFilters] = useState({ status: 'pending', search: '' });
-  const [notesById, setNotesById] = useState({});
-  const [deptById, setDeptById] = useState({});
+  const [selected, setSelected] = useState(null); // the request being reviewed
+  const [deptId, setDeptId] = useState('');
+  const [adminNotes, setAdminNotes] = useState('');
 
   const fetchRequests = useCallback(async () => {
     setLoading(true);
@@ -44,15 +69,6 @@ const RoleUpgradeRequests = () => {
       });
       const items = Array.isArray(payload?.data) ? payload.data : [];
       setRequests(items);
-
-      const nextDeptMap = {};
-      items.forEach((req) => {
-        const id = req?._id;
-        if (!id) return;
-        const deptId = req?.department?._id || req?.department;
-        if (deptId) nextDeptMap[id] = String(deptId);
-      });
-      setDeptById((prev) => ({ ...nextDeptMap, ...prev }));
     } catch (err) {
       setError(getErrorMessage(err));
     } finally {
@@ -60,78 +76,99 @@ const RoleUpgradeRequests = () => {
     }
   }, [filters.status]);
 
+  useEffect(() => { fetchRequests(); }, [fetchRequests]);
+
+  // Fetch last 5 reviewed (approved/rejected) independently of the filter
   useEffect(() => {
-    fetchRequests();
-  }, [fetchRequests]);
+    let mounted = true;
+    const fetchRecent = async () => {
+      try {
+        const [approvedRes, rejectedRes] = await Promise.all([
+          getRoleUpgradeRequestsAdmin({ status: 'approved', limit: 5 }),
+          getRoleUpgradeRequestsAdmin({ status: 'rejected', limit: 5 }),
+        ]);
+        if (!mounted) return;
+        const approved = Array.isArray(approvedRes?.data) ? approvedRes.data : [];
+        const rejected = Array.isArray(rejectedRes?.data) ? rejectedRes.data : [];
+        const merged = [...approved, ...rejected]
+          .sort((a, b) => new Date(b.reviewedAt || b.updatedAt) - new Date(a.reviewedAt || a.updatedAt))
+          .slice(0, 5);
+        setRecentReviewed(merged);
+      } catch { /* silent */ }
+    };
+    fetchRecent();
+    return () => { mounted = false; };
+  }, []);
 
   useEffect(() => {
     let mounted = true;
-    const fetchDepts = async () => {
-      try {
-        const data = await getDepartmentsAdmin();
-        if (!mounted) return;
-        const rawDepts = Array.isArray(data) ? data : [];
-        const deduped = [];
-        const seen = new Set();
-        for (const dept of rawDepts) {
-          const name = String(dept?.name || '').trim();
-          if (!name) continue;
-          const key = name.toLowerCase();
-          if (seen.has(key)) continue;
-          seen.add(key);
-          deduped.push({ ...dept, name });
-        }
-        setDepartments(deduped.sort((a, b) => String(a?.name || '').localeCompare(String(b?.name || ''))));
-      } catch (err) {
-        if (mounted) showToast(getErrorMessage(err), { tone: 'error' });
-      }
-    };
-    fetchDepts();
-    return () => {
-      mounted = false;
-    };
-  }, [showToast]);
+    getDepartmentsAdmin().then((data) => {
+      if (!mounted) return;
+      const raw = Array.isArray(data) ? data : [];
+      const seen = new Set();
+      const deduped = raw.filter((d) => {
+        const k = String(d?.name || '').toLowerCase();
+        if (!k || seen.has(k)) return false;
+        seen.add(k);
+        return true;
+      });
+      setDepartments(deduped.sort((a, b) => String(a.name).localeCompare(String(b.name))));
+    }).catch(() => {});
+    return () => { mounted = false; };
+  }, []);
 
   const filteredRequests = useMemo(() => {
     const q = filters.search.trim().toLowerCase();
     if (!q) return requests;
     return requests.filter((req) => {
-      const user = req?.user || {};
-      const hay = `${user.name || ''} ${user.email || ''} ${req.requestedRole || ''}`.toLowerCase();
-      return hay.includes(q);
+      const u = req?.user || {};
+      return `${u.name || ''} ${u.email || ''} ${req.requestedRole || ''}`.toLowerCase().includes(q);
     });
   }, [filters.search, requests]);
 
-  const handleDecision = async (request, decision) => {
-    const requiresDept = ['officer', 'worker'].includes(String(request?.requestedRole || ''));
-    const deptId = deptById[request._id];
+  const openDetail = (req) => {
+    setSelected(req);
+    setDeptId(req?.department?._id || req?.department || '');
+    setAdminNotes(req?.adminNotes || '');
+  };
+
+  const closeDetail = () => setSelected(null);
+
+  const handleDecision = async (decision) => {
+    const req = selected;
+    const requiresDept = ['officer', 'worker'].includes(String(req?.requestedRole || ''));
 
     if (decision === 'approved' && requiresDept && !deptId) {
       showToast('Select a department before approving.', { tone: 'error' });
       return;
     }
 
-    const approved = await confirm({
+    const ok = await confirm({
       title: decision === 'approved' ? 'Approve request' : 'Reject request',
-      message:
-        decision === 'approved'
-          ? 'Approve this role upgrade request?'
-          : 'Reject this role upgrade request?',
+      message: decision === 'approved'
+        ? `Approve ${req?.user?.name || 'this user'} as ${formatRole(req?.requestedRole)}?`
+        : `Reject this role upgrade request?`,
       confirmLabel: decision === 'approved' ? 'Approve' : 'Reject',
       tone: decision === 'approved' ? 'success' : 'danger',
     });
+    if (!ok) return;
 
-    if (!approved) return;
-
-    setWorkingId(request._id);
+    setWorkingId(req._id);
     try {
-      const payload = {
-        decision,
-        adminNotes: notesById[request._id] || '',
+      const updated = await reviewRoleUpgradeRequestAdmin(req._id, {
+        status: decision,
+        adminNotes: adminNotes.trim(),
         departmentId: deptId || undefined,
-      };
-      const updated = await reviewRoleUpgradeRequestAdmin(request._id, payload);
-      setRequests((prev) => prev.map((item) => (item._id === updated?._id ? updated : item)));
+      });
+      setRequests((prev) => prev.map((item) => item._id === updated?._id ? updated : item));
+      setSelected(updated);
+      // Refresh recent reviewed
+      if (updated?.status === 'approved' || updated?.status === 'rejected') {
+        setRecentReviewed((prev) => {
+          const filtered = prev.filter((r) => r._id !== updated._id);
+          return [updated, ...filtered].slice(0, 5);
+        });
+      }
       showToast(`Request ${decision}.`, { tone: 'success' });
     } catch (err) {
       showToast(getErrorMessage(err), { tone: 'error' });
@@ -142,12 +179,15 @@ const RoleUpgradeRequests = () => {
 
   if (loading) return <Loader fullScreen />;
 
+  const isPending = selected?.status === 'pending';
+  const requiresDept = ['officer', 'worker'].includes(String(selected?.requestedRole || ''));
+
   return (
     <section className="role-requests page">
       <div className="container">
         <PageHeader
           title="Role Upgrade Requests"
-          subtitle="Review and approve role upgrade applications from citizens and staff."
+          subtitle="Review and approve role upgrade applications."
         />
 
         <div className="role-requests__toolbar">
@@ -155,16 +195,14 @@ const RoleUpgradeRequests = () => {
             type="search"
             placeholder="Search by name or email"
             value={filters.search}
-            onChange={(event) => setFilters((prev) => ({ ...prev, search: event.target.value }))}
+            onChange={(e) => setFilters((p) => ({ ...p, search: e.target.value }))}
           />
           <select
             value={filters.status}
-            onChange={(event) => setFilters((prev) => ({ ...prev, status: event.target.value }))}
+            onChange={(e) => setFilters((p) => ({ ...p, status: e.target.value }))}
           >
-            {STATUS_OPTIONS.map((opt) => (
-              <option key={opt.value} value={opt.value}>
-                {opt.label}
-              </option>
+            {STATUS_OPTIONS.map((o) => (
+              <option key={o.value} value={o.value}>{o.label}</option>
             ))}
           </select>
           <button type="button" className="role-requests__refresh" onClick={fetchRequests}>
@@ -174,109 +212,163 @@ const RoleUpgradeRequests = () => {
 
         {error && <div className="issues-error">{error}</div>}
 
-        <section className="card role-requests__table table-wrapper">
-          <table className="role-requests__grid">
-            <thead>
-              <tr>
-                <th>User</th>
-                <th>Current Role</th>
-                <th>Requested Role</th>
-                <th>Preferred Dept</th>
-                <th>Submitted</th>
-                <th>Status</th>
-                <th>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filteredRequests.length === 0 ? (
+        {/* RECENT REQUESTS */}
+        {recentReviewed.length > 0 && (
+          <div className="rr-recent">
+            <h2 className="rr-recent__heading">Recent Activity</h2>
+            <div className="rr-recent__list">
+              {recentReviewed.map((req) => (
+                <RecentCard key={req._id} req={req} onClick={openDetail} />
+              ))}
+            </div>
+          </div>
+        )}
+
+        <div className={`rr-layout ${selected ? 'rr-layout--split' : ''}`}>
+          {/* LIST */}
+          <section className="card role-requests__table table-wrapper">
+            <table className="role-requests__grid">
+              <thead>
                 <tr>
-                  <td colSpan={7} className="role-requests__empty">No role upgrade requests found.</td>
+                  <th>User</th>
+                  <th>Current</th>
+                  <th>Requested</th>
+                  <th>Submitted</th>
+                  <th>Status</th>
                 </tr>
-              ) : (
-                filteredRequests.map((req) => {
-                  const user = req?.user || {};
-                  const requiresDept = ['officer', 'worker'].includes(String(req?.requestedRole || ''));
-                  const isPending = req.status === 'pending';
-                  return (
-                    <tr key={req._id}>
-                      <td>
-                        <strong>{user.name || 'Unknown'}</strong>
-                        <div className="role-requests__meta">{user.email || '-'}</div>
-                      </td>
-                      <td>{formatRole(req.currentRole)}</td>
-                      <td>{formatRole(req.requestedRole)}</td>
-                      <td>
-                        <div className="role-requests__meta">{req.preferredDepartment || '-'}</div>
-                        {requiresDept && isPending ? (
-                          <select
-                            value={deptById[req._id] || ''}
-                            onChange={(event) =>
-                              setDeptById((prev) => ({ ...prev, [req._id]: event.target.value }))
-                            }
-                          >
-                            <option value="">Select department</option>
-                            {departments.map((dept) => (
-                              <option key={dept._id} value={dept._id}>
-                                {dept.name}
-                              </option>
-                            ))}
-                          </select>
-                        ) : req.department ? (
-                          <div className="role-requests__meta">Assigned: {req.department?.name || req.department}</div>
-                        ) : null}
-                      </td>
-                      <td>{new Date(req.createdAt).toLocaleDateString()}</td>
-                      <td>
-                        <span className={`role-requests__status role-requests__status--${req.status}`}>
-                          {req.status}
-                        </span>
-                      </td>
-                      <td>
-                        <div className="role-requests__actions">
-                          {isPending ? (
-                            <>
-                              <input
-                                type="text"
-                                placeholder="Admin notes"
-                                value={notesById[req._id] || ''}
-                                onChange={(event) =>
-                                  setNotesById((prev) => ({ ...prev, [req._id]: event.target.value }))
-                                }
-                                disabled={workingId === req._id}
-                              />
-                              <div className="role-requests__buttons">
-                                <button
-                                  type="button"
-                                  className="approve"
-                                  onClick={() => handleDecision(req, 'approved')}
-                                  disabled={workingId === req._id}
-                                >
-                                  Approve
-                                </button>
-                                <button
-                                  type="button"
-                                  className="reject"
-                                  onClick={() => handleDecision(req, 'rejected')}
-                                  disabled={workingId === req._id}
-                                >
-                                  Reject
-                                </button>
-                              </div>
-                            </>
-                          ) : (
-                            <div className="role-requests__meta">
-                              {req.adminNotes ? `Notes: ${req.adminNotes}` : 'No admin notes.'}
-                            </div>
-                          )}
-                        </div>
-                      </td>
-                    </tr>
-                  );
-                })
+              </thead>
+              <tbody>
+                {filteredRequests.length === 0 ? (
+                  <tr>
+                    <td colSpan={5} className="role-requests__empty">No requests found.</td>
+                  </tr>
+                ) : filteredRequests.map((req) => (
+                  <tr
+                    key={req._id}
+                    className={`rr-row ${selected?._id === req._id ? 'rr-row--active' : ''}`}
+                    onClick={() => openDetail(req)}
+                  >
+                    <td>
+                      <strong>{req?.user?.name || 'Unknown'}</strong>
+                      <div className="role-requests__meta">{req?.user?.email || '-'}</div>
+                    </td>
+                    <td>{formatRole(req.currentRole)}</td>
+                    <td>{formatRole(req.requestedRole)}</td>
+                    <td>{new Date(req.createdAt).toLocaleDateString()}</td>
+                    <td>
+                      <span className={`role-requests__status role-requests__status--${req.status}`}>
+                        {req.status}
+                      </span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </section>
+
+          {/* DETAIL PANEL */}
+          {selected && (
+            <aside className="rr-detail card">
+              <div className="rr-detail__head">
+                <div>
+                  <h2 className="rr-detail__title">
+                    {selected?.user?.name || 'Unknown'}
+                    <span className={`role-requests__status role-requests__status--${selected.status}`}>
+                      {selected.status}
+                    </span>
+                  </h2>
+                  <p className="rr-detail__sub">{selected?.user?.email}</p>
+                </div>
+                <button type="button" className="rr-detail__close" onClick={closeDetail}>✕</button>
+              </div>
+
+              <div className="rr-detail__section">
+                <h3>Role Request</h3>
+                <DetailRow label="Current role" value={formatRole(selected.currentRole)} />
+                <DetailRow label="Requested role" value={formatRole(selected.requestedRole)} />
+                <DetailRow label="Preferred department" value={selected.preferredDepartment} />
+                <DetailRow label="Submitted" value={new Date(selected.createdAt).toLocaleString()} />
+              </div>
+
+              <div className="rr-detail__section">
+                <h3>Application Details</h3>
+                <DetailRow label="Motivation" value={selected.motivation} />
+                <DetailRow label="Experience" value={selected.experience} />
+                <DetailRow label="Availability" value={selected.availability} />
+                <DetailRow label="Skills" value={selected.skills} />
+                {Array.isArray(selected.supportingLinks) && selected.supportingLinks.length > 0 && (
+                  <div className="rr-detail__row">
+                    <span className="rr-detail__label">Supporting links</span>
+                    <div className="rr-detail__links">
+                      {selected.supportingLinks.map((link, i) => (
+                        <a key={i} href={link} target="_blank" rel="noreferrer">{link}</a>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {selected.adminNotes && !isPending && (
+                <div className="rr-detail__section">
+                  <h3>Admin Notes</h3>
+                  <p className="rr-detail__notes">{selected.adminNotes}</p>
+                </div>
               )}
-            </tbody>
-          </table>
-        </section>
+
+              {isPending && (
+                <div className="rr-detail__section rr-detail__actions">
+                  <h3>Review</h3>
+
+                  {requiresDept && (
+                    <label className="rr-detail__field">
+                      <span>Assign department <span className="rr-required">*</span></span>
+                      <select
+                        value={deptId}
+                        onChange={(e) => setDeptId(e.target.value)}
+                        disabled={!!workingId}
+                      >
+                        <option value="">Select department</option>
+                        {departments.map((d) => (
+                          <option key={d._id} value={d._id}>{d.name}</option>
+                        ))}
+                      </select>
+                    </label>
+                  )}
+
+                  <label className="rr-detail__field">
+                    <span>Admin notes (optional)</span>
+                    <textarea
+                      rows={3}
+                      placeholder="Add notes for the applicant..."
+                      value={adminNotes}
+                      onChange={(e) => setAdminNotes(e.target.value)}
+                      disabled={!!workingId}
+                    />
+                  </label>
+
+                  <div className="rr-detail__buttons">
+                    <button
+                      type="button"
+                      className="rr-btn rr-btn--approve"
+                      onClick={() => handleDecision('approved')}
+                      disabled={!!workingId}
+                    >
+                      {workingId === selected._id ? 'Processing…' : 'Approve'}
+                    </button>
+                    <button
+                      type="button"
+                      className="rr-btn rr-btn--reject"
+                      onClick={() => handleDecision('rejected')}
+                      disabled={!!workingId}
+                    >
+                      Reject
+                    </button>
+                  </div>
+                </div>
+              )}
+            </aside>
+          )}
+        </div>
       </div>
     </section>
   );

@@ -31,7 +31,7 @@
 }
 
 .dept-create input {
-  border: 1px solid var(--border-color);
+  border: 1.5px solid var(--border-color);
   border-radius: var(--radius-input);
   background: var(--bg-surface);
   color: var(--text-primary);
@@ -69,7 +69,7 @@
 .user-table-wrap {
   padding: 16px;
   background: var(--bg-surface);
-  border: 1px solid var(--border-color);
+  border: 1.5px solid var(--border-color);
   border-radius: 12px;
   overflow: hidden;
 }
@@ -84,7 +84,7 @@
 
 .user-table th,
 .user-table td {
-  border-bottom: 1px solid var(--border-color);
+  border-bottom: 1.5px solid var(--border-color);
   text-align: left;
   padding: 12px 10px;
   font-size: 0.85rem;
@@ -119,7 +119,7 @@
   -webkit-appearance: none;
   -moz-appearance: none;
 
-  border: 1px solid var(--border-color);
+  border: 1.5px solid var(--border-color);
   border-radius: var(--radius-input);
   background: var(--bg-surface);
   color: var(--text-primary);
@@ -160,7 +160,7 @@ select option {
    TABLE BUTTONS
 ========================= */
 .user-table button {
-  border: 1px solid var(--border-color);
+  border: 1.5px solid var(--border-color);
   border-radius: var(--radius-input);
   background: var(--bg-surface);
   color: var(--text-primary);

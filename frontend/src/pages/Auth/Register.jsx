@@ -51,8 +51,13 @@ const Register = () => {
         return;
       }
 
-      if (password.length < 6 || password.length > 128) {
-        setError('Password must be 6-128 characters');
+      if (password.length < 8 || password.length > 128) {
+        setError('Password must be 8-128 characters');
+        return;
+      }
+
+      if (!/^(?=.*[0-9])(?=.*[^A-Za-z0-9]).{8,128}$/.test(password)) {
+        setError('Password must include at least one number and one special character');
         return;
       }
 
@@ -124,7 +129,7 @@ const Register = () => {
               value={userData.password}
               onChange={handleChange}
               required
-              minLength={6}
+              minLength={8}
             />
             <button
               type="button"
@@ -137,7 +142,7 @@ const Register = () => {
           </div>
 
           {/* BUTTON */}
-          <Button type="submit" disabled={submitting} className="full-width register-btn">
+          <Button type="submit" disabled={submitting} className="full-width register-btn" variant="sky-blue">
             {submitting ? 'Creating Account...' : 'Create Account'}
           </Button>
 

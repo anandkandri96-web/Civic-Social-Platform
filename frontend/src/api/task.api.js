@@ -11,8 +11,10 @@ export const createTask = async (payload) => {
   return getResponseData(res);
 };
 
-export const updateTaskStatus = async (taskId, status) => {
-  const res = await api.patch(`/tasks/${taskId}/status`, { status });
+export const updateTaskStatus = async (taskId, status, completionReport = '') => {
+  const payload = { status };
+  if (completionReport) payload.completionReport = completionReport;
+  const res = await api.patch(`/tasks/${taskId}/status`, payload);
   return getResponseData(res);
 };
 

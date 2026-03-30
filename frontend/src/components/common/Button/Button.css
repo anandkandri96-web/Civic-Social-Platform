@@ -1,3 +1,33 @@
+.button--sky-blue {
+  background: linear-gradient(90deg, var(--color-sky-blue) 60%, #60a5fa 100%);
+  color: #fff;
+  border: 1.5px solid var(--color-sky-blue);
+  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.12);
+}
+.button--mint-green {
+  background: linear-gradient(90deg, var(--color-mint-green) 60%, #6ee7b7 100%);
+  color: #fff;
+  border: 1.5px solid var(--color-mint-green);
+  box-shadow: 0 2px 8px rgba(52, 211, 153, 0.12);
+}
+.button--sunny-yellow {
+  background: linear-gradient(90deg, var(--color-sunny-yellow) 60%, #fde68a 100%);
+  color: #7c5700;
+  border: 1.5px solid var(--color-sunny-yellow);
+  box-shadow: 0 2px 8px rgba(250, 204, 21, 0.12);
+}
+.button--coral-pink {
+  background: linear-gradient(90deg, var(--color-coral-pink) 60%, #fb7185 100%);
+  color: #fff;
+  border: 1.5px solid var(--color-coral-pink);
+  box-shadow: 0 2px 8px rgba(244, 63, 94, 0.12);
+}
+.button--lavender {
+  background: linear-gradient(90deg, var(--color-lavender) 60%, #c084fc 100%);
+  color: #fff;
+  border: 1.5px solid var(--color-lavender);
+  box-shadow: 0 2px 8px rgba(168, 85, 247, 0.12);
+}
 .button {
   display: inline-flex;
   align-items: center;

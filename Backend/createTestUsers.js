@@ -7,6 +7,7 @@ const MONGO_URI = process.env.MONGO_URI || "mongodb://127.0.0.1:27017/civicdb";
 
 async function createTestUsers() {
   await mongoose.connect(MONGO_URI);
+  // For local dev only:
   console.log("Connected to MongoDB");
 
   const testUsers = [
@@ -48,13 +49,16 @@ async function createTestUsers() {
     const existingUser = await User.findOne({ email: userData.email });
     if (!existingUser) {
       await User.create(userData);
+      // For local dev only:
       console.log(`Created test user: ${userData.email}`);
     } else {
+      // For local dev only:
       console.log(`Test user already exists: ${userData.email}`);
     }
   }
 
   await mongoose.disconnect();
+  // For local dev only:
   console.log("Test users creation complete");
 }
 

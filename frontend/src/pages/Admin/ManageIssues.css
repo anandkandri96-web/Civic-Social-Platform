@@ -23,7 +23,7 @@
   padding: 10px 14px;
   margin-bottom: var(--space-md);
   border-radius: 999px;
-  border: 1px solid var(--border-color);
+  border: 1.5px solid var(--border-color);
   background: var(--bg-surface);
   color: var(--text-secondary);
   font-size: 0.85rem;
@@ -44,7 +44,7 @@
   padding: var(--space-md);
   border-radius: 18px;
   background: var(--bg-surface);
-  border: 1px solid var(--border-color);
+  border: 1.5px solid var(--border-color);
   transition: all 0.25s ease;
 }
 
@@ -168,7 +168,7 @@
   -moz-appearance: none;
 
   background: var(--bg-surface);
-  border: 1px solid var(--border-color);
+  border: 1.5px solid var(--border-color);
   border-radius: 10px;
 
   padding: 12px 40px 12px 14px;
@@ -235,7 +235,7 @@
   flex: 1;
   padding: 10px 14px;
   border-radius: 10px;
-  border: 1px solid var(--border-color);
+  border: 1.5px solid var(--border-color);
   background: var(--bg-surface);
   color: var(--text-primary);
   font-size: 0.9rem;
@@ -251,7 +251,7 @@
 .manage-issues-search button {
   padding: 10px 18px;
   border-radius: 10px;
-  border: 1px solid var(--border-color);
+  border: 1.5px solid var(--border-color);
   background: var(--bg-surface);
   color: var(--text-primary);
   font-size: 0.85rem;

@@ -13,6 +13,8 @@
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",
+    "@storybook/addon-vitest": "^10.3.3",
+    "@vitest/browser-playwright": "^4.1.2",
     "axios": "^1.13.4",
     "chart.js": "^4.5.1",
     "jwt-decode": "^3.1.2",

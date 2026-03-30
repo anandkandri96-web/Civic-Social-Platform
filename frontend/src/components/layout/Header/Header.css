@@ -1,7 +1,7 @@
 .app-header {
   position: sticky;
   top: 0;
-  z-index: 900;
+  z-index: 1200;
   height: 64px;
   display: flex;
   align-items: center;
@@ -254,7 +254,7 @@
   top: 46px;
   min-width: 220px;
   background: var(--bg-card);
-  border: 1px solid var(--border-color);
+  border: 1.5px solid var(--color-primary);
   border-radius: var(--radius-card);
   box-shadow: var(--shadow-card);
   padding: 12px;
@@ -293,6 +293,28 @@
   border-radius: var(--radius-button);
   text-decoration: none;
   transition: background var(--transition-fast);
+}
+
+.app-header__login-btn {
+  height: 40px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 16px;
+  border-radius: 10px;
+  font-weight: 600;
+  color: #ffffff;
+  border: none;
+  background: linear-gradient(135deg, #2F8398 0%, #87A83F 100%);
+  text-decoration: none;
+  transition: all 0.3s ease;
+  box-shadow: var(--shadow-card);
+}
+
+.app-header__login-btn:hover {
+  transform: translateY(-2px);
+  filter: brightness(1.1);
+  box-shadow: 0 4px 12px rgba(47, 131, 152, 0.4);
 }
 
 .app-header__link:hover {

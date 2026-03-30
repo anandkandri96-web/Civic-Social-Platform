@@ -23,7 +23,7 @@
 }
 
 .role-dashboard__action {
-  border: 1px solid var(--border-color);
+  border: 1.5px solid var(--border-color);
   border-radius: var(--radius-button);
   padding: 8px 12px;
   color: var(--color-primary-light);
@@ -109,7 +109,7 @@
 .role-dashboard__table th,
 .role-dashboard__table td {
   padding: 12px;
-  border-bottom: 1px solid var(--border-color);
+  border-bottom: 1.5px solid var(--border-color);
   text-align: left;
   font-size: 0.8rem;
   vertical-align: middle;
@@ -133,7 +133,7 @@
 .role-dashboard__actions button,
 .role-dashboard__actions select,
 .role-dashboard__actions input {
-  border: 1px solid var(--border-color);
+  border: 1.5px solid var(--border-color);
   border-radius: var(--radius-button);
   background: var(--bg-surface);
   color: var(--text-primary);
@@ -277,4 +277,26 @@
     grid-template-columns: 1fr;
   }
 
+}
+
+.role-dashboard__review-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 6px 14px;
+  border-radius: var(--radius-button);
+  font-size: 0.8rem;
+  font-weight: 700;
+  background: var(--color-primary);
+  color: var(--text-on-accent);
+  text-decoration: none;
+  border: 1px solid var(--color-primary);
+  transition: filter 0.2s, transform 0.2s;
+  white-space: nowrap;
+}
+
+.role-dashboard__review-link:hover {
+  filter: brightness(1.1);
+  transform: translateY(-1px);
+  color: var(--text-on-accent);
 }

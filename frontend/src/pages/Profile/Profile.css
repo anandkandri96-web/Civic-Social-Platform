@@ -17,7 +17,7 @@
 
   border-radius: 16px;
   background: var(--bg-card);
-  border: 1px solid var(--border-color);
+  border: 1.5px solid var(--color-primary);
 
   position: relative;
   overflow: hidden;
@@ -95,7 +95,7 @@
   padding: 18px;
   border-radius: 14px;
   background: var(--bg-card);
-  border: 1px solid var(--border-color);
+  border: 1.5px solid var(--color-primary);
   transition: all 0.25s ease;
 }
 
@@ -149,7 +149,7 @@
 .profile-list > div {
   display: grid;
   gap: 4px;
-  border-bottom: 1px solid var(--border-color);
+  border-bottom: 1.5px solid var(--border-color);
   padding-bottom: 10px;
 }
 
@@ -176,7 +176,7 @@
 .profile-password-form input {
   padding: 10px 12px;
   border-radius: 10px;
-  border: 1px solid var(--border-color);
+  border: 1.5px solid var(--border-color);
   background: var(--bg-surface);
   color: var(--text-primary);
   font-size: 0.85rem;

@@ -19,8 +19,9 @@ const adminRoutes = require("./routes/admin.routes");
 const analyticsRoutes = require("./routes/analytics.routes");
 const heatmapRoutes = require("./routes/heatmap.routes");
 const notificationRoutes = require("./routes/notification.routes");
-const imageRoutes = require("./routes/image.routes");
 const roleUpgradeRoutes = require("./routes/roleUpgrade.routes");
+
+const imageRoutes = require("./routes/image.routes");
 const errorHandler = require("./middlewares/error.middleware");
 
 const app = express();
@@ -43,7 +44,7 @@ app.use(
         return cb(null, origin === clientUrl);
       }
 
-      const allowed = new Set([clientUrl, "http://localhost:5173", "http://127.0.0.1:5173"].filter(Boolean));
+      const allowed = new Set([clientUrl, "http://localhost:5173", "http://127.0.0.1:5173", "http://localhost:5174", "http://127.0.0.1:5174", "http://localhost:5175", "http://127.0.0.1:5175", "http://localhost:5176", "http://127.0.0.1:5176", "http://localhost:5177", "http://127.0.0.1:5177", "http://localhost:5178", "http://127.0.0.1:5178", "http://localhost:5179", "http://127.0.0.1:5179"].filter(Boolean));
       return cb(null, allowed.has(origin));
     },
     credentials: true,
@@ -76,6 +77,8 @@ app.get("/health", (_req, res) => {
   res.status(200).json({ ok: true, service: "civic-backend" });
 });
 
+
+app.use("/api/images", imageRoutes);
 app.use("/api/auth", authRoutes);
 app.use("/api/issues", issueRoutes);
 app.use("/api/votes", voteRoutes);
@@ -88,7 +91,6 @@ app.use("/api/admin", adminRoutes);
 app.use("/api/analytics", analyticsRoutes);
 app.use("/api/heatmap", heatmapRoutes);
 app.use("/api/notifications", notificationRoutes);
-app.use("/api/images", imageRoutes);
 app.use("/api/role-upgrades", roleUpgradeRoutes);
 
 app.use((req, res) => {

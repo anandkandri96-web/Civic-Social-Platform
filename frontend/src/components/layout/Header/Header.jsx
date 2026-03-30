@@ -1,8 +1,9 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../../hooks/useAuth';
-import { useRole } from '../../../hooks/useRole';
+// ...existing code...
 import { usePermission } from '../../../hooks/usePermission';
+import { useRole } from '../../../hooks/useRole';
 import { getNotifications } from '@api/notifications.api.js';
 import NotificationPanel from '../../notifications/NotificationPanel/NotificationPanel';
 import ThemeToggle from '../../common/ThemeToggle/ThemeToggle';
@@ -196,6 +197,11 @@ const Header = () => {
               Role Requests
             </NavLink>
           )}
+          {can('officer:review_issues') && !can('admin:view_analytics') && (
+            <NavLink to="/dashboard/officer/analytics" className={({ isActive }) => `app-header__nav-link${isActive ? ' is-active' : ''}`}>
+              View Analytics
+            </NavLink>
+          )}
         </nav>
       </div>
 
@@ -288,7 +294,7 @@ const Header = () => {
           </>
         ) : (
           <div className="app-header__auth">
-            <Link to="/login" className="app-header__link">
+            <Link to="/login" className="app-header__login-btn">
               Login
             </Link>
             <Link to="/register" className="app-header__report">

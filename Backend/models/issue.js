@@ -1,5 +1,7 @@
 const mongoose = require("mongoose");
 const { ISSUE_CATEGORIES, ISSUE_STATUS } = require("../utils/constants");
+const { HANDLING_MODE } = require("../config/issueStatusMachine");
+const { imageItemSchema } = require("./schemas/imageItem.schema");
 
 const issueSchema = new mongoose.Schema(
   {
@@ -7,6 +9,7 @@ const issueSchema = new mongoose.Schema(
       type: String,
       required: true,
       trim: true,
+      minlength: 3,
       maxlength: 120,
     },
 
@@ -34,9 +37,34 @@ const issueSchema = new mongoose.Schema(
       index: true,
     },
 
+    /** { url, cloudinaryId } — legacy string entries normalized at read time in API helpers */
     images: {
-      type: [String],
+      type: [mongoose.Schema.Types.Mixed],
       default: [],
+    },
+
+    handlingMode: {
+      type: String,
+      enum: Object.values(HANDLING_MODE),
+      default: HANDLING_MODE.UNASSIGNED,
+      index: true,
+    },
+
+    volunteerClaimedAt: {
+      type: Date,
+      default: null,
+    },
+
+    verificationDeadline: {
+      type: Date,
+      default: null,
+      index: true,
+    },
+
+    acceptedResolution: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Resolution",
+      default: null,
     },
 
     location: {
@@ -72,6 +100,7 @@ const issueSchema = new mongoose.Schema(
         ISSUE_STATUS.UNDER_REVIEW,
         ISSUE_STATUS.ASSIGNED_TO_DEPARTMENT,
         ISSUE_STATUS.WORK_IN_PROGRESS,
+        ISSUE_STATUS.AWAITING_OFFICER_VERIFICATION,
         ISSUE_STATUS.RESOLVED,
         ISSUE_STATUS.CITIZEN_VERIFIED,
         ISSUE_STATUS.CLOSED,
@@ -119,7 +148,7 @@ const issueSchema = new mongoose.Schema(
     },
 
     communityProof: {
-      type: [String],
+      type: [mongoose.Schema.Types.Mixed],
       default: [],
     },
 
@@ -201,5 +230,6 @@ const issueSchema = new mongoose.Schema(
 issueSchema.index({ location: "2dsphere" });
 issueSchema.index({ category: 1, status: 1 });
 issueSchema.index({ title: "text", description: "text" });
+issueSchema.index({ priorityScore: -1, createdAt: -1 });
 
 module.exports = mongoose.model("Issue", issueSchema);

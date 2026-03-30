@@ -8,8 +8,12 @@ const { apiResponse } = require("../utils/apiResponse");
  * Response example:
  * [{ lat: 12.9716, lng: 77.5946, count: 12 }]
  */
-exports.getPublicHeatmap = async (_req, res) => {
+exports.getPublicHeatmap = async (req, res) => {
   try {
+    const pageNum = Math.max(1, Number(req.query.page) || 1);
+    const limitNum = Math.min(5000, Math.max(1, Number(req.query.limit) || 500));
+    const skip = (pageNum - 1) * limitNum;
+
     const points = await Issue.aggregate([
       {
         $match: {
@@ -62,12 +66,18 @@ exports.getPublicHeatmap = async (_req, res) => {
         },
       },
       { $sort: { count: -1 } },
-      { $limit: 5000 },
+      { $skip: skip },
+      { $limit: limitNum },
     ]);
 
-    return apiResponse(res, 200, "Public heatmap points fetched", points);
+    return apiResponse(res, 200, "Public heatmap points fetched", points, {
+      page: pageNum,
+      limit: limitNum,
+      returned: points.length,
+    });
   } catch (error) {
-    console.error("Public heatmap error:", error);
+    const logger = require("../utils/logger");
+    logger.error("Public heatmap error:", error);
     return apiResponse(res, 500, "Failed to fetch heatmap data");
   }
 };

@@ -1,9 +1,47 @@
+.volunteer-action-btn {
+  border: 1px solid var(--color-primary);
+  border-radius: 999px;
+  color: var(--text-on-accent);
+  padding: 10px 22px;
+  font-weight: 800;
+  font-size: 1rem;
+  margin-top: 12px;
+  margin-right: 12px;
+  box-shadow: none;
+  background: var(--color-primary);
+  transition: border-color 0.2s, transform 0.2s;
+  cursor: pointer;
+}
+.btn-sky-blue {
+  border-color: #3B82F6;
+  background: #3B82F6;
+  color: #fff;
+}
+.btn-sky-blue:hover {
+  background: #34D399;
+  color: #fff;
+  border-color: #34D399;
+  transform: translateY(-2px) scale(1.04);
+  box-shadow: none;
+}
+.btn-mint-green {
+  border-color: #34D399;
+  background: #34D399;
+  color: #fff;
+}
+.btn-mint-green:hover {
+  background: #3B82F6;
+  color: #fff;
+  border-color: #3B82F6;
+  transform: translateY(-2px) scale(1.04);
+  box-shadow: none;
+}
 .volunteer-panel {
   margin-top: 24px;
   padding: 16px;
-  border: 1px solid var(--border-color);
+  border: 1px solid var(--color-primary);
   border-radius: var(--radius-card);
-  background: var(--bg-card);
+  background: transparent;
 }
 
 .volunteer-panel h3 {
@@ -12,10 +50,10 @@
 
 .volunteer-panel button {
   margin-right: 12px;
-  border: 1px solid var(--border-color);
+  border: 1px solid var(--color-primary);
   border-radius: var(--radius-button);
-  background: var(--bg-surface);
-  color: var(--text-primary);
+  background: var(--color-primary);
+  color: var(--text-on-accent);
   padding: var(--space-3) var(--space-4);
   font-weight: 800;
   font-size: 12px;
@@ -25,10 +63,10 @@
 .volunteer-panel__link {
   display: inline-block;
   margin-top: 8px;
-  border: 1px solid var(--border-color);
+  border: 1px solid var(--color-primary);
   border-radius: var(--radius-button);
   padding: var(--space-2) var(--space-3);
-  background: var(--bg-surface);
-  color: var(--text-primary);
+  background: var(--color-primary);
+  color: var(--text-on-accent);
   font-size: 0.8rem;
 }

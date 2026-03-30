@@ -4,7 +4,6 @@ const { apiResponse } = require("../utils/apiResponse");
 exports.getTrends = async (req, res) => {
   try {
     const { from, to } = req.query;
-
     const matchStage = {};
     if (from || to) {
       matchStage.createdAt = {};
@@ -72,15 +71,21 @@ exports.getTrends = async (req, res) => {
       statusBreakdown,
       avgResolutionTime: avgResolutionTime[0]?.avgHours || 0,
       resolvedByDepartment,
+      filters: { from: from || null, to: to || null },
     });
   } catch (error) {
-    console.error("Analytics Error:", error);
+    const logger = require("../utils/logger");
+    logger.error("Analytics Error:", error);
     return apiResponse(res, 500, "Failed to load analytics");
   }
 };
 
 exports.getHeatmap = async (req, res) => {
   try {
+    const pageNum = Math.max(1, Number(req.query.page) || 1);
+    const limitNum = Math.min(5000, Math.max(1, Number(req.query.limit) || 500));
+    const skip = (pageNum - 1) * limitNum;
+
     const points = await Issue.aggregate([
       {
         $group: {
@@ -106,11 +111,18 @@ exports.getHeatmap = async (req, res) => {
       {
         $sort: { weight: -1 },
       },
+      { $skip: skip },
+      { $limit: limitNum },
     ]);
 
-    return apiResponse(res, 200, "Heatmap points fetched", points);
+    return apiResponse(res, 200, "Heatmap points fetched", points, {
+      page: pageNum,
+      limit: limitNum,
+      returned: points.length,
+    });
   } catch (error) {
-    console.error("Heatmap Error:", error);
+    const logger = require("../utils/logger");
+    logger.error("Heatmap Error:", error);
     return apiResponse(res, 500, "Failed to fetch heatmap data");
   }
 };

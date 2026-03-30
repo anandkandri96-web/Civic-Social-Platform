@@ -107,6 +107,27 @@ async function notifyIssueResolved(issue, resolverType) {
   });
 }
 
+async function notifyOfficerTaskCompleted(issue, worker) {
+  // Notify officers in the same department dynamically
+  if (!issue.assignedDepartment) return;
+  const officers = await User.find({
+    role: ROLES.OFFICER,
+    department: issue.assignedDepartment,
+    isActive: true,
+  }).select("_id");
+
+  if (officers.length > 0) {
+    await createNotificationsBulk(
+      officers.map((officer) => ({
+        userId: officer._id,
+        title: "Issue Resolved by Worker",
+        message: `${worker.name} has successfully completed and resolved the task for: ${issue.title}`,
+        issueId: issue._id,
+      }))
+    );
+  }
+}
+
 module.exports = {
   createNotification,
   createNotificationsBulk,
@@ -115,4 +136,5 @@ module.exports = {
   notifyCitizenVerificationRequest,
   notifyIssueEscalated,
   notifyIssueResolved,
+  notifyOfficerTaskCompleted,
 };

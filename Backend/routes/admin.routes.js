@@ -1,8 +1,9 @@
 const router = require("express").Router();
 const { protect } = require("../middlewares/auth.middleware");
-const { canPerform } = require("../middlewares/permission.middleware");
+const { canPerform, canPerformResourceAction } = require("../middlewares/permission.middleware");
 const { validatePagination, validateSort } = require("../middlewares/validation.middleware");
 const { PERMISSIONS } = require("../config/permissions.config");
+const Issue = require("../models/issue");
 const {
   getStats,
   getAllIssues,
@@ -16,10 +17,13 @@ const {
   getDepartments,
   createDepartment,
 } = require("../controllers/admin.controller");
+const { forceCloseIssue } = require("../controllers/issue.controller");
 const {
   getRoleUpgradeRequests,
   reviewRoleUpgradeRequest,
 } = require("../controllers/roleUpgrade.controller");
+const { validateRequest } = require("../middlewares/validateRequest.middleware");
+const schemas = require("../validators/joi.schemas");
 const { getHeatmap } = require("../controllers/analytics.controller");
 
 // ✅ Admin Analytics & Insights
@@ -41,19 +45,29 @@ router.get(
   getAllIssues
 );
 
+router.patch(
+  "/issues/:id/force-close",
+  protect,
+  canPerform(PERMISSIONS.ADMIN_CLOSE_ISSUE),
+  canPerformResourceAction("ISSUE", "CLOSE", async (req) => Issue.findById(req.params.id)),
+  forceCloseIssue
+);
+
 // ✅ Admin User Management
 router.get("/users", protect, canPerform(PERMISSIONS.ADMIN_MANAGE_USERS), getUsers);
-router.post("/users", protect, canPerform(PERMISSIONS.ADMIN_MANAGE_USERS), createUser);
+router.post("/users", protect, canPerform(PERMISSIONS.ADMIN_MANAGE_USERS), validateRequest(schemas.adminCreateUser), createUser);
 router.patch(
   "/users/:id/role",
   protect,
   canPerform(PERMISSIONS.ADMIN_CHANGE_ROLE),
+  validateRequest(schemas.adminUpdateUserRole),
   updateUserRole
 );
 router.patch(
   "/users/:id/status",
   protect,
   canPerform(PERMISSIONS.ADMIN_MANAGE_USERS),
+  validateRequest(schemas.adminUpdateUserStatus),
   updateUserStatus
 );
 router.patch(
@@ -66,6 +80,7 @@ router.patch(
   "/users/:id/department",
   protect,
   canPerform(PERMISSIONS.ADMIN_MANAGE_USERS),
+  validateRequest(schemas.adminAssignUserDepartment),
   assignUserDepartment
 );
 router.delete(
@@ -87,6 +102,7 @@ router.patch(
   "/role-upgrades/:id/decision",
   protect,
   canPerform(PERMISSIONS.ADMIN_MANAGE_ROLE_UPGRADES),
+  validateRequest(schemas.roleUpgradeReviewDecision),
   reviewRoleUpgradeRequest
 );
 
@@ -96,6 +112,7 @@ router.post(
   "/departments",
   protect,
   canPerform(PERMISSIONS.ADMIN_MANAGE_DEPARTMENTS),
+  validateRequest(schemas.departmentCreate),
   createDepartment
 );
 

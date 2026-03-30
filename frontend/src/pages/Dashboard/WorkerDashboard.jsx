@@ -45,19 +45,10 @@ const WorkerDashboard = () => {
             <p>Manage your assigned tasks</p>
           </div>
 
-          <div className="worker-dashboard__profile card">
-            <div className="worker-dashboard__profile-kv">
-              <span>Worker ID</span>
-              <strong>{workerId || 'N/A'}</strong>
-            </div>
-            <div className="worker-dashboard__profile-kv">
-              <span>Name</span>
-              <strong>{user?.name || '-'}</strong>
-            </div>
-            <div className="worker-dashboard__profile-kv">
-              <span>Department</span>
-              <strong>{departmentName || '-'}</strong>
-            </div>
+          <div className="worker-info card">
+            <p><span>Worker ID:</span> {workerId || 'N/A'}</p>
+            <p><span>Name:</span> {user?.name || '-'}</p>
+            <p><span>Department:</span> {departmentName || '-'}</p>
           </div>
         </header>
 
@@ -66,7 +57,7 @@ const WorkerDashboard = () => {
         {loading ? (
           <p>Loading tasks...</p>
         ) : (
-          <div className="tasks-grid">
+          <div className="issue-cards-container">
             {tasks.map(task => (
               <TaskCard key={task._id} task={task} onUpdate={handleTaskUpdate} workerId={workerId}>
                 <TaskProgressUpload task={task} onUpdate={handleTaskUpdate} />

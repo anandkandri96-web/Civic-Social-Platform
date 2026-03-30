@@ -50,7 +50,7 @@ const Analytics = () => {
     return () => {
       mounted = false;
     };
-  }, []);
+  }, [canViewAdminAnalytics]);
 
   const statusMap = useMemo(() => {
     const list = trends?.statusBreakdown || [];
@@ -106,7 +106,7 @@ const Analytics = () => {
     const textSecondary = read('--text-secondary', '#35585e');
     const gridColor = 'rgba(16, 24, 40, 0.08)';
     return { successRgb, textSecondary, gridColor };
-  }, [canViewAdminAnalytics]);
+  }, []);
 
   if (loading) return <Loader fullScreen />;
 

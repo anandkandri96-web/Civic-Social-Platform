@@ -9,7 +9,7 @@
 }
 
 .admin-dashboard-link {
-  border: 1px solid var(--border-color);
+  border: 1.5px solid var(--border-color);
   border-radius: var(--radius-button);
   color: var(--text-primary);
   font-size: 0.75rem;
@@ -169,7 +169,7 @@
 }
 
 .admin-recent-list li {
-  border-bottom: 1px solid var(--border-color);
+  border-bottom: 1.5px solid var(--border-color);
   padding-bottom: 8px;
   display: grid;
   gap: 4px;
@@ -206,7 +206,7 @@
 }
 
 .admin-table-toolbar input[type="search"] {
-  border: 1px solid var(--border-color);
+  border: 1.5px solid var(--border-color);
   background: var(--bg-surface);
   color: var(--text-primary);
   border-radius: var(--radius-input);
@@ -237,7 +237,7 @@
 .admin-table th,
 .admin-table td {
   padding: 12px;
-  border-bottom: 1px solid var(--border-color);
+  border-bottom: 1.5px solid var(--border-color);
   text-align: left;
   font-size: 0.82rem;
   vertical-align: middle;

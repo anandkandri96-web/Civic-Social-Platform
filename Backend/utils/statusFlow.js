@@ -1,8 +1,3 @@
-const { STATUS_TRANSITIONS } = require("./constants");
-
-function canTransition(fromStatus, toStatus) {
-  const allowed = STATUS_TRANSITIONS[fromStatus] || [];
-  return allowed.includes(toStatus);
-}
+const { canTransition } = require("../config/issueStatusMachine");
 
 module.exports = { canTransition };

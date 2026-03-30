@@ -22,9 +22,24 @@ import './IssueDetails.css';
 const normalizeImages = (images) =>
   Array.isArray(images)
     ? images
-        .map((img) => String(img || '').trim())
+        .map((img) => {
+          if (!img) return null;
+          if (typeof img === 'string') return { url: img };
+          if (typeof img === 'object') return img;
+          return null;
+        })
         .filter(Boolean)
     : [];
+
+const getImageUrl = (img) => {
+  if (!img) return '';
+  if (typeof img === 'string') return resolveMediaUrl(img);
+  if (typeof img === 'object') {
+    if (img._id) return `/api/images/${img._id}`;
+    if (img.url) return resolveMediaUrl(img.url);
+  }
+  return '';
+};
 
 const TITLE_RE = /[a-zA-Z]/;
 const TITLE_NUMERIC_ONLY_RE = /^[0-9\s]+$/;
@@ -39,6 +54,7 @@ const IssueDetails = () => {
   const [commentText, setCommentText] = useState('');
   const [replyTo, setReplyTo] = useState(null);
   const [liked, setLiked] = useState(() => new Set());
+  const [editingComment, setEditingComment] = useState(null); // { id, text }
   const [loading, setLoading] = useState(true);
   const [deleteLoading, setDeleteLoading] = useState(false);
   const [actionLoading, setActionLoading] = useState(false);
@@ -91,26 +107,25 @@ const IssueDetails = () => {
 
   const reporterId = issue?.reportedBy?._id ?? issue?.reportedBy;
   const isReporter = user?.id && String(reporterId) === String(user.id);
+  const isAdmin = can('admin:view_analytics');
   const status = String(issue?.status || '').trim().toLowerCase();
-  // ✅ Use permissions instead of role checks
-  // issue:delete allows: admins (always), citizens (if reporter + deletable status)
-  const canDelete = can('issue:delete') && (user?.role === 'admin' || (isReporter && ['reported', 'under_review', 'closed'].includes(status)));
+  // Permission-aware actions (RBAC-safe)
+  const canDelete = can('issue:delete') && (isAdmin || (isReporter && ['reported', 'under_review', 'closed'].includes(status)));
   const canEdit = can('issue:update') && isReporter && ['reported', 'under_review'].includes(status);
-  // issue:close allows: admins and officers (with transition check)
   const canClose = can('issue:close') && canTransition(issue?.status, 'closed');
-  const canVerify = isReporter && canTransition(issue?.status, 'citizen_verified');
+  const canVerify = can('issue:verify') && (isReporter || isAdmin) && canTransition(issue?.status, 'citizen_verified');
   const REOPENABLE = ['resolved', 'resolved_by_community', 'closed'];
-  const canReopen = isReporter && REOPENABLE.includes(issue?.status);
+  const canReopen = can('issue:reopen') && (isReporter || isAdmin) && REOPENABLE.includes(issue?.status);
 
-  const backPath = can('admin:view_analytics') ? '/admin' : '/issues';
-  const backLabel = can('admin:view_analytics') ? 'Admin Dashboard' : 'Issues';
+  const backPath = isAdmin ? '/admin' : '/issues';
+  const backLabel = isAdmin ? 'Admin Dashboard' : 'Issues';
   const submittedImages = normalizeImages(issue?.images);
   const volunteerAfterImages = normalizeImages(issue?.communityProof);
   const workerAfterImages = normalizeImages(issue?.workerProgressImages);
-  const afterImages = [...new Set([...volunteerAfterImages, ...workerAfterImages])];
+  const afterImages = [...new Map([...volunteerAfterImages, ...workerAfterImages].map((img) => [img._id || img.url, img])).values()];
   const isResolvedFlow = ['resolved', 'resolved_by_community', 'citizen_verified', 'closed'].includes(issue?.status);
-  const coverImage = submittedImages[0];
   const resolutionImage = afterImages[0];
+  const coverImage = submittedImages[0] || resolutionImage;
   const isVerified =
     issue?.verified === true ||
     issue?.verifiedByCitizen === true ||
@@ -194,7 +209,7 @@ const IssueDetails = () => {
     if (!issue?._id) return;
     const title = editForm.title.trim();
     const description = editForm.description.trim();
-    const locationText = editForm.locationText.trim();
+    const locationTextValue = editForm.locationText.trim();
     const severityNum = Number(editForm.severity);
 
     if (title.length < 3) {
@@ -213,11 +228,11 @@ const IssueDetails = () => {
       setEditError('Description must be at least 10 characters.');
       return;
     }
-    if (!locationText) {
+    if (!locationTextValue) {
       setEditError('Location text is required.');
       return;
     }
-    if (!Number.isFinite(severityNum) || severityNum < 1 || severityNum > 5) {
+    if (!Number.isFinite(severityNum) || severityNum < 1 || severityNum > 4) {
       setEditError('Please select a valid severity level.');
       return;
     }
@@ -230,7 +245,7 @@ const IssueDetails = () => {
         description,
         category: editForm.category,
         severity: severityNum,
-        locationText,
+        locationText: locationTextValue,
       });
       setIssue(updated);
       setEditing(false);
@@ -261,12 +276,17 @@ const IssueDetails = () => {
     }
   };
 
-  const handleEditComment = async (commentId, currentText) => {
-    const nextMessage = window.prompt('Edit comment', currentText);
-    if (!nextMessage || !nextMessage.trim()) return;
+  const handleEditComment = (commentId, currentText) => {
+    setEditingComment({ id: commentId, text: currentText });
+  };
+
+  const handleCommentEditSave = async (commentId) => {
+    const editText = editingComment?.text?.trim();
+    if (!editText) return;
     try {
-      const updated = await updateIssueComment(commentId, { message: nextMessage.trim() });
+      const updated = await updateIssueComment(commentId, { message: editText });
       setComments((prev) => prev.map((c) => (c._id === commentId ? { ...c, ...updated } : c)));
+      setEditingComment(null);
     } catch (err) {
       showToast(getErrorMessage(err), { tone: 'error' });
     }
@@ -318,333 +338,352 @@ const IssueDetails = () => {
       </Link>
 
       <div className="issue-details-grid">
-        <div className="issue-cards-container">
-          {/* Issue Details Card */}
-          <div className="issue-details-card">
-            <div className="issue-details-image">
-              <SafeImage
-                src={coverImage}
-                alt={issue.title}
-                showSkeleton
-                style={{ width: '100%', height: '400px', objectFit: 'cover' }}
-              />
-              <StatusBadge status={issue.status} className="status-badge" />
-            </div>
-            
-            <div className="issue-details-body">
-              <div className="issue-tags">
-                <span className="tag">
-                  {ISSUE_CATEGORIES.find((cat) => cat.value === issue.category)?.label || issue.category}
-                </span>
-                <span className="tag secondary">
-                  Priority:{' '}
-                  {typeof issue.severity === 'number'
-                    ? ISSUE_SEVERITY_LABELS[issue.severity] || issue.severity
-                    : issue.severity}
-                </span>
-                {isVerified ? (
-                  <span className="tag verified" aria-label="Verified by citizen">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                      <path
-                        d="M20 6L9 17l-5-5"
-                        stroke="currentColor"
-                        strokeWidth="2"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      />
-                    </svg>
-                    Verified
-                  </span>
-                ) : null}
-              </div>
-
-              <div className="issue-header">
-                <h1>{issue.title}</h1>
-                {/* ✅ Show vote button only if user doesn't have admin permissions */}
-                {!can('admin:view_analytics') && (
-                  <div onClick={(e) => e.stopPropagation()}>
-                    <VoteButton
-                      issueId={issue._id}
-                      voteCount={issue.voteCount ?? issue.votes ?? 0}
-                      userVoted={issue.userVoted}
-                      onVote={(result) => setIssue((prev) => ({ ...prev, voteCount: result.voteCount, userVoted: result.voted }))}
-                    />
-                  </div>
-                )}
-              </div>
-
-              <div className="issue-meta">
-                {metaItems.map((item) => (
-                  <div key={item.label} className="issue-meta-item">
-                    <span>{item.label}</span>
-                    <strong>{item.value}</strong>
-                  </div>
-                ))}
-              </div>
-
-              {canEdit && (
-                <div className="issue-edit">
-                  <div className="issue-edit__head">
-                    <h3>Edit Report</h3>
-                    <button
-                      type="button"
-                      className="issue-edit__toggle"
-                      onClick={() => {
-                        setEditError('');
-                        setEditing((prev) => !prev);
-                      }}
-                    >
-                      {editing ? 'Close' : 'Edit'}
-                    </button>
-                  </div>
-
-                  {editing && (
-                    <div className="issue-edit__form">
-                      <label>
-                        Title
-                        <input
-                          type="text"
-                          value={editForm.title}
-                          onChange={(e) => setEditForm((prev) => ({ ...prev, title: e.target.value }))}
-                          placeholder="Issue title"
-                        />
-                      </label>
-                      <label>
-                        Category
-                        <select
-                          value={editForm.category}
-                          onChange={(e) => setEditForm((prev) => ({ ...prev, category: e.target.value }))}
-                        >
-                          {ISSUE_CATEGORIES.map((cat) => (
-                            <option key={cat.value} value={cat.value}>{cat.label}</option>
-                          ))}
-                        </select>
-                      </label>
-                      <label>
-                        Severity
-                        <select
-                          value={String(editForm.severity)}
-                          onChange={(e) => setEditForm((prev) => ({ ...prev, severity: Number(e.target.value) }))}
-                        >
-                          {ISSUE_SEVERITY_OPTIONS.map((sev) => (
-                            <option key={sev.value} value={sev.value}>{sev.label}</option>
-                          ))}
-                        </select>
-                      </label>
-                      <label>
-                        Location text
-                        <input
-                          type="text"
-                          value={editForm.locationText}
-                          onChange={(e) => setEditForm((prev) => ({ ...prev, locationText: e.target.value }))}
-                          placeholder="Area or landmark"
-                        />
-                      </label>
-                      <label>
-                        Description
-                        <textarea
-                          rows={4}
-                          value={editForm.description}
-                          onChange={(e) => setEditForm((prev) => ({ ...prev, description: e.target.value }))}
-                          placeholder="Describe the issue"
-                        />
-                      </label>
-                      {editError && <div className="issue-edit__error">{editError}</div>}
-                      <div className="issue-edit__actions">
-                        <button type="button" onClick={handleEditSave} disabled={editLoading}>
-                          {editLoading ? 'Saving...' : 'Save changes'}
-                        </button>
-                        <button
-                          type="button"
-                          className="ghost"
-                          onClick={() => {
-                            setEditing(false);
-                            setEditError('');
-                            setEditForm({
-                              title: issue.title || '',
-                              description: issue.description || '',
-                              category: issue.category || 'roads',
-                              severity: typeof issue.severity === 'number' ? issue.severity : Number(issue.severity || 3),
-                              locationText: issue.locationText || '',
-                            });
-                          }}
-                        >
-                          Cancel
-                        </button>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              )}
-
-              <div className="issue-description">
-                <h3>Description</h3>
-                <p>{issue.description || 'No description provided.'}</p>
-              </div>
-
-              {mapPoints.length > 0 && (
-                <div className="issue-map-preview">
-                  <h3>Location Map</h3>
-                  <div className="issue-map-preview__canvas" aria-label="Issue location map">
-                    <IssueLeafletMap
-                      issues={mapPoints}
-                      activeId={issue._id}
-                      zoom={16}
-                      scrollWheelZoom
-                      showZoomControl
-                      showAttribution={false}
-                      className="issue-map-preview__leaflet"
-                      showRecenter
-                    />
-                  </div>
-                </div>
-              )}
-
-              {(canVerify || canReopen || canClose || canDelete) && (
-                <div className="issue-workflow-actions">
-                  {canVerify && (
-                    <button
-                      type="button"
-                      className="issue-action issue-action--verify"
-                      disabled={actionLoading}
-                      onClick={() => handleIssueAction(verifyIssue)}
-                    >
-                      Verify Resolution
-                    </button>
-                  )}
-                  {canReopen && (
-                    <button
-                      type="button"
-                      className="issue-action issue-action--reopen"
-                      disabled={actionLoading}
-                      onClick={() => handleIssueAction(reopenIssue)}
-                    >
-                      Reopen Issue
-                    </button>
-                  )}
-                  {canClose && (
-                    <button type="button" disabled={actionLoading} onClick={() => handleIssueAction(closeIssue)}>
-                      Close Issue
-                    </button>
-                  )}
-                  {canDelete && (
-                    <button type="button" className="issue-delete-btn" onClick={handleDelete} disabled={deleteLoading}>
-                      {deleteLoading ? 'Deleting...' : 'Delete'}
-                    </button>
-                  )}
-                </div>
-              )}
-              {deleteError && <p className="issue-delete-error">{deleteError}</p>}
+        <div className="issue-details-left card">
+          <div className="issue-image-wrapper">
+            <SafeImage
+              src={getImageUrl(coverImage)}
+              alt={issue.title}
+              showSkeleton
+              style={{ width: '100%', height: '100%' }}
+            />
+            <div className="status-badge">
+              <StatusBadge status={issue.status} />
             </div>
           </div>
 
-          {/* Issue Resolution Card */}
-          {showResolutionCard && (
-          <div className="issue-resolution-card">
-            <div className="resolution-image">
-              {resolutionImage ? (
-                <SafeImage
-                  src={resolutionImage}
-                  alt="Resolution progress"
-                  showSkeleton
-                  style={{ width: '100%', height: '400px', objectFit: 'cover' }}
-                />
-              ) : (
-                <div className="resolution-placeholder">Resolution image will appear after the fix is submitted.</div>
+          <div className="issue-details-body">
+            <div className="issue-tags">
+              <span className="tag">
+                {ISSUE_CATEGORIES.find((cat) => cat.value === issue.category)?.label || issue.category}
+              </span>
+              <span className="tag secondary">
+                Priority:{' '}
+                {(() => {
+                  const raw = typeof issue.severity === 'number'
+                    ? issue.severity
+                    : Number(issue.severity || 0);
+                  const normalized = Math.min(4, Math.max(1, Number.isFinite(raw) ? raw : 1));
+                  return ISSUE_SEVERITY_LABELS[normalized] || normalized;
+                })()}
+              </span>
+              {isVerified ? (
+                <span className="tag verified" aria-label="Verified by citizen">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                    <path
+                      d="M20 6L9 17l-5-5"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                  </svg>
+                  Verified
+                </span>
+              ) : null}
+            </div>
+
+            <div className="issue-header">
+              <h1>{issue.title}</h1>
+              {!isAdmin && (
+                <div onClick={(e) => e.stopPropagation()}>
+                  <VoteButton
+                    issueId={issue._id}
+                    voteCount={issue.voteCount ?? issue.votes ?? 0}
+                    userVoted={issue.userVoted}
+                    onVote={(result) => setIssue((prev) => ({ ...prev, voteCount: result.voteCount, userVoted: result.voted }))}
+                  />
+                </div>
               )}
             </div>
-            
-            <div className="resolution-body">
-              <h2>Issue Resolution</h2>
-              
-              <div className="resolution-status">
-                <h3>Current Status</h3>
-                <StatusBadge status={issue.status} />
-              </div>
 
-              {afterImages.length > 1 && (
-                <div className="issue-images-section">
-                  <h3>Resolution Photos</h3>
-                  <div className="issue-image-grid">
-                    {afterImages.map((img, idx) => (
-                      <a key={`after-${img}-${idx}`} href={resolveMediaUrl(img)} target="_blank" rel="noreferrer">
-                        <SafeImage src={img} alt={`Resolution photo ${idx + 1}`} showSkeleton style={{ width: '100%', height: 80 }} />
-                      </a>
-                    ))}
-                  </div>
+            <div className="issue-meta">
+              {metaItems.map((item) => (
+                <div key={item.label} className="issue-meta-item">
+                  <span>{item.label}</span>
+                  <strong>{item.value}</strong>
                 </div>
-              )}
+              ))}
+            </div>
 
-              <div className="assignments-section">
-                <h3>Assignments</h3>
-                <div className="assignment-item">
-                  <span>Department:</span>
-                  <strong>{assignedDepartmentName || departmentName || '-'}</strong>
+            {canEdit && (
+              <div className="issue-edit">
+                <div className="issue-edit__head">
+                  <h3>Edit Report</h3>
+                  <button
+                    type="button"
+                    className="issue-edit__toggle"
+                    onClick={() => {
+                      setEditError('');
+                      setEditing((prev) => !prev);
+                    }}
+                  >
+                    {editing ? 'Close' : 'Edit'}
+                  </button>
                 </div>
-                <div className="assignment-item">
-                  <span>Worker:</span>
-                  <strong>{assignedWorkerName || '-'}</strong>
-                </div>
-                <div className="assignment-item">
-                  <span>Volunteer:</span>
-                  <strong>{volunteerName || '-'}</strong>
-                </div>
-              </div>
 
-              {issue?.communityResolutionReport?.text && (
-                <div className="resolution-report">
-                  <h3>Resolution Report</h3>
-                  <p>{issue.communityResolutionReport.text}</p>
-                </div>
-              )}
-
-              <div className="resolution-comments">
-                <h3>Comments ({comments.length})</h3>
-                
-                {isAuthenticated && (
-                  <form onSubmit={handleCreateComment} className="issue-comment-form">
-                    {replyTo && (
-                      <div className="issue-replying">
-                        Replying to <strong>{replyTo.name}</strong>
-                        <button type="button" onClick={() => setReplyTo(null)}>Cancel</button>
-                      </div>
-                    )}
-                    <textarea
-                      value={commentText}
-                      onChange={(e) => setCommentText(e.target.value)}
-                      placeholder="Write a comment"
-                      maxLength={1000}
-                    />
-                    <div className="issue-comment-footer">
-                      <small>{commentText.length}/1000</small>
-                      <button type="submit" disabled={commentLoading || commentText.trim().length === 0}>
-                        {commentLoading ? 'Posting...' : 'Post'}
+                {editing && (
+                  <div className="issue-edit__form">
+                    <label>
+                      Title
+                      <input
+                        type="text"
+                        value={editForm.title}
+                        onChange={(e) => setEditForm((prev) => ({ ...prev, title: e.target.value }))}
+                        placeholder="Issue title"
+                      />
+                    </label>
+                    <label>
+                      Category
+                      <select
+                        value={editForm.category}
+                        onChange={(e) => setEditForm((prev) => ({ ...prev, category: e.target.value }))}
+                      >
+                        {ISSUE_CATEGORIES.map((cat) => (
+                          <option key={cat.value} value={cat.value}>{cat.label}</option>
+                        ))}
+                      </select>
+                    </label>
+                    <label>
+                      Severity
+                      <select
+                        value={String(editForm.severity)}
+                        onChange={(e) => setEditForm((prev) => ({ ...prev, severity: Number(e.target.value) }))}
+                      >
+                        {ISSUE_SEVERITY_OPTIONS.map((sev) => (
+                          <option key={sev.value} value={sev.value}>{sev.label}</option>
+                        ))}
+                      </select>
+                    </label>
+                    <label>
+                      Location text
+                      <input
+                        type="text"
+                        value={editForm.locationText}
+                        onChange={(e) => setEditForm((prev) => ({ ...prev, locationText: e.target.value }))}
+                        placeholder="Area or landmark"
+                      />
+                    </label>
+                    <label>
+                      Description
+                      <textarea
+                        rows={4}
+                        value={editForm.description}
+                        onChange={(e) => setEditForm((prev) => ({ ...prev, description: e.target.value }))}
+                        placeholder="Describe the issue"
+                      />
+                    </label>
+                    {editError && <div className="issue-edit__error">{editError}</div>}
+                    <div className="issue-edit__actions">
+                      <button type="button" onClick={handleEditSave} disabled={editLoading}>
+                        {editLoading ? 'Saving...' : 'Save changes'}
+                      </button>
+                      <button
+                        type="button"
+                        className="ghost"
+                        onClick={() => {
+                          setEditing(false);
+                          setEditError('');
+                          setEditForm({
+                            title: issue.title || '',
+                            description: issue.description || '',
+                            category: issue.category || 'roads',
+                            severity: typeof issue.severity === 'number' ? issue.severity : Number(issue.severity || 3),
+                            locationText: issue.locationText || '',
+                          });
+                        }}
+                      >
+                        Cancel
                       </button>
                     </div>
-                  </form>
+                  </div>
                 )}
+              </div>
+            )}
 
-                {comments.length === 0 ? (
-                  <p className="text-muted">No comments yet.</p>
-                ) : (
-                  <ul className="issue-comment-list">
-                    {comments.slice(0, 3).map((comment) => {
-                      const commentUserId = comment?.user?._id ?? comment?.user;
-                      // ✅ Use comment:delete permission (admin or comment author)
-                      const canModifyComment = can('comment:delete') && (user?.role === 'admin' || (user?.id && String(commentUserId) === String(user.id)));
-                      const name = comment?.user?.name || 'User';
-                      const avatar = String(name).charAt(0).toUpperCase();
-                      const isLiked = liked.has(comment._id);
+            <div className="issue-description">
+              <h3>Description</h3>
+              <p>{issue.description || 'No description provided.'}</p>
+            </div>
 
-                      return (
-                        <li key={comment._id} className="issue-comment-item">
-                          <div className="issue-comment-avatar" aria-hidden="true">{avatar}</div>
-                          <div className="issue-comment-main">
-                            <div className="issue-comment-head">
-                              <strong>{name}</strong>
-                              <small>{new Date(comment.createdAt).toLocaleString()}</small>
+            {mapPoints.length > 0 ? (
+              <section className="issue-map-preview">
+                <h3>Location Map</h3>
+                <div className="issue-map-preview__canvas" aria-label="Issue location map">
+                  <IssueLeafletMap issues={mapPoints} activeId={issue._id} zoom={14} scrollWheelZoom={false} className="issue-map-preview__leaflet" />
+                </div>
+              </section>
+            ) : null}
+
+            {null}
+
+            {workerAfterImages.length > 0 ? (
+              <div className="issue-images-section">
+                <h3>Worker Progress Photos</h3>
+                <div className="issue-image-grid">
+                  {workerAfterImages.map((img, idx) => {
+                    const imgUrl = getImageUrl(img);
+                    return (
+                      <a key={`worker-${img._id || img.url || idx}`} href={imgUrl} target="_blank" rel="noreferrer">
+                        <SafeImage src={imgUrl} alt={`Worker progress photo ${idx + 1}`} showSkeleton style={{ width: '100%', height: 100 }} />
+                      </a>
+                    );
+                  })}
+                </div>
+              </div>
+            ) : null}
+
+            {volunteerAfterImages.length > 0 ? (
+              <div className="issue-images-section">
+                <h3>Community Proof Photos</h3>
+                <div className="issue-image-grid">
+                  {volunteerAfterImages.map((img, idx) => {
+                    const imgUrl = getImageUrl(img);
+                    return (
+                      <a key={`community-${img._id || img.url || idx}`} href={imgUrl} target="_blank" rel="noreferrer">
+                        <SafeImage src={imgUrl} alt={`Community proof photo ${idx + 1}`} showSkeleton style={{ width: '100%', height: 100 }} />
+                      </a>
+                    );
+                  })}
+                </div>
+              </div>
+            ) : null}
+
+            {issue?.communityResolutionReport?.text && !showResolutionCard ? (
+              <div className="issue-resolution-report">
+                <h3>Community Resolution Report</h3>
+                <p>{issue.communityResolutionReport.text}</p>
+              </div>
+            ) : null}
+
+            {showResolutionCard && (
+              <div className="issue-resolution-card">
+                <div className="resolution-image">
+                  {resolutionImage ? (
+                    <SafeImage
+                      src={getImageUrl(resolutionImage)}
+                      alt="Resolution progress"
+                      showSkeleton
+                      style={{ width: '100%', height: '400px', objectFit: 'cover' }}
+                    />
+                  ) : (
+                    <div className="resolution-placeholder">Resolution image will appear after the fix is submitted.</div>
+                  )}
+                </div>
+
+                <div className="resolution-body">
+                  <h2>Issue Resolution</h2>
+
+                  <div className="resolution-status">
+                    <h3>Current Status</h3>
+                    <StatusBadge status={issue.status} />
+                  </div>
+
+                  {afterImages.length > 1 && (
+                    <div className="issue-images-section">
+                      <h3>Resolution Photos</h3>
+                      <div className="issue-image-grid">
+                        {afterImages.map((img, idx) => {
+                          const imgUrl = getImageUrl(img);
+                          return (
+                            <a key={`after-${img._id || img.url || idx}`} href={imgUrl} target="_blank" rel="noreferrer">
+                              <SafeImage src={imgUrl} alt={`Resolution photo ${idx + 1}`} showSkeleton style={{ width: '100%', height: 80 }} />
+                            </a>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="assignments-section">
+                    <h3>Assignments</h3>
+                    <div className="assignment-item">
+                      <span>Department:</span>
+                      <strong>{assignedDepartmentName || departmentName || '-'}</strong>
+                    </div>
+                    <div className="assignment-item">
+                      <span>Worker:</span>
+                      <strong>{assignedWorkerName || '-'}</strong>
+                    </div>
+                    <div className="assignment-item">
+                      <span>Volunteer:</span>
+                      <strong>{volunteerName || '-'}</strong>
+                    </div>
+                  </div>
+
+                  {issue?.communityResolutionReport?.text && (
+                    <div className="resolution-report">
+                      <h3>Resolution Report</h3>
+                      <p>{issue.communityResolutionReport.text}</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
+            <div className="issue-comments">
+              <h3>Comments</h3>
+
+              {isAuthenticated && can('comment:create') && (
+                <form onSubmit={handleCreateComment} className="issue-comment-form">
+                  {replyTo ? (
+                    <div className="issue-replying">
+                      Replying to <strong>{replyTo.name}</strong>
+                      <button type="button" onClick={() => setReplyTo(null)}>
+                        Cancel
+                      </button>
+                    </div>
+                  ) : null}
+                  <textarea
+                    value={commentText}
+                    onChange={(e) => setCommentText(e.target.value)}
+                    placeholder="Write a comment"
+                    maxLength={1000}
+                  />
+                  <div className="issue-comment-footer">
+                    <small>{commentText.length}/1000</small>
+                    <button type="submit" disabled={commentLoading || commentText.trim().length === 0}>
+                      {commentLoading ? 'Posting...' : 'Post Comment'}
+                    </button>
+                  </div>
+                </form>
+              )}
+
+              {comments.length === 0 ? (
+                <p className="text-muted">No comments yet.</p>
+              ) : (
+                <ul className="issue-comment-list">
+                  {comments.map((comment) => {
+                    const commentUserId = comment?.user?._id ?? comment?.user;
+                    const canModifyComment = can('comment:delete') && (isAdmin || (user?.id && String(commentUserId) === String(user.id)));
+                    const name = comment?.user?.name || 'User';
+                    const avatar = String(name).charAt(0).toUpperCase();
+                    const isLiked = liked.has(comment._id);
+
+                    return (
+                      <li key={comment._id} className="issue-comment-item">
+                        <div className="issue-comment-avatar" aria-hidden="true">{avatar}</div>
+                        <div className="issue-comment-main">
+                          <div className="issue-comment-head">
+                            <strong>{name}</strong>
+                            <small>{new Date(comment.createdAt).toLocaleString()}</small>
+                          </div>
+                          {editingComment?.id === comment._id ? (
+                            <div className="comment-edit-field">
+                              <textarea
+                                value={editingComment.text}
+                                onChange={(e) => setEditingComment((prev) => ({ ...prev, text: e.target.value }))}
+                                rows={3}
+                                autoFocus
+                              />
+                              <div className="comment-edit-actions">
+                                <button type="button" className="btn-save" onClick={() => handleCommentEditSave(comment._id)}>Save</button>
+                                <button type="button" className="btn-cancel" onClick={() => setEditingComment(null)}>Cancel</button>
+                              </div>
                             </div>
+                          ) : (
                             <p className="issue-comment-text">{comment.message}</p>
+                          )}
+                          {editingComment?.id !== comment._id && (
                             <div className="issue-comment-actions">
                               <button
                                 type="button"
@@ -660,15 +699,17 @@ const IssueDetails = () => {
                               >
                                 {isLiked ? 'Liked' : 'Like'}
                               </button>
-                              {isAuthenticated && (
+                              {isAuthenticated ? (
                                 <button
                                   type="button"
-                                  onClick={() => setReplyTo({ id: comment._id, name })}
+                                  onClick={() => {
+                                    setReplyTo({ id: comment._id, name });
+                                  }}
                                 >
                                   Reply
                                 </button>
-                              )}
-                              {canModifyComment && (
+                              ) : null}
+                              {canModifyComment ? (
                                 <>
                                   <button type="button" onClick={() => handleEditComment(comment._id, comment.message)}>
                                     Edit
@@ -677,22 +718,17 @@ const IssueDetails = () => {
                                     Delete
                                   </button>
                                 </>
-                              )}
+                              ) : null}
                             </div>
-                          </div>
-                        </li>
-                      );
-                    })}
-                  </ul>
-                )}
-                
-                {comments.length > 3 && (
-                  <p className="text-muted">+ {comments.length - 3} more comments</p>
-                )}
-              </div>
+                          )}
+                        </div>
+                      </li>
+                    );
+                  })}
+                </ul>
+              )}
             </div>
           </div>
-          )}
         </div>
 
         <aside className="issue-details-right">
@@ -704,21 +740,73 @@ const IssueDetails = () => {
             <div className="issue-side-card card">
               <h3>All Photos</h3>
               <div className="issue-image-grid">
-                {submittedImages.map((img, idx) => (
-                  <a key={`before-${img}-${idx}`} href={resolveMediaUrl(img)} target="_blank" rel="noreferrer">
-                    <SafeImage src={img} alt={`Issue photo ${idx + 1}`} showSkeleton style={{ width: '100%', height: 80 }} />
-                  </a>
-                ))}
+                {submittedImages.map((img, idx) => {
+                  const imgUrl = getImageUrl(img);
+                  return (
+                    <a key={`before-${img._id || img.url || idx}`} href={imgUrl} target="_blank" rel="noreferrer">
+                      <SafeImage src={imgUrl} alt={`Issue photo ${idx + 1}`} showSkeleton style={{ width: '100%', height: 80 }} />
+                    </a>
+                  );
+                })}
               </div>
             </div>
           )}
 
-          {/* ✅ Show volunteer panel to volunteers */}
-          {isVolunteer && can('volunteer:claim_issue') && (
+          <div className="issue-side-card card">
+            <h3>Assignments</h3>
+            <div className="issue-side-kv">
+              <span>Department</span>
+              <strong>{assignedDepartmentName || departmentName || '-'}</strong>
+            </div>
+            <div className="issue-side-kv">
+              <span>Worker</span>
+              <strong>{assignedWorkerName || '-'}</strong>
+            </div>
+            <div className="issue-side-kv">
+              <span>Volunteer</span>
+              <strong>{volunteerName || '-'}</strong>
+            </div>
+          </div>
+
+          {(canVerify || canReopen || canClose || canDelete) ? (
+            <div className="issue-side-card card">
+              <h3>Actions</h3>
+              {(canVerify || canReopen || canClose) && (
+                <div className="issue-workflow-actions">
+                  {canVerify && (
+                    <button type="button" className="issue-action issue-action--verify" disabled={actionLoading} onClick={() => handleIssueAction(verifyIssue)}>
+                      Verify Resolution
+                    </button>
+                  )}
+                  {canReopen && (
+                    <button type="button" className="issue-action issue-action--reopen" disabled={actionLoading} onClick={() => handleIssueAction(reopenIssue)}>
+                      Reopen Issue
+                    </button>
+                  )}
+                  {canClose && (
+                    <button type="button" disabled={actionLoading} onClick={() => handleIssueAction(closeIssue)}>
+                      Close Issue
+                    </button>
+                  )}
+                </div>
+              )}
+
+              {canDelete && (
+                <div className="issue-details-actions">
+                  {deleteError && <p className="issue-delete-error">{deleteError}</p>}
+                  <button type="button" className="issue-delete-btn" onClick={handleDelete} disabled={deleteLoading}>
+                    {deleteLoading ? 'Deleting...' : 'Delete issue'}
+                  </button>
+                </div>
+              )}
+            </div>
+          ) : null}
+
+          {isVolunteer && can('volunteer:claim_issue') ? (
             <div className="issue-side-card card">
               <VolunteerPanel issue={issue} onIssueUpdate={setIssue} />
             </div>
-          )}
+          ) : null}
         </aside>
       </div>
     </div>

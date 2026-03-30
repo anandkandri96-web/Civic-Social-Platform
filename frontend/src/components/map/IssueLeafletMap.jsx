@@ -1,9 +1,16 @@
 import { useEffect, useState } from 'react';
 import L from 'leaflet';
 import { CircleMarker, MapContainer, Marker, Popup, TileLayer, useMap } from 'react-leaflet';
+import MapAutoSizer from './MapAutoSizer';
 import 'leaflet/dist/leaflet.css';
-import markerIcon from 'leaflet/dist/images/marker-icon.png';
-import markerShadow from 'leaflet/dist/images/marker-shadow.png';
+
+// Fix for default markers in React Leaflet v5
+delete L.Icon.Default.prototype._getIconUrl;
+L.Icon.Default.mergeOptions({
+  iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon-2x.png',
+  iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon.png',
+  shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png',
+});
 
 const HEATMAP_COLORS = {
   low: '#5F7F1C',
@@ -14,13 +21,6 @@ const HEATMAP_COLORS = {
 const DEFAULT_CENTER = [12.7096, 77.6958];
 const TILE_URL = 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png';
 const TILE_ATTRIBUTION = '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors';
-const ISSUE_MARKER_ICON = L.icon({
-  iconUrl: markerIcon,
-  shadowUrl: markerShadow,
-  iconSize: [25, 41],
-  iconAnchor: [12, 41],
-  shadowSize: [41, 41],
-});
 const DOT_ICON_CACHE = new Map();
 
 const getSeverityColor = (severity) => {
@@ -179,7 +179,6 @@ function IssueMarkers({ points, onSelect }) {
     <Marker
       key={`pin-${point.id || index}`}
       position={[point.lat, point.lng]}
-      icon={ISSUE_MARKER_ICON}
       eventHandlers={{
         click: () => {
           map.flyTo([point.lat, point.lng], Math.max(map.getZoom(), 16), { animate: true, duration: 0.6 });
@@ -304,6 +303,7 @@ const IssueLeafletMap = ({
         detectRetina={false}
       />
 
+      <MapAutoSizer />
       <MapFocus active={active} />
       <MapAutoFit points={data} active={active} />
       {showRecenter && <MapRecenterControl focusPoints={data} active={active} />}

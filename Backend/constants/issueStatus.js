@@ -1,8 +1,10 @@
+
 const ISSUE_STATUS = Object.freeze({
   REPORTED: "reported",
   UNDER_REVIEW: "under_review",
   ASSIGNED_TO_DEPARTMENT: "assigned_to_department",
   WORK_IN_PROGRESS: "work_in_progress",
+  AWAITING_OFFICER_VERIFICATION: "awaiting_officer_verification",
   RESOLVED: "resolved",
   CITIZEN_VERIFIED: "citizen_verified",
   CLOSED: "closed",

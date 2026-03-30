@@ -1,4 +1,7 @@
-﻿import './Button.css';
+﻿
+// Available color variants: primary, secondary, danger, sky-blue, mint-green, sunny-yellow, coral-pink, lavender
+// Use the new vibrant variants (sky-blue, mint-green, sunny-yellow, coral-pink, lavender) for a more colorful UI.
+import './Button.css';
 
 const Button = ({
   children,

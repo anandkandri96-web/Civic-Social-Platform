@@ -39,7 +39,8 @@ exports.createDepartment = async (req, res) => {
 
     return apiResponse(res, 201, "Department created successfully", department);
   } catch (error) {
-    console.error("Create department error:", error);
+    const logger = require("../utils/logger");
+    logger.error("Create department error:", error);
     return apiResponse(res, 500, "Failed to create department");
   }
 };
@@ -51,7 +52,8 @@ exports.getDepartments = async (req, res) => {
 
     return apiResponse(res, 200, "Departments retrieved successfully", departments);
   } catch (error) {
-    console.error("Get departments error:", error);
+    const logger = require("../utils/logger");
+    logger.error("Get departments error:", error);
     return apiResponse(res, 500, "Failed to fetch departments");
   }
 };
@@ -122,7 +124,8 @@ exports.updateDepartment = async (req, res) => {
 
     return apiResponse(res, 200, "Department updated successfully", department);
   } catch (error) {
-    console.error("Update department error:", error);
+    const logger = require("../utils/logger");
+    logger.error("Update department error:", error);
     return apiResponse(res, 500, "Failed to update department");
   }
 };
@@ -147,7 +150,8 @@ exports.deleteDepartment = async (req, res) => {
 
     return apiResponse(res, 200, "Department deleted successfully");
   } catch (error) {
-    console.error("Delete department error:", error);
+    const logger = require("../utils/logger");
+    logger.error("Delete department error:", error);
     return apiResponse(res, 500, "Failed to delete department");
   }
 };

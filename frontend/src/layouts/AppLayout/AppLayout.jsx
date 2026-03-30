@@ -4,6 +4,7 @@ import HomeHeader from '../../components/layout/HomeHeader/HomeHeader';
 import { useAuth } from '../../hooks/useAuth';
 import { usePermission } from '../../hooks/usePermission';
 import { useRole } from '../../hooks/useRole';
+// ...existing code...
 
 const AppLayout = ({ layoutClassName, mainClassName }) => {
   const location = useLocation();

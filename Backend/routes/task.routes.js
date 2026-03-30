@@ -3,6 +3,9 @@ const { protect } = require("../middlewares/auth.middleware");
 const { canPerform } = require("../middlewares/permission.middleware");
 const { uploadImages } = require("../middlewares/upload.middleware");
 const { PERMISSIONS } = require("../config/permissions.config");
+const { validateRequest } = require("../middlewares/validateRequest.middleware");
+const schemas = require("../validators/joi.schemas");
+const { requireTaskAddProgressPayload } = require("../middlewares/bodyOrUploadGuards.middleware");
 const {
   createTask,
   getMyTasks,
@@ -24,6 +27,7 @@ router.get(
 router.post(
   "/",
   canPerform(PERMISSIONS.TASK_CREATE),
+  validateRequest(schemas.taskCreate),
   createTask
 );
 
@@ -31,6 +35,7 @@ router.post(
 router.patch(
   "/:id/status",
   canPerform(PERMISSIONS.TASK_UPDATE_STATUS),
+  validateRequest(schemas.updateTaskStatus),
   updateTaskStatus
 );
 
@@ -39,6 +44,8 @@ router.post(
   "/:id/progress",
   canPerform(PERMISSIONS.TASK_ADD_PROGRESS),
   uploadImages("progressImages", 5),
+  validateRequest(schemas.addTaskProgress),
+  requireTaskAddProgressPayload,
   addTaskProgress
 );
 

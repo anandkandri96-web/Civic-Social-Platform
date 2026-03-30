@@ -18,7 +18,8 @@ const handleLogout = () => {
     localStorage.removeItem("token");
     localStorage.removeItem("user");
   } catch (error) {
-    console.warn("Local storage cleanup failed during logout:", error);
+    // eslint-disable-next-line no-console
+    console.warn("Local storage cleanup failed during logout:", error); // For browser debugging only
   }
 
   if (typeof window !== "undefined") {
@@ -43,7 +44,12 @@ api.interceptors.response.use(
   (response) => response,
   (error) => {
     const status = error?.response?.status;
-    if (status === 401 && typeof window !== "undefined") {
+    const requestUrl = error?.config?.url || '';
+
+    // Only auto-logout on 401 for authenticated requests, NOT for login/register attempts
+    const isAuthEndpoint = requestUrl.includes('/auth/login') || requestUrl.includes('/auth/register');
+
+    if (status === 401 && !isAuthEndpoint && typeof window !== 'undefined') {
       handleLogout();
     }
     return Promise.reject(error);

@@ -26,10 +26,12 @@
 const router = require("express").Router();
 const { register, login, getMe, updateMe } = require("../controllers/auth.controller");
 const { protect } = require("../middlewares/auth.middleware");
+const { validateRequest } = require("../middlewares/validateRequest.middleware");
+const schemas = require("../validators/joi.schemas");
 
-router.post("/register", register);
-router.post("/login", login);
+router.post("/register", validateRequest(schemas.authRegister), register);
+router.post("/login", validateRequest(schemas.authLogin), login);
 router.get("/me", protect, getMe);
-router.patch("/me", protect, updateMe);
+router.patch("/me", protect, validateRequest(schemas.authUpdateMe), updateMe);
 
 module.exports = router;

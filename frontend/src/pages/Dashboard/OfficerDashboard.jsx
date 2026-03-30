@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { assignOfficerWorker, getOfficerIssues, getOfficerWorkers, reviewOfficerIssue, updateOfficerIssueStatus } from '@api/officer.api.js';
+import { assignOfficerWorker, getOfficerIssues, getOfficerWorkers, updateOfficerIssueStatus } from '@api/officer.api.js';
 import { getErrorMessage } from '@api/utils';
 import './RoleDashboard.css';
 import { canTransition } from '../../utils/statusFlow';
@@ -20,6 +20,7 @@ const OfficerDashboard = () => {
   const [error, setError] = useState('');
   const [workingId, setWorkingId] = useState('');
   const [workerInputs, setWorkerInputs] = useState({});
+  const [statusInputs, setStatusInputs] = useState({});
   const [availableWorkers, setAvailableWorkers] = useState([]);
   const [workerDirectoryError, setWorkerDirectoryError] = useState('');
   const { showToast } = useToast();
@@ -27,22 +28,30 @@ const OfficerDashboard = () => {
   useEffect(() => {
     let mounted = true;
 
-    const fetchIssues = async () => {
-      setLoading(true);
+    const fetchIssues = async (showLoading = true) => {
+      if (showLoading) setLoading(true);
       setError('');
       try {
         const data = await getOfficerIssues();
         if (mounted) setIssues(Array.isArray(data) ? data : []);
       } catch (err) {
-        if (mounted) setError(getErrorMessage(err));
+        if (mounted && showLoading) setError(getErrorMessage(err));
       } finally {
-        if (mounted) setLoading(false);
+        if (mounted && showLoading) setLoading(false);
       }
     };
 
-    fetchIssues();
+    // Initial fetch with loading state
+    fetchIssues(true);
+
+    // Dynamically poll to keep the department queue instantly updated
+    const intervalId = setInterval(() => {
+      fetchIssues(false);
+    }, 15000);
+
     return () => {
       mounted = false;
+      clearInterval(intervalId);
     };
   }, []);
 
@@ -97,12 +106,13 @@ const OfficerDashboard = () => {
     underReview: issues.filter((issue) => issue.status === 'under_review').length,
     assigned: issues.filter((issue) => issue.status === 'assigned_to_department').length,
     progress: issues.filter((issue) => issue.status === 'work_in_progress').length,
+    awaitingOfficer: issues.filter((issue) => issue.status === 'awaiting_officer_verification').length,
     resolved: issues.filter((issue) => issue.status === 'resolved').length,
   };
 
   const chartStats = {
     pending: grouped.underReview,
-    assigned: grouped.assigned + grouped.progress,
+    assigned: grouped.assigned + grouped.progress + grouped.awaitingOfficer,
     resolved: grouped.resolved,
   };
 
@@ -113,7 +123,7 @@ const OfficerDashboard = () => {
   };
 
   const officerStatuses = useMemo(
-    () => ['under_review', 'assigned_to_department', 'work_in_progress', 'resolved', 'rejected'],
+    () => ['under_review', 'assigned_to_department', 'work_in_progress', 'awaiting_officer_verification', 'resolved', 'rejected', 'closed'],
     []
   );
 
@@ -252,13 +262,12 @@ const OfficerDashboard = () => {
                       <td>{getWorkerDisplayId(issue.assignedWorker)}</td>
                       <td>
                         <div className="role-dashboard__actions">
-                          <button
-                            type="button"
-                            disabled={workingId === issueId}
-                            onClick={() => runAction(issueId, () => reviewOfficerIssue(issueId))}
+                          <Link
+                            to={`/issues/${issueId}`}
+                            className="role-dashboard__review-link"
                           >
                             Review
-                          </button>
+                          </Link>
                           {hasWorkerDirectory ? (
                             <select
                               value={workerInputs[issueId] ?? ''}
@@ -318,20 +327,34 @@ const OfficerDashboard = () => {
                             })()
                           ) : null}
                           <select
-                            defaultValue={issueStatus || 'reported'}
+                            value={statusInputs[issueId] ?? issueStatus}
                             disabled={workingId === issueId}
                             onChange={(e) =>
-                              runAction(issueId, () => updateOfficerIssueStatus(issueId, e.target.value))
+                              setStatusInputs((prev) => ({ ...prev, [issueId]: e.target.value }))
                             }
                           >
+                            <option value={issueStatus}>{issueStatus}</option>
                             {officerStatuses
-                              .filter((status) => status === issueStatus || canTransition(issueStatus, status))
+                              .filter((status) => status !== issueStatus && canTransition(issueStatus, status))
                               .map((status) => (
                                 <option key={status} value={status}>
                                   {status}
                                 </option>
                               ))}
                           </select>
+                          {statusInputs[issueId] && statusInputs[issueId] !== issueStatus && (
+                            <button
+                              type="button"
+                              disabled={workingId === issueId}
+                              onClick={() => {
+                                const next = statusInputs[issueId];
+                                runAction(issueId, () => updateOfficerIssueStatus(issueId, next));
+                                setStatusInputs((prev) => { const n = { ...prev }; delete n[issueId]; return n; });
+                              }}
+                            >
+                              Update
+                            </button>
+                          )}
                         </div>
                       </td>
                     </tr>

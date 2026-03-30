@@ -3,6 +3,9 @@ const { protect } = require("../middlewares/auth.middleware");
 const { canPerform, canPerformResourceAction } = require("../middlewares/permission.middleware");
 const { PERMISSIONS } = require("../config/permissions.config");
 const Issue = require("../models/issue");
+const { validateRequest } = require("../middlewares/validateRequest.middleware");
+const schemas = require("../validators/joi.schemas");
+const { unclaimIssue } = require("../controllers/volunteer.controller");
 const {
   getDepartmentIssues,
   getDepartmentWorkers,
@@ -20,12 +23,14 @@ router.get("/issues", canPerform(PERMISSIONS.OFFICER_REVIEW_ISSUES), getDepartme
 router.patch(
   "/issues/:issueId/review",
   canPerformResourceAction("ISSUE", "REVIEW", async (req) => Issue.findById(req.params.issueId)),
+  validateRequest(schemas.officerReviewIssue),
   reviewIssue
 );
 
 router.patch(
   "/issues/:issueId/status",
   canPerformResourceAction("ISSUE", "UPDATE_STATUS", async (req) => Issue.findById(req.params.issueId)),
+  validateRequest(schemas.officerUpdateIssueStatus),
   updateOfficerStatus
 );
 
@@ -35,7 +40,14 @@ router.get("/workers", canPerform(PERMISSIONS.OFFICER_ASSIGN_WORKER), getDepartm
 router.patch(
   "/issues/:issueId/assign-worker",
   canPerformResourceAction("ISSUE", "ASSIGN_WORKER", async (req) => Issue.findById(req.params.issueId)),
+  validateRequest(schemas.assignWorkerBody),
   assignWorker
+);
+
+router.patch(
+  "/issues/:issueId/release-volunteer",
+  canPerformResourceAction("ISSUE", "ASSIGN_WORKER", async (req) => Issue.findById(req.params.issueId)),
+  unclaimIssue
 );
 
 module.exports = router;

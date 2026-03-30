@@ -18,7 +18,8 @@ const connectDB = async () => {
       serverSelectionTimeoutMS: 5000,
     });
 
-    console.log(
+    const logger = require("../utils/logger");
+    logger.info(
       `✅ MongoDB Connected | Host: ${conn.connection.host} | DB: ${conn.connection.name}`
     );
 
@@ -26,13 +27,13 @@ const connectDB = async () => {
       try {
         await User.syncIndexes();
       } catch (err) {
-        console.warn("?? Failed to sync User indexes:", err.message);
+        logger.warn("?? Failed to sync User indexes:", err.message);
       }
     }
 
     // Connection events (important for cron jobs)
     mongoose.connection.on("connected", () => {
-      console.log("🟢 MongoDB connection established");
+      logger.info("🟢 MongoDB connection established");
     });
 
     mongoose.connection.on("error", (err) => {
@@ -40,13 +41,13 @@ const connectDB = async () => {
     });
 
     mongoose.connection.on("disconnected", () => {
-      console.warn("🟠 MongoDB disconnected");
+      logger.warn("🟠 MongoDB disconnected");
     });
 
     // Graceful shutdown
     process.on("SIGINT", async () => {
       await mongoose.connection.close();
-      console.log("🛑 MongoDB connection closed due to app termination");
+      logger.info("🛑 MongoDB connection closed due to app termination");
       process.exit(0);
     });
 

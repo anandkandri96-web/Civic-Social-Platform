@@ -3,6 +3,8 @@ const Comment = require("../models/comment");
 const { protect } = require("../middlewares/auth.middleware");
 const { canPerform, canPerformResourceAction } = require("../middlewares/permission.middleware");
 const { PERMISSIONS } = require("../config/permissions.config");
+const { validateRequest } = require("../middlewares/validateRequest.middleware");
+const schemas = require("../validators/joi.schemas");
 const {
   createComment,
   getIssueComments,
@@ -18,6 +20,7 @@ router.post(
   "/:issueId",
   protect,
   canPerform(PERMISSIONS.COMMENT_CREATE),
+  validateRequest(schemas.commentCreate),
   createComment
 );
 
@@ -26,6 +29,7 @@ router.patch(
   "/single/:id",
   protect,
   canPerformResourceAction("COMMENT", "EDIT", async (req) => Comment.findById(req.params.id)),
+  validateRequest(schemas.commentUpdate),
   updateComment
 );
 

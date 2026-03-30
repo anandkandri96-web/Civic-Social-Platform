@@ -1,16 +1,18 @@
 const cron = require("node-cron");
-const { runEscalationSweep } = require("../services/escalation.service");
+const { runAllEscalationTasks } = require("../services/escalation.service");
+const logger = require("../utils/logger");
+const appConfig = require("../config/appConfig");
 
 function startEscalationJob() {
-  const schedule = process.env.ESCALATION_CRON || "0 * * * *"; // hourly
+  const schedule = appConfig.escalationCron;
   cron.schedule(schedule, async () => {
     try {
-      const count = await runEscalationSweep();
-      if (count > 0) {
-        console.log(`[escalation-job] escalated ${count} issues`);
+      const summary = await runAllEscalationTasks();
+      if (summary.escalated || summary.released || summary.autoClosed) {
+        logger.info("[escalation-job]", summary);
       }
     } catch (error) {
-      console.error("[escalation-job] failed:", error.message);
+      logger.error("[escalation-job] failed", { message: error.message, stack: error.stack });
     }
   });
 }

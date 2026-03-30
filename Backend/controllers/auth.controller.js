@@ -9,7 +9,6 @@ const ALLOWED_REGISTER_FIELDS = ["name", "email", "password", "role"];
 const PUBLIC_ROLES = new Set([ROLES.CITIZEN, ROLES.VOLUNTEER]);
 const EMAIL_RE = /^\S+@\S+\.\S+$/;
 const NAME_RE = /^[A-Za-z][A-Za-z\s.'-]{1,59}$/;
-const APPROVAL_ROLES = new Set([ROLES.VOLUNTEER, ROLES.OFFICER, ROLES.WORKER]);
 
 const normalizeRole = (role) => {
   const raw = String(role || "").toLowerCase();
@@ -45,9 +44,8 @@ exports.register = async (req, res) => {
     const name = String(body.name).trim();
     const email = String(body.email).trim().toLowerCase();
     const password = String(body.password);
-    // ✅ SECURITY FIX: Force 'citizen' role for all new registrations
-    // Only admins can elevate users to other roles via separate admin endpoint
-    const requestedRole = ROLES.CITIZEN;
+    const rawRole = normalizeRole(body.role || ROLES.CITIZEN);
+    const requestedRole = PUBLIC_ROLES.has(rawRole) ? rawRole : ROLES.CITIZEN;
 
     if (!NAME_RE.test(name)) {
       return apiResponse(res, 400, "Name must be 2-60 letters and spaces only");
@@ -57,8 +55,11 @@ exports.register = async (req, res) => {
       return apiResponse(res, 400, "Invalid email format");
     }
 
-    if (password.length < 6 || password.length > 128) {
-      return apiResponse(res, 400, "Password must be 6-128 characters");
+    if (password.length < 8 || password.length > 128) {
+      return apiResponse(res, 400, "Password must be 8-128 characters");
+    }
+    if (!/^(?=.*[0-9])(?=.*[^A-Za-z0-9]).{8,128}$/.test(password)) {
+      return apiResponse(res, 400, "Password must include at least one number and one special character");
     }
 
     const existing = await User.findOne({ email });
@@ -71,7 +72,6 @@ exports.register = async (req, res) => {
       email,
       password,
       role: requestedRole,
-      // ✅ New citizens are auto-approved (no escalation needed)
       isApproved: true,
     });
 
@@ -84,7 +84,8 @@ exports.register = async (req, res) => {
       { token, user: { id: user._id, name: user.name, email: user.email, role: user.role } }
     );
   } catch (err) {
-    console.error("Register error:", err);
+    const logger = require("../utils/logger");
+    logger.error("Register error:", err);
     return apiResponse(res, 500, "Registration failed");
   }
 };
@@ -119,8 +120,8 @@ exports.login = async (req, res) => {
     if (!user.isActive) {
       return apiResponse(res, 403, "Account is disabled");
     }
-    if (APPROVAL_ROLES.has(normalizeRole(user.role)) && !user.isApproved) {
-      return apiResponse(res, 403, "Account pending admin approval");
+    if (!user.isApproved) {
+      return apiResponse(res, 403, "This account has been suspended. Contact an administrator if you believe this is a mistake.");
     }
 
     const token = generateToken(user);
@@ -140,7 +141,8 @@ exports.login = async (req, res) => {
       },
     });
   } catch (err) {
-    console.error("Login error:", err);
+    const logger = require("../utils/logger");
+    logger.error("Login error:", err);
     return apiResponse(res, 500, "Login failed");
   }
 };
@@ -208,7 +210,8 @@ exports.updateMe = async (req, res) => {
       officerId: user.officerId || null,
     });
   } catch (err) {
-    console.error("Update profile error:", err);
+    const logger = require("../utils/logger");
+    logger.error("Update profile error:", err);
     return apiResponse(res, 500, "Failed to update profile");
   }
 };

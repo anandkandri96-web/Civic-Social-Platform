@@ -1,41 +1,18 @@
-import { useAuth } from './useAuth';
-import { ROLES } from '../utils/constants';
-import { hasRole, normalizeRole } from '../utils/roleCheck';
+// useRole.js (restored)
+// React hook for role-based access (deprecated in favor of permission-based system)
+import { useContext } from 'react';
+import { AuthContext } from '../contexts/AuthContextBase';
+import { getDashboardPath, isAdmin, isOfficer, isWorker, isVolunteer, isCitizen } from '../utils/roleCheck';
 
 export const useRole = () => {
-  const { user, loading } = useAuth();
-
-  const role = normalizeRole(user?.role || null);
-  const isAdmin = role === 'admin' || user?.role === ROLES.ADMIN;
-  const isVolunteer = hasRole(role, ROLES.VOLUNTEER);
-  const isCitizen = hasRole(role, [ROLES.CITIZEN, ROLES.USER]);
-  const isOfficer = hasRole(role, ROLES.OFFICER);
-  const isWorker = hasRole(role, ROLES.WORKER);
-
-  const dashboardPath = isAdmin
-    ? '/admin'
-    : isOfficer
-      ? '/dashboard/officer'
-      : isWorker
-        ? '/dashboard/worker'
-        : isVolunteer
-          ? '/dashboard/volunteer'
-          : '/dashboard';
-
-  const hasPermission = (requiredRole) => {
-    if (loading || !role) return false;
-    return hasRole(role, requiredRole);
-  };
-
+  const { user } = useContext(AuthContext);
   return {
-    role,
-    loading,
-    isCitizen,
-    isVolunteer,
-    isOfficer,
-    isWorker,
-    isAdmin,
-    dashboardPath,
-    hasPermission,
+    isAdmin: isAdmin(user),
+    isOfficer: isOfficer(user),
+    isWorker: isWorker(user),
+    isVolunteer: isVolunteer(user),
+    isCitizen: isCitizen(user),
+    dashboardPath: getDashboardPath(user),
+    user,
   };
 };

@@ -18,9 +18,24 @@ const imageAssetSchema = new mongoose.Schema(
       required: true,
       min: 0,
     },
+    /** Legacy stored binary — new uploads should not rely on this for serving */
     data: {
       type: Buffer,
-      required: true,
+      default: undefined,
+    },
+    /** Public URL (CDN or local static) — audit / bookkeeping */
+    url: {
+      type: String,
+      trim: true,
+      default: "",
+      maxlength: 2048,
+    },
+    cloudinaryPublicId: {
+      type: String,
+      trim: true,
+      default: "",
+      maxlength: 512,
+      index: true,
     },
     uploadedBy: {
       type: mongoose.Schema.Types.ObjectId,

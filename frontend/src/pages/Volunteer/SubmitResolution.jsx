@@ -51,10 +51,17 @@ const SubmitResolution = () => {
   // =========================
   // MEMO DATA
   // =========================
-  const beforeImages = useMemo(
-    () => (Array.isArray(issue?.images) ? issue.images.filter(Boolean) : []),
-    [issue]
-  );
+  const beforeImages = useMemo(() => {
+    if (!Array.isArray(issue?.images)) return [];
+    return issue.images
+      .map((img) => {
+        if (!img) return null;
+        if (typeof img === 'object' && (img.url || img._id)) return img;
+        if (typeof img === 'string') return { url: img };
+        return null;
+      })
+      .filter(Boolean);
+  }, [issue]);
 
   const canSubmit = issue?.status === 'community_fix_in_progress';
 
@@ -139,15 +146,12 @@ const SubmitResolution = () => {
 
   if (!issue) {
     return (
-      <section className="submit-resolution page">
-        <div className="container">
-          <Link to="/dashboard/volunteer" className="back-link">Back</Link>
-          <div className="card submit-resolution__card">
-            <h1>Submit Resolution</h1>
-            <p className="text-muted">{error || 'Issue not found.'}</p>
-          </div>
+      <div className="resolution-page">
+        <Link to="/dashboard/volunteer" className="back-link">← Back</Link>
+        <div className="resolution-card">
+          <p className="text-muted">{error || 'Issue not found.'}</p>
         </div>
-      </section>
+      </div>
     );
   }
 
@@ -155,47 +159,49 @@ const SubmitResolution = () => {
   // UI
   // =========================
   return (
-    <section className="submit-resolution page">
-      <div className="container">
-        <Link to="/dashboard/volunteer" className="back-link">Back</Link>
+    <div className="resolution-page">
+      <Link to="/dashboard/volunteer" className="back-link">← Back</Link>
 
-        <div className="card submit-resolution__card">
-          <header className="submit-resolution__head">
-            <div>
-              <h1>Community Resolution Report</h1>
-              <p className="text-muted">{issue.title}</p>
-            </div>
-            <span className="submit-resolution__status">{issue.status}</span>
-          </header>
+      <div className="resolution-card">
+        <div className="resolution-header">
+          <div>
+            <div className="resolution-title">Community Resolution Report</div>
+            <div className="resolution-subtitle">{issue.title}</div>
+          </div>
+          <span className="status-badge">{issue.status}</span>
+        </div>
 
-          {!canSubmit && (
-            <div className="submit-resolution__notice">
-              Issue must be in <strong>community_fix_in_progress</strong>.
+        {!canSubmit && (
+          <div className="resolution-notice">
+            Issue must be in <strong>community_fix_in_progress</strong>.
+          </div>
+        )}
+
+        {error && <div className="resolution-error">{error}</div>}
+
+        {/* BEFORE IMAGES */}
+        <div className="section">
+          <h3>Before Photos</h3>
+          {beforeImages.length === 0 ? (
+            <p className="text-muted">No images</p>
+          ) : (
+            <div className="image-grid">
+              {beforeImages.map((img, i) => {
+                const src = img._id ? `/api/images/${img._id}` : resolveMediaUrl(img.url);
+                return (
+                  <a key={i} href={src} target="_blank" rel="noreferrer" className="image-card">
+                    <SafeImage src={src} alt="" />
+                  </a>
+                );
+              })}
             </div>
           )}
+        </div>
 
-          {error && <div className="submit-resolution__error">{error}</div>}
-
-          {/* BEFORE IMAGES */}
-          <div className="submit-resolution__section">
-            <h2>Before Photos</h2>
-            {beforeImages.length === 0 ? (
-              <p className="text-muted">No images</p>
-            ) : (
-              <div className="submit-resolution__grid">
-                {beforeImages.map((img, i) => (
-                  <a key={i} href={resolveMediaUrl(img)} target="_blank" rel="noreferrer">
-                    <SafeImage src={img} alt="" style={{ height: 110 }} />
-                  </a>
-                ))}
-              </div>
-            )}
-          </div>
-
-          {/* AFTER IMAGES */}
-          <div className="submit-resolution__section">
-            <h2>After Photos</h2>
-
+        {/* AFTER IMAGES */}
+        <div className="section">
+          <h3>After Photos</h3>
+          <label className="upload-box">
             <input
               type="file"
               accept="image/*"
@@ -203,45 +209,42 @@ const SubmitResolution = () => {
               disabled={!canSubmit || submitting}
               onChange={handleFileChange}
             />
-
-            <div className="submit-resolution__preview">
-              {previewUrls.map((url, i) => (
-                <div key={i} className="preview-item">
-                  <img src={url} alt="preview" />
-                  <button onClick={() => removeImage(i)}>✕</button>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* REPORT */}
-          <div className="submit-resolution__section">
-            <h2>Report</h2>
-
-            <textarea
-              value={reportText}
-              onChange={(e) => setReportText(e.target.value)}
-              disabled={!canSubmit || submitting}
-              rows={6}
-            />
-
-            <div className="char-count">
-              {reportText.length}/{MIN_REPORT_LENGTH} min
-            </div>
-          </div>
-
-          {/* ACTION */}
-          <div className="submit-resolution__actions">
-            <button
-              onClick={handleSubmit}
-              disabled={!canSubmit || submitting}
-            >
-              {submitting ? 'Submitting...' : 'Submit Resolution'}
-            </button>
+            <div className="upload-text">Click or drag to upload</div>
+          </label>
+          <div className="image-grid" style={{ marginTop: 12 }}>
+            {previewUrls.map((url, i) => (
+              <div key={i} className="image-card preview-item">
+                <img src={url} alt="preview" />
+                <button className="preview-remove" onClick={() => removeImage(i)}>✕</button>
+              </div>
+            ))}
           </div>
         </div>
+
+        {/* REPORT */}
+        <div className="section">
+          <h3>Resolution Details</h3>
+          <textarea
+            className="textarea"
+            placeholder="Describe the fix..."
+            value={reportText}
+            onChange={(e) => setReportText(e.target.value)}
+            disabled={!canSubmit || submitting}
+            rows={6}
+          />
+          <div className="char-count">{reportText.length} / 500</div>
+        </div>
+
+        {/* ACTION */}
+        <button
+          className="submit-btn"
+          onClick={handleSubmit}
+          disabled={!canSubmit || submitting}
+        >
+          {submitting ? 'Submitting...' : 'Submit Resolution'}
+        </button>
       </div>
-    </section>
+    </div>
   );
 };
 

@@ -1,6 +1,7 @@
 const Comment = require("../models/comment");
 const Issue = require("../models/issue");
 const { apiResponse } = require("../utils/apiResponse");
+const { normalizeImageArray } = require("../utils/imageNormalize");
 
 exports.createComment = async (req, res) => {
   try {
@@ -17,13 +18,14 @@ exports.createComment = async (req, res) => {
       issue: issueId,
       user: req.user._id,
       message: safeMessage,
-      images: Array.isArray(images) ? images.filter(Boolean) : [],
+      images: normalizeImageArray(Array.isArray(images) ? images : []),
     });
 
     const data = await comment.populate("user", "name role");
     return apiResponse(res, 201, "Comment created", data);
   } catch (error) {
-    console.error("Create comment error:", error);
+    const logger = require("../utils/logger");
+    logger.error("Create comment error:", error);
     return apiResponse(res, 500, "Failed to create comment");
   }
 };
@@ -31,13 +33,29 @@ exports.createComment = async (req, res) => {
 exports.getIssueComments = async (req, res) => {
   try {
     const { issueId } = req.params;
-    const comments = await Comment.find({ issue: issueId })
-      .populate("user", "name role")
-      .sort({ createdAt: -1 });
+    const pageNum = Math.max(1, Number(req.query.page) || 1);
+    const limitNum = Math.min(100, Math.max(1, Number(req.query.limit) || 30));
+    const skip = (pageNum - 1) * limitNum;
 
-    return apiResponse(res, 200, "Comments retrieved", comments);
+    const filter = { issue: issueId };
+    const [comments, total] = await Promise.all([
+      Comment.find(filter)
+        .populate("user", "name role")
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(limitNum),
+      Comment.countDocuments(filter),
+    ]);
+
+    return apiResponse(res, 200, "Comments retrieved", comments, {
+      total,
+      page: pageNum,
+      limit: limitNum,
+      pages: Math.ceil(total / limitNum),
+    });
   } catch (error) {
-    console.error("Get comments error:", error);
+    const logger = require("../utils/logger");
+    logger.error("Get comments error:", error);
     return apiResponse(res, 500, "Failed to fetch comments");
   }
 };
@@ -45,7 +63,7 @@ exports.getIssueComments = async (req, res) => {
 exports.updateComment = async (req, res) => {
   try {
     const { id } = req.params;
-    const { message } = req.body;
+    const { message, images } = req.body;
 
     const comment = await Comment.findById(id);
     if (!comment) return apiResponse(res, 404, "Comment not found");
@@ -54,10 +72,16 @@ exports.updateComment = async (req, res) => {
       return apiResponse(res, 403, "You can only edit your own comment");
     }
 
-    const safeMessage = String(message || "").trim();
-    if (!safeMessage) return apiResponse(res, 400, "Message is required");
+    if (message !== undefined) {
+      const safeMessage = String(message || "").trim();
+      if (!safeMessage) return apiResponse(res, 400, "Message cannot be empty");
+      comment.message = safeMessage;
+    }
 
-    comment.message = safeMessage;
+    if (images !== undefined) {
+      comment.images = normalizeImageArray(Array.isArray(images) ? images : []);
+    }
+
     await comment.save();
 
     return apiResponse(res, 200, "Comment updated", comment);

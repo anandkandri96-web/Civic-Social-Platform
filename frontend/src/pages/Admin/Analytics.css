@@ -26,7 +26,7 @@
   padding: var(--space-md);
   border-radius: 16px;
   background: var(--bg-surface);
-  border: 1px solid var(--border-color);
+  border: 1.5px solid var(--border-color);
   border-top: 3px solid var(--color-primary);
   transition: all 0.25s ease;
   position: relative;
@@ -101,7 +101,7 @@
   padding: var(--space-md);
   border-radius: 16px;
   background: var(--bg-surface);
-  border: 1px solid var(--border-color);
+  border: 1.5px solid var(--border-color);
   transition: all 0.25s ease;
 }
 
@@ -190,7 +190,7 @@
   justify-content: space-between;
   align-items: center;
   gap: var(--space-sm);
-  border-bottom: 1px solid var(--border-color);
+  border-bottom: 1.5px solid var(--border-color);
   padding-bottom: var(--space-sm);
   font-size: 0.85rem;
   transition: all 0.2s ease;

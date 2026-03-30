@@ -6,11 +6,13 @@ import './TaskProgressUpload.css';
 
 const TaskProgressUpload = ({ task, onUpdate }) => {
   const [images, setImages] = useState([]);
+  const [reportText, setReportText] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const MAX_IMAGES = 5;
   const hasProgressImages = Array.isArray(task?.progressImages) && task.progressImages.length > 0;
-  const canComplete = ['accepted', 'in_progress'].includes(String(task?.status || '').toLowerCase()) && hasProgressImages;
+  // If task status allows completing, and has images, and the report is >= 10 chars.
+  const canComplete = ['accepted', 'in_progress'].includes(String(task?.status || '').toLowerCase()) && hasProgressImages && reportText.trim().length >= 10;
   const { showToast } = useToast();
 
   const handleUploadProgress = async () => {
@@ -31,9 +33,13 @@ const TaskProgressUpload = ({ task, onUpdate }) => {
   };
 
   const handleComplete = async () => {
+    if (reportText.trim().length < 10) {
+      setError('A completion report of at least 10 characters is required.');
+      return;
+    }
     setLoading(true);
     try {
-      const updated = await updateTaskStatus(task._id, 'completed');
+      const updated = await updateTaskStatus(task._id, 'completed', reportText.trim());
       onUpdate(updated);
     } catch (err) {
       showToast(getErrorMessage(err), { tone: 'error' });
@@ -67,11 +73,27 @@ const TaskProgressUpload = ({ task, onUpdate }) => {
       <button onClick={handleUploadProgress} disabled={loading || images.length === 0}>
         Upload Progress Images
       </button>
+      <div className="task-progress-upload__report-area">
+        <textarea
+          value={reportText}
+          onChange={(e) => {
+            setError('');
+            setReportText(e.target.value);
+          }}
+          placeholder="Enter a final completion report describing the work done (min 10 characters)"
+          rows={3}
+          disabled={loading}
+        />
+        <div className="task-progress-upload__char-count">{reportText.length} characters</div>
+      </div>
       <button onClick={handleComplete} disabled={loading || !canComplete}>
         Mark Task Completed
       </button>
       {!hasProgressImages && (
         <p className="task-progress-upload__hint">Upload at least one image before completing the task.</p>
+      )}
+      {hasProgressImages && reportText.trim().length < 10 && (
+        <p className="task-progress-upload__hint">A completion report of at least 10 characters is required to finish the task.</p>
       )}
     </div>
   );

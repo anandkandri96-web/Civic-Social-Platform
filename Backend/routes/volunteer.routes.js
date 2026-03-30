@@ -5,9 +5,13 @@ const { uploadImages } = require("../middlewares/upload.middleware");
 const { PERMISSIONS } = require("../config/permissions.config");
 const { ROLES } = require("../utils/constants");
 const { apiResponse } = require("../utils/apiResponse");
+const { validateRequest } = require("../middlewares/validateRequest.middleware");
+const schemas = require("../validators/joi.schemas");
+const { requireVolunteerResolutionProof } = require("../middlewares/bodyOrUploadGuards.middleware");
 const {
   getAvailableIssues,
   claimIssue,
+  unclaimIssue,
   updateCommunityProgress,
   submitCommunityResolution,
 } = require("../controllers/volunteer.controller");
@@ -32,10 +36,17 @@ router.post(
   claimIssue
 );
 
+router.post(
+  "/issues/:issueId/unclaim",
+  canPerform(PERMISSIONS.VOLUNTEER_CLAIM_ISSUE),
+  unclaimIssue
+);
+
 // ✅ Update progress on claimed issue
 router.patch(
   "/issues/:issueId/progress",
   canPerform(PERMISSIONS.VOLUNTEER_UPDATE_PROGRESS),
+  validateRequest(schemas.volunteerUpdateProgress),
   updateCommunityProgress
 );
 
@@ -44,6 +55,8 @@ router.patch(
   "/issues/:issueId/resolve",
   canPerform(PERMISSIONS.VOLUNTEER_SUBMIT_RESOLUTION),
   uploadImages("proofImages", 5),
+  validateRequest(schemas.volunteerSubmitResolution),
+  requireVolunteerResolutionProof,
   submitCommunityResolution
 );
 

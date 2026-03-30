@@ -94,11 +94,21 @@ const UserManagement = () => {
     const draft = drafts[user._id];
     setWorking(user._id);
     try {
+      const roleChanged = draft.role !== undefined && draft.role !== user.role;
+      const deptChanged = draft.department !== undefined && draft.department !== (user.department?._id || user.department || '');
+
       const actions = [];
-      if (draft.role !== undefined && draft.role !== user.role)
-        actions.push(updateUserRoleAdmin(user._id, draft.role));
-      if (draft.department !== undefined && draft.department !== (user.department?._id || user.department || ''))
+
+      if (roleChanged) {
+        // Pass departmentId alongside role so officer/worker role changes don't fail
+        // when the department is being set at the same time
+        const payload = { role: draft.role };
+        if (deptChanged) payload.departmentId = draft.department;
+        actions.push(updateUserRoleAdmin(user._id, payload));
+      } else if (deptChanged) {
         actions.push(assignUserDepartmentAdmin(user._id, draft.department));
+      }
+
       const results = await Promise.all(actions);
       results.forEach((r) => { if (r?._id) patchUser(r); });
       setDrafts((prev) => { const next = { ...prev }; delete next[user._id]; return next; });

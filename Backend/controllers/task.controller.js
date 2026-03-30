@@ -2,11 +2,26 @@ const mongoose = require("mongoose");
 const Task = require("../models/task");
 const Issue = require("../models/issue");
 const User = require("../models/user");
+const Resolution = require("../models/resolution");
+const { RESOLUTION_TYPES } = require("../models/resolution");
 const { apiResponse } = require("../utils/apiResponse");
 const { ISSUE_STATUS, ROLES } = require("../utils/constants");
-const { canTransition } = require("../utils/statusFlow");
-const { createNotification, notifyWorkerAssigned, notifyCitizenVerificationRequest } = require("../services/notification.service");
+const { assertIssueStatusChange, HANDLING_MODE } = require("../config/issueStatusMachine");
+const { createNotification, notifyWorkerAssigned, notifyCitizenVerificationRequest, notifyOfficerTaskCompleted } = require("../services/notification.service");
 const { normalizeMulterFiles, persistUploadedFiles } = require("../services/imageAsset.service");
+const { normalizeImageArray } = require("../utils/imageNormalize");
+const appConfig = require("../config/appConfig");
+const { recomputeIssuePriority } = require("../services/priority.service");
+const { logAudit } = require("../services/audit.service");
+
+function auditCtx(req) {
+  return {
+    ip: req.ip || req.headers["x-forwarded-for"] || "",
+    userAgent: String(req.headers["user-agent"] || "").slice(0, 512),
+    requestPath: req.originalUrl || "",
+    requestMethod: req.method || "",
+  };
+}
 
 const TASK_STATUS = Object.freeze({
   ASSIGNED: "assigned",
@@ -63,6 +78,18 @@ exports.createTask = async (req, res) => {
     const worker = await User.findOne({ _id: workerId, role: ROLES.WORKER, isActive: true });
     if (!worker) return apiResponse(res, 404, "Worker not found");
 
+    if (String(issue.reportedBy) === String(worker._id)) {
+      return apiResponse(res, 400, "A worker cannot be assigned to an issue they reported.");
+    }
+
+    if (issue.handlingMode === HANDLING_MODE.VOLUNTEER) {
+      return apiResponse(
+        res,
+        409,
+        "This issue is locked to the volunteer workflow. Release the volunteer claim before assigning a worker."
+      );
+    }
+
     // Officers can only assign within their own department.
     if (req.user.role === ROLES.OFFICER) {
       if (!req.user.department) return apiResponse(res, 400, "Officer must be assigned to a department");
@@ -74,12 +101,14 @@ exports.createTask = async (req, res) => {
       }
     }
 
-    // Ensure issue is in a valid state for assignment.
-    if (
-      issue.status !== ISSUE_STATUS.ASSIGNED_TO_DEPARTMENT &&
-      !canTransition(issue.status, ISSUE_STATUS.ASSIGNED_TO_DEPARTMENT)
-    ) {
-      return apiResponse(res, 400, `Cannot assign worker in current status: ${issue.status}`);
+    const ac = assertIssueStatusChange({
+      issue,
+      nextStatus: ISSUE_STATUS.ASSIGNED_TO_DEPARTMENT,
+      user: req.user,
+      context: {},
+    });
+    if (!ac.ok) {
+      return apiResponse(res, ac.statusCode, ac.message);
     }
 
     const existingForIssue = await Task.findOne({ issue: issue._id }).select("_id worker status");
@@ -98,6 +127,7 @@ exports.createTask = async (req, res) => {
 
     issue.assignedWorker = worker._id;
     issue.status = ISSUE_STATUS.ASSIGNED_TO_DEPARTMENT;
+    issue.handlingMode = HANDLING_MODE.OFFICER_WORKER;
     await issue.save();
 
     await notifyWorkerAssigned(issue, worker);
@@ -110,7 +140,8 @@ exports.createTask = async (req, res) => {
 
     return apiResponse(res, 201, "Task created", task);
   } catch (error) {
-    console.error("Create task error:", error);
+    const logger = require("../utils/logger");
+    logger.error("Create task error:", error);
     return apiResponse(res, 500, "Failed to create task");
   }
 };
@@ -122,7 +153,8 @@ exports.getMyTasks = async (req, res) => {
       .sort({ createdAt: -1 });
     return apiResponse(res, 200, "Tasks fetched", tasks);
   } catch (error) {
-    console.error("Get my tasks error:", error);
+    const logger = require("../utils/logger");
+    logger.error("Get my tasks error:", error);
     return apiResponse(res, 500, "Failed to fetch tasks");
   }
 };
@@ -131,6 +163,7 @@ exports.updateTaskStatus = async (req, res) => {
   try {
     const { id } = req.params;
     const nextStatus = String(req.body?.status || "").trim();
+    const { completionReport, complicationReport, progressImages } = req.body || {};
 
     if (!mongoose.Types.ObjectId.isValid(id)) {
       return apiResponse(res, 400, "Invalid task id");
@@ -147,11 +180,28 @@ exports.updateTaskStatus = async (req, res) => {
       return apiResponse(res, 400, `Invalid task transition ${task.status} -> ${nextStatus}`);
     }
 
+    if (typeof completionReport === "string") {
+      task.completionReport = completionReport.trim();
+    }
+    if (typeof complicationReport === "string") {
+      task.complicationReport = complicationReport.trim();
+    }
+    if (Array.isArray(progressImages) && progressImages.length) {
+      task.progressImages = normalizeImageArray([...(task.progressImages || []), ...progressImages]);
+    }
+
     task.status = nextStatus;
 
     if (nextStatus === TASK_STATUS.ACCEPTED) {
-      if (!canTransition(task.issue.status, ISSUE_STATUS.WORK_IN_PROGRESS)) {
-        return apiResponse(res, 400, `Cannot move issue from ${task.issue.status} to ${ISSUE_STATUS.WORK_IN_PROGRESS}`);
+      const iss = await Issue.findById(task.issue._id);
+      const chk = assertIssueStatusChange({
+        issue: iss,
+        nextStatus: ISSUE_STATUS.WORK_IN_PROGRESS,
+        user: req.user,
+        context: {},
+      });
+      if (!chk.ok) {
+        return apiResponse(res, chk.statusCode, chk.message);
       }
       await Issue.findByIdAndUpdate(task.issue._id, { status: ISSUE_STATUS.WORK_IN_PROGRESS });
       await createNotification({
@@ -163,30 +213,62 @@ exports.updateTaskStatus = async (req, res) => {
     }
 
     if (nextStatus === TASK_STATUS.IN_PROGRESS) {
-      if (!canTransition(task.issue.status, ISSUE_STATUS.WORK_IN_PROGRESS)) {
-        return apiResponse(res, 400, `Cannot move issue from ${task.issue.status} to ${ISSUE_STATUS.WORK_IN_PROGRESS}`);
+      const iss = await Issue.findById(task.issue._id);
+      const chk = assertIssueStatusChange({
+        issue: iss,
+        nextStatus: ISSUE_STATUS.WORK_IN_PROGRESS,
+        user: req.user,
+        context: {},
+      });
+      if (!chk.ok) {
+        return apiResponse(res, chk.statusCode, chk.message);
       }
       await Issue.findByIdAndUpdate(task.issue._id, { status: ISSUE_STATUS.WORK_IN_PROGRESS });
     }
 
     if (nextStatus === TASK_STATUS.COMPLETED) {
-      if (!Array.isArray(task.progressImages) || task.progressImages.length === 0) {
+      const imgs = normalizeImageArray(task.progressImages || []);
+      if (!imgs.length) {
         return apiResponse(res, 400, "Upload at least one progress image before completing the task");
       }
-      if (!canTransition(task.issue.status, ISSUE_STATUS.RESOLVED)) {
-        return apiResponse(res, 400, `Cannot move issue from ${task.issue.status} to ${ISSUE_STATUS.RESOLVED}`);
-      }
-      task.completedAt = new Date();
-      await Issue.findByIdAndUpdate(task.issue._id, {
-        status: ISSUE_STATUS.RESOLVED,
-        resolvedAt: new Date(),
+      const iss = await Issue.findById(task.issue._id);
+      const resolution = await Resolution.create({
+        issue: iss._id,
+        task: task._id,
+        type: RESOLUTION_TYPES.WORKER,
+        resolvedBy: req.user._id,
+        report: String(task.completionReport || "").trim(),
+        proofImages: imgs,
       });
-      await notifyCitizenVerificationRequest({ _id: task.issue._id, reportedBy: task.issue.reportedBy });
+
+      // Issue moves to AWAITING_OFFICER_VERIFICATION until the officer verifies the resolution
+      await Issue.findByIdAndUpdate(task.issue._id, {
+        acceptedResolution: resolution._id,
+        status: ISSUE_STATUS.AWAITING_OFFICER_VERIFICATION,
+      });
+      await notifyOfficerTaskCompleted(task.issue, req.user);
+
+      logAudit({
+        issue: task.issue._id,
+        user: req.user._id,
+        action: "task.complete",
+        resourceType: "resolution",
+        resourceId: resolution._id,
+        detail: "Worker completed task, awaiting officer verification",
+        ...auditCtx(req),
+      });
     }
 
     if (nextStatus === TASK_STATUS.COMPLICATION_REPORTED) {
-      if (!canTransition(task.issue.status, ISSUE_STATUS.UNDER_REVIEW)) {
-        return apiResponse(res, 400, `Cannot move issue from ${task.issue.status} to ${ISSUE_STATUS.UNDER_REVIEW}`);
+      const iss = await Issue.findById(task.issue._id);
+      const chk = assertIssueStatusChange({
+        issue: iss,
+        nextStatus: ISSUE_STATUS.UNDER_REVIEW,
+        user: req.user,
+        context: {},
+      });
+      if (!chk.ok) {
+        return apiResponse(res, chk.statusCode, chk.message);
       }
       await Issue.findByIdAndUpdate(task.issue._id, { status: ISSUE_STATUS.UNDER_REVIEW });
     }
@@ -195,7 +277,8 @@ exports.updateTaskStatus = async (req, res) => {
     const populated = await Task.findById(task._id).populate("issue", ISSUE_TASK_FIELDS);
     return apiResponse(res, 200, "Task status updated", populated);
   } catch (error) {
-    console.error("Update task status error:", error);
+    const logger = require("../utils/logger");
+    logger.error("Update task status error:", error);
     return apiResponse(res, 500, "Failed to update task status");
   }
 };
@@ -203,7 +286,7 @@ exports.updateTaskStatus = async (req, res) => {
 exports.addTaskProgress = async (req, res) => {
   try {
     const { id } = req.params;
-    const { completionReport, complicationReport } = req.body || {};
+    const { notes, completionReport, complicationReport, progressImages } = req.body || {};
 
     if (!mongoose.Types.ObjectId.isValid(id)) {
       return apiResponse(res, 400, "Invalid task id");
@@ -219,8 +302,16 @@ exports.addTaskProgress = async (req, res) => {
 
     const uploadedFiles = normalizeMulterFiles(req, ["progressImages"]);
     if (uploadedFiles.length > 0) {
-      const urls = await persistUploadedFiles(req, uploadedFiles, req.user._id);
-      task.progressImages = [...(task.progressImages || []), ...urls];
+      const items = await persistUploadedFiles(req, uploadedFiles, req.user._id);
+      task.progressImages = normalizeImageArray([...(task.progressImages || []), ...items]);
+    }
+
+    if (Array.isArray(progressImages) && progressImages.length) {
+      task.progressImages = normalizeImageArray([...(task.progressImages || []), ...progressImages]);
+    }
+
+    if (typeof notes === "string" && notes.trim().length >= 5) {
+      task.completionReport = notes.trim();
     }
 
     if (typeof completionReport === "string") {
@@ -240,7 +331,8 @@ exports.addTaskProgress = async (req, res) => {
     await task.save();
     return apiResponse(res, 200, "Task progress updated", task);
   } catch (error) {
-    console.error("Add task progress error:", error);
+    const logger = require("../utils/logger");
+    logger.error("Add task progress error:", error);
     return apiResponse(res, 500, "Failed to update task progress");
   }
 };

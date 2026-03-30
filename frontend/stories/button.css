@@ -1,3 +1,33 @@
+.storybook-button--sky-blue {
+  background: linear-gradient(90deg, #3B82F6 60%, #60a5fa 100%);
+  color: #fff;
+  border: 1.5px solid #3B82F6;
+  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.12);
+}
+.storybook-button--mint-green {
+  background: linear-gradient(90deg, #34D399 60%, #6ee7b7 100%);
+  color: #fff;
+  border: 1.5px solid #34D399;
+  box-shadow: 0 2px 8px rgba(52, 211, 153, 0.12);
+}
+.storybook-button--sunny-yellow {
+  background: linear-gradient(90deg, #FACC15 60%, #fde68a 100%);
+  color: #7c5700;
+  border: 1.5px solid #FACC15;
+  box-shadow: 0 2px 8px rgba(250, 204, 21, 0.12);
+}
+.storybook-button--coral-pink {
+  background: linear-gradient(90deg, #F43F5E 60%, #fb7185 100%);
+  color: #fff;
+  border: 1.5px solid #F43F5E;
+  box-shadow: 0 2px 8px rgba(244, 63, 94, 0.12);
+}
+.storybook-button--lavender {
+  background: linear-gradient(90deg, #A855F7 60%, #c084fc 100%);
+  color: #fff;
+  border: 1.5px solid #A855F7;
+  box-shadow: 0 2px 8px rgba(168, 85, 247, 0.12);
+}
 .storybook-button {
   display: inline-block;
   cursor: pointer;

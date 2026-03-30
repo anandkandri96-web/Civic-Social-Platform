@@ -1,0 +1,291 @@
+/* ===== PAGE ===== */
+.dashboard-page {
+  padding: 24px;
+  background: linear-gradient(180deg, #0b1320, #0f1b2e);
+  min-height: 100vh;
+  color: #e6edf3;
+  font-family: "Inter", sans-serif;
+}
+
+/* ===== HEADER ===== */
+.dashboard-header {
+  margin-bottom: 20px;
+}
+
+.dashboard-title {
+  font-size: 26px;
+  font-weight: 600;
+}
+
+.dashboard-subtitle {
+  font-size: 14px;
+  color: #8aa0b6;
+  margin-top: 4px;
+}
+
+/* ===== OFFICER CARD ===== */
+.officer-card {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: #0f1725;
+  padding: 16px 20px;
+  border-radius: 12px;
+  margin-bottom: 20px;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.officer-info {
+  display: flex;
+  gap: 30px;
+}
+
+.officer-item span {
+  display: block;
+  font-size: 11px;
+  color: #8aa0b6;
+}
+
+.officer-item strong {
+  font-size: 14px;
+}
+
+/* ===== KPI CARDS ===== */
+.stats-row {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.stat-card {
+  flex: 1;
+  padding: 18px;
+  border-radius: 12px;
+  background: #0f1725;
+  border-left: 4px solid;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.stat-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.4);
+}
+
+.stat-card h4 {
+  font-size: 12px;
+  color: #8aa0b6;
+}
+
+.stat-card p {
+  font-size: 26px;
+  font-weight: 600;
+  margin-top: 6px;
+}
+
+/* Status Colors */
+.stat-pending {
+  border-color: #facc15;
+}
+
+.stat-assigned {
+  border-color: #38bdf8;
+}
+
+.stat-progress {
+  border-color: #a78bfa;
+}
+
+.stat-resolved {
+  border-color: #4ade80;
+}
+
+/* ===== CHART CARD ===== */
+.chart-card {
+  background: #0f1725;
+  padding: 20px;
+  border-radius: 14px;
+  margin-bottom: 20px;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.chart-title {
+  font-size: 16px;
+  margin-bottom: 16px;
+}
+
+/* Fake bars (if not using library) */
+.chart-bar {
+  height: 10px;
+  border-radius: 10px;
+  margin-bottom: 12px;
+}
+
+.bar-pending {
+  background: #facc15;
+}
+
+.bar-assigned {
+  background: #38bdf8;
+}
+
+.bar-resolved {
+  background: #4ade80;
+}
+
+/* ===== FILTERS ===== */
+.filters {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.filter-btn {
+  padding: 6px 12px;
+  border-radius: 999px;
+  background: #1e293b;
+  color: #cbd5f5;
+  font-size: 13px;
+  cursor: pointer;
+  border: none;
+  transition: all 0.2s ease;
+}
+
+.filter-btn:hover {
+  background: #334155;
+}
+
+.filter-active {
+  background: #5b8cff;
+  color: white;
+}
+
+/* ===== SEARCH ===== */
+.search-box {
+  margin-bottom: 16px;
+}
+
+.search-input {
+  width: 100%;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: #0f1725;
+  color: #e6edf3;
+}
+
+.search-input:focus {
+  outline: none;
+  border-color: #7aa2ff;
+  box-shadow: 0 0 0 2px rgba(122, 162, 255, 0.2);
+}
+
+/* ===== TABLE ===== */
+.table-container {
+  background: #0f1725;
+  border-radius: 14px;
+  padding: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.table th {
+  text-align: left;
+  font-size: 12px;
+  color: #8aa0b6;
+  padding: 10px;
+}
+
+.table td {
+  padding: 12px 10px;
+  font-size: 14px;
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.table-row:hover {
+  background: rgba(255, 255, 255, 0.03);
+}
+
+/* ===== STATUS BADGES ===== */
+.status {
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.status-review {
+  background: rgba(250, 204, 21, 0.15);
+  color: #facc15;
+}
+
+.status-assigned {
+  background: rgba(56, 189, 248, 0.15);
+  color: #38bdf8;
+}
+
+.status-verified {
+  background: rgba(74, 222, 128, 0.15);
+  color: #4ade80;
+}
+
+/* ===== ACTIONS ===== */
+.action-group {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+/* ===== BUTTONS ===== */
+.btn-primary {
+  background: linear-gradient(135deg, #4fd1ff, #5b8cff);
+  border: none;
+  padding: 6px 12px;
+  border-radius: 8px;
+  font-weight: 500;
+  cursor: pointer;
+  color: #0b1320;
+  transition: all 0.2s ease;
+  text-decoration: none;
+  display: inline-block;
+}
+
+.btn-primary:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 18px rgba(91, 140, 255, 0.4);
+}
+
+.btn-secondary {
+  background: #1e293b;
+  color: #cbd5f5;
+  padding: 6px 10px;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+  text-decoration: none;
+  display: inline-block;
+}
+
+/* ===== SELECT ===== */
+.select {
+  background: #0f1725;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: #e6edf3;
+  padding: 6px 8px;
+  border-radius: 8px;
+}
+
+.select:focus {
+  outline: none;
+  border-color: #7aa2ff;
+}
+
+/* ===== EMPTY STATE ===== */
+.empty-state {
+  text-align: center;
+  padding: 30px;
+  color: #8aa0b6;
+}
