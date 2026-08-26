@@ -13,6 +13,21 @@ import { ISSUE_CATEGORY_LABELS, ISSUE_SEVERITY_LABELS } from '../../../constants
 import { ISSUE_STATUS_LABELS } from '../../../constants/issueStatus';
 import './IssueCard.css';
 
+function normalizeImageEntry(entry) {
+  if (!entry) return '';
+  if (typeof entry === 'string') return String(entry).trim();
+  if (typeof entry === 'object') {
+    if (entry._id) return `/api/images/${entry._id}`;
+    if (entry.url) return String(entry.url).trim();
+  }
+  return '';
+}
+
+function normalizeImageList(images) {
+  if (!Array.isArray(images)) return [];
+  return images.map(normalizeImageEntry).filter(Boolean);
+}
+
 function formatLocation(location, locationText) {
   const manual = locationText && String(locationText).trim();
   const coords =
@@ -48,11 +63,9 @@ const IssueCard = ({ issue, onVote, onDeleted }) => {
 
   if (!issue) return null;
 
-  const submittedImages = Array.isArray(issue?.images) ? issue.images.map(String).filter(Boolean) : [];
-  const volunteerAfterImages = Array.isArray(issue?.communityProof) ? issue.communityProof.map(String).filter(Boolean) : [];
-  const workerAfterImages = Array.isArray(issue?.workerProgressImages)
-    ? issue.workerProgressImages.map(String).filter(Boolean)
-    : [];
+  const submittedImages = normalizeImageList(issue?.images);
+  const volunteerAfterImages = normalizeImageList(issue?.communityProof);
+  const workerAfterImages = normalizeImageList(issue?.workerProgressImages);
   const afterImages = Array.from(new Set([...volunteerAfterImages, ...workerAfterImages]));
   const isResolvedFlow = ['resolved', 'resolved_by_community', 'citizen_verified', 'closed'].includes(issue?.status);
   const coverImage = isResolvedFlow && afterImages[0] ? afterImages[0] : submittedImages[0];

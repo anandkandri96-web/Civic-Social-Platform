@@ -91,7 +91,7 @@ const AppRoutes = () => (
           <Route
             path="/dashboard/officer/analytics"
             element={(
-              <ProtectedRoute requiredPermissions={["officer:access", "admin:view_analytics"]} fallbackRoute="/unauthorized">
+              <ProtectedRoute requiredPermission={["officer:access", "admin:view_analytics"]} fallbackRoute="/unauthorized">
                 <Analytics />
               </ProtectedRoute>
             )}

@@ -98,7 +98,7 @@ const VolunteerDashboard = () => {
     const total = myIssues.length;
     const resolved = myIssues.filter((i) => ['resolved', 'resolved_by_community', 'closed'].includes(i.status)).length;
     const active = total - resolved;
-    const inProgress = myIssues.filter((i) => ['under_review', 'assigned_to_department', 'work_in_progress'].includes(i.status)).length;
+    const inProgress = myIssues.filter((i) => ['under_review', 'assigned_to_department', 'work_in_progress', 'awaiting_officer_verification'].includes(i.status)).length;
     return { total, active, inProgress, resolved };
   }, [myIssues]);
 
@@ -172,7 +172,11 @@ const VolunteerDashboard = () => {
                         <button
                           type="button"
                           disabled={workingId === issue._id || !['volunteer_claimed', 'community_fix_in_progress'].includes(issue.status)}
-                          onClick={() => runAction(issue._id, () => updateVolunteerProgress(issue._id))}
+                          onClick={() =>
+                            runAction(issue._id, () =>
+                              updateVolunteerProgress(issue._id, { notes: 'Started community fix' })
+                            )
+                          }
                         >
                           Start Fix
                         </button>

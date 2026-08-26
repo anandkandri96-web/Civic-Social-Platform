@@ -60,6 +60,10 @@ const isAllowedTaskTransition = (from, to) => {
 
 exports.createTask = async (req, res) => {
   try {
+    if (![ROLES.OFFICER, ROLES.ADMIN].includes(req.user?.role)) {
+      return apiResponse(res, 403, "Only officers or admins can assign tasks");
+    }
+
     const { issueId, workerId } = req.body || {};
 
     if (!issueId || !workerId) {

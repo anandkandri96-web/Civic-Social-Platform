@@ -5,6 +5,7 @@ import { normalizeRole } from '../../utils/roleCheck';
 import { getErrorMessage } from '@api/utils';
 import Button from '../../components/common/Button/Button';
 import { useToast } from '../../contexts/ToastContext';
+import { validateEmail, normalizeEmail } from '../../utils/validation';
 import './Login.css';
 
 const Login = () => {
@@ -19,31 +20,45 @@ const Login = () => {
     email: '',
     password: '',
   });
+  const [touched, setTouched] = useState({});
 
   const [error, setError] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
-  const EMAIL_RE = /^\S+@\S+\.\S+$/;
+
+  const emailIsValid = validateEmail(credentials.email);
+  const passwordIsValid = credentials.password.length > 0;
+  const canSubmit = emailIsValid && passwordIsValid && !submitting;
 
   const handleChange = (e) => {
     const { name, value } = e.target;
     setCredentials((prev) => ({ ...prev, [name]: value }));
   };
 
+  const handleBlur = (e) => {
+    const { name } = e.target;
+    setTouched((prev) => ({ ...prev, [name]: true }));
+  };
+
   const onSubmit = async (e) => {
     e.preventDefault();
+    if (submitting) return;
+
     setError('');
     setSubmitting(true);
 
     try {
-      const email = credentials.email.trim().toLowerCase();
+      const email = normalizeEmail(credentials.email);
       const password = String(credentials.password || '');
-      if (!EMAIL_RE.test(email)) {
+
+      if (!validateEmail(email)) {
         setError('Please enter a valid email address');
+        setSubmitting(false);
         return;
       }
-      if (password.length < 6 || password.length > 128) {
-        setError('Password must be 6-128 characters');
+      if (!password) {
+        setError('Password is required');
+        setSubmitting(false);
         return;
       }
 
@@ -92,10 +107,15 @@ const Login = () => {
             name="email"
             value={credentials.email}
             onChange={handleChange}
+            onBlur={handleBlur}
             placeholder="Enter email"
             autoComplete="username"
             required
+            className={touched.email ? (emailIsValid ? 'input-valid' : 'input-invalid') : ''}
           />
+          {touched.email && !emailIsValid && (
+            <div className="field-note error">Please enter a valid email address.</div>
+          )}
 
           <label>Password</label>
           <div className="password-field">
@@ -104,9 +124,11 @@ const Login = () => {
               name="password"
               value={credentials.password}
               onChange={handleChange}
+              onBlur={handleBlur}
               placeholder="Enter password"
               autoComplete="current-password"
               required
+              className={touched.password && !passwordIsValid ? 'input-invalid' : ''}
             />
             <button
               type="button"
@@ -117,8 +139,11 @@ const Login = () => {
               {showPassword ? 'Hide' : 'Show'}
             </button>
           </div>
+          {touched.password && !passwordIsValid && (
+            <div className="field-note error">Password is required.</div>
+          )}
 
-          <Button type="submit" disabled={submitting} className="full-width">
+          <Button type="submit" disabled={!canSubmit} className="full-width">
             {submitting ? 'Signing in...' : 'Sign In'}
           </Button>
         </form>

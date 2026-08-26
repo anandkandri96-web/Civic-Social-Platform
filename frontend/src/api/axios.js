@@ -18,7 +18,6 @@ const handleLogout = () => {
     localStorage.removeItem("token");
     localStorage.removeItem("user");
   } catch (error) {
-    // eslint-disable-next-line no-console
     console.warn("Local storage cleanup failed during logout:", error); // For browser debugging only
   }
 

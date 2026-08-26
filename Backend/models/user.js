@@ -1,6 +1,7 @@
 const mongoose = require("mongoose");
 const bcrypt = require("bcryptjs");
 const { ROLES } = require("../config/roles");
+const { PASSWORD_RE, passwordValidationMessage } = require("../utils/authValidation");
 
 const userSchema = new mongoose.Schema(
   {
@@ -25,6 +26,13 @@ const userSchema = new mongoose.Schema(
       required: true,
       minlength: 8,
       select: false,
+      validate: {
+        validator: function (value) {
+          if (!this.isModified("password")) return true;
+          return PASSWORD_RE.test(value);
+        },
+        message: passwordValidationMessage,
+      },
     },
 
     role: {

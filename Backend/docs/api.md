@@ -51,7 +51,7 @@ Run these from the `Backend` directory:
 - `PATCH /issues/:id` (reporting citizen, before assignment)
   - body: any of `title`, `description`, `category`, `severity`, `lat`, `lng`, `locationText`, `images`
 - `PATCH /issues/:id/status` (admin)
-  - body: `{ "status": "under_review|assigned_to_department|work_in_progress|resolved|citizen_verified|closed|volunteer_claimed|community_fix_in_progress|resolved_by_community|rejected|reported" }`
+  - body: `{ "status": "under_review|assigned_to_department|work_in_progress|awaiting_officer_verification|resolved|citizen_verified|closed|volunteer_claimed|community_fix_in_progress|resolved_by_community|rejected|reported" }`
 - `PATCH /issues/:id/verify` (reporting citizen)
 - `PATCH /issues/:id/reopen` (reporting citizen)
 - `PATCH /issues/:id/close` (admin/officer)

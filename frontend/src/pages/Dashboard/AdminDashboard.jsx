@@ -116,12 +116,14 @@ const AdminDashboard = () => {
     const total = Object.values(statusMap).reduce((sum, n) => sum + n, 0);
     const pending   = (statusMap.reported || 0) + (statusMap.under_review || 0);
     const inProgress = (statusMap.assigned_to_department || 0) + (statusMap.work_in_progress || 0)
+                     + (statusMap.awaiting_officer_verification || 0)
                      + (statusMap.volunteer_claimed || 0) + (statusMap.community_fix_in_progress || 0);
     const resolved  = (statusMap.resolved || 0) + (statusMap.resolved_by_community || 0)
                      + (statusMap.citizen_verified || 0) + (statusMap.closed || 0);
     const rejected  = (statusMap.rejected || 0);
     // kept for bar chart backward compat
-    const assigned  = (statusMap.assigned_to_department || 0) + (statusMap.work_in_progress || 0);
+    const assigned  = (statusMap.assigned_to_department || 0) + (statusMap.work_in_progress || 0)
+                    + (statusMap.awaiting_officer_verification || 0);
     return { total, pending, inProgress, assigned, resolved, rejected };
   }, [trends]);
 

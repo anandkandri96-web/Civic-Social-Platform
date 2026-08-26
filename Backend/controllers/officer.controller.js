@@ -18,26 +18,32 @@ function auditCtx(req) {
   };
 }
 
-const hasOfficerScope = (user) => user.role === ROLES.OFFICER && user.department;
+const getEntityId = (value) => String(value?._id || value?.id || value || "");
+
+const hasOfficerScope = (user) => user.role === ROLES.OFFICER && getEntityId(user.department);
+
+const DEPARTMENT_QUEUE_STATUSES = Object.freeze([
+  ISSUE_STATUS.REPORTED,
+  ISSUE_STATUS.UNDER_REVIEW,
+  ISSUE_STATUS.ASSIGNED_TO_DEPARTMENT,
+  ISSUE_STATUS.WORK_IN_PROGRESS,
+  ISSUE_STATUS.AWAITING_OFFICER_VERIFICATION,
+  ISSUE_STATUS.RESOLVED,
+  ISSUE_STATUS.CITIZEN_VERIFIED,
+]);
 
 exports.getDepartmentIssues = async (req, res) => {
   try {
     const filter = {
       status: {
-        $in: [
-          ISSUE_STATUS.UNDER_REVIEW,
-          ISSUE_STATUS.ASSIGNED_TO_DEPARTMENT,
-          ISSUE_STATUS.WORK_IN_PROGRESS,
-          ISSUE_STATUS.RESOLVED,
-          ISSUE_STATUS.CITIZEN_VERIFIED,
-        ],
+        $in: DEPARTMENT_QUEUE_STATUSES,
       },
     };
     if (req.user.role === ROLES.OFFICER) {
       if (!hasOfficerScope(req.user)) {
         return apiResponse(res, 400, "Officer must be assigned to a department");
       }
-      filter.assignedDepartment = req.user.department;
+      filter.assignedDepartment = getEntityId(req.user.department);
     } else if (req.query.departmentId) {
       filter.assignedDepartment = req.query.departmentId;
     }
@@ -64,7 +70,7 @@ exports.getDepartmentWorkers = async (req, res) => {
       if (!hasOfficerScope(req.user)) {
         return apiResponse(res, 400, "Officer must be assigned to a department");
       }
-      filter.department = req.user.department;
+      filter.department = getEntityId(req.user.department);
     } else if (req.query.departmentId) {
       filter.department = req.query.departmentId;
     }
@@ -106,7 +112,7 @@ exports.reviewIssue = async (req, res) => {
     if (req.user.role === ROLES.OFFICER && !hasOfficerScope(req.user)) {
       return apiResponse(res, 400, "Officer must be assigned to a department");
     }
-    if (req.user.role === ROLES.OFFICER && String(issue.assignedDepartment?._id || issue.assignedDepartment || '') !== String(req.user.department?._id || req.user.department || '')) {
+    if (req.user.role === ROLES.OFFICER && getEntityId(issue.assignedDepartment) !== getEntityId(req.user.department)) {
       return apiResponse(res, 403, "Officer can review only own department issues");
     }
 
@@ -159,8 +165,8 @@ exports.assignWorker = async (req, res) => {
 
     if (req.user.role === ROLES.OFFICER) {
       if (!hasOfficerScope(req.user)) return apiResponse(res, 400, "Officer must be assigned to a department");
-      const issueDeptId = String(issue.assignedDepartment?._id || issue.assignedDepartment || '');
-      const officerDeptId = String(req.user.department?._id || req.user.department || '');
+      const issueDeptId = getEntityId(issue.assignedDepartment);
+      const officerDeptId = getEntityId(req.user.department);
       if (issueDeptId && issueDeptId !== 'null' && issueDeptId !== officerDeptId) {
         return apiResponse(res, 403, "Officer can assign only own department issues");
       }
@@ -172,7 +178,7 @@ exports.assignWorker = async (req, res) => {
       isActive: true,
     });
     if (!worker) return apiResponse(res, 404, "Worker not found");
-    if (req.user.role === ROLES.OFFICER && worker.department && String(worker.department) !== String(req.user.department)) {
+    if (req.user.role === ROLES.OFFICER && worker.department && getEntityId(worker.department) !== getEntityId(req.user.department)) {
       return apiResponse(res, 400, "Worker belongs to a different department");
     }
 
@@ -271,8 +277,8 @@ exports.updateOfficerStatus = async (req, res) => {
       return apiResponse(res, 400, "Officer must be assigned to a department");
     }
     if (req.user.role === ROLES.OFFICER) {
-      const issueDeptId = String(issue.assignedDepartment?._id || issue.assignedDepartment || '');
-      const officerDeptId = String(req.user.department?._id || req.user.department || '');
+      const issueDeptId = getEntityId(issue.assignedDepartment);
+      const officerDeptId = getEntityId(req.user.department);
       if (issueDeptId && issueDeptId !== 'null' && issueDeptId !== officerDeptId) {
         return apiResponse(res, 403, "Officer can update only own department issues");
       }

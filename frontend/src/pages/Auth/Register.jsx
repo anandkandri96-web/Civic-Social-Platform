@@ -1,77 +1,98 @@
-﻿import { useState } from 'react';
+﻿import { useMemo, useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { register } from '@api/auth.api';
 import { getErrorMessage } from '@api/utils';
 import Button from '../../components/common/Button/Button';
 import { useToast } from '../../contexts/ToastContext';
+import {
+  normalizeEmail,
+  validateEmail,
+  passwordRules,
+  isPasswordValid,
+  getPasswordStrength,
+} from '../../utils/validation';
 import './Register.css';
+
+const NAME_RE = /^[A-Za-z][A-Za-z\s.'-]{1,59}$/;
 
 const Register = () => {
   const navigate = useNavigate();
+  const { showToast } = useToast();
 
-  const [userData, setUserData] = useState({
+  const [form, setForm] = useState({
     name: '',
     email: '',
     password: '',
+    confirmPassword: '',
   });
-
+  const [touched, setTouched] = useState({});
   const [error, setError] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
-  const { showToast } = useToast();
 
-  const EMAIL_RE = /^\S+@\S+\.\S+$/;
-  const NAME_RE = /^[A-Za-z][A-Za-z\s.'-]{1,59}$/;
+  const emailValue = normalizeEmail(form.email);
+  const isNameValid = NAME_RE.test(form.name.trim());
+  const isEmailValid = validateEmail(form.email);
+  const isPasswordOk = isPasswordValid(form.password);
+  const isConfirmMatching = form.password && form.password === form.confirmPassword;
+  const canSubmit = isNameValid && isEmailValid && isPasswordOk && isConfirmMatching && !submitting;
+  const passwordStrength = useMemo(() => getPasswordStrength(form.password), [form.password]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setUserData((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
+    setForm((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleBlur = (e) => {
+    const { name } = e.target;
+    setTouched((prev) => ({ ...prev, [name]: true }));
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (!canSubmit) return;
+
     setError('');
     setSubmitting(true);
 
     try {
-      const name = userData.name.trim();
-      const email = userData.email.trim().toLowerCase();
-      const password = String(userData.password || '');
-      // ✅ Validation
+      const name = form.name.trim();
+      const email = emailValue;
+      const password = String(form.password || '');
+
       if (!NAME_RE.test(name)) {
         setError('Name must be 2-60 letters and spaces only');
+        setSubmitting(false);
         return;
       }
 
-      if (!EMAIL_RE.test(email)) {
+      if (!validateEmail(email)) {
         setError('Please enter a valid email address');
+        setSubmitting(false);
         return;
       }
 
-      if (password.length < 8 || password.length > 128) {
-        setError('Password must be 8-128 characters');
+      if (!isPasswordOk) {
+        setError('Password does not meet the required strength rules.');
+        setSubmitting(false);
         return;
       }
 
-      if (!/^(?=.*[0-9])(?=.*[^A-Za-z0-9]).{8,128}$/.test(password)) {
-        setError('Password must include at least one number and one special character');
+      if (!isConfirmMatching) {
+        setError('Confirm password must match password');
+        setSubmitting(false);
         return;
       }
 
-      // ✅ API Call
       await register({
         name,
         email,
         password,
+        confirmPassword: form.confirmPassword,
       });
 
-      // ✅ Redirect to login after success
       showToast('Successfully registered. Please sign in.', { tone: 'success' });
       navigate('/login', { replace: true });
-
     } catch (err) {
       setError(getErrorMessage(err));
     } finally {
@@ -92,42 +113,47 @@ const Register = () => {
         {error && <div className="register-error">{error}</div>}
 
         <form onSubmit={handleSubmit} className="register-form">
-
-          {/* NAME */}
-          <div className="register-field">
+          <div className={`register-field ${touched.name ? (isNameValid ? 'valid' : 'invalid') : ''}`}>
             <label>Full Name</label>
             <input
               type="text"
               name="name"
               placeholder="John Doe"
-              value={userData.name}
+              value={form.name}
               onChange={handleChange}
+              onBlur={handleBlur}
               required
             />
+            {touched.name && !isNameValid && (
+              <div className="field-note error">Name must be 2-60 letters and spaces only.</div>
+            )}
           </div>
 
-          {/* EMAIL */}
-          <div className="register-field">
+          <div className={`register-field ${touched.email ? (isEmailValid ? 'valid' : 'invalid') : ''}`}>
             <label>Email</label>
             <input
               type="email"
               name="email"
               placeholder="you@example.com"
-              value={userData.email}
+              value={form.email}
               onChange={handleChange}
+              onBlur={handleBlur}
               required
             />
+            {touched.email && !isEmailValid && (
+              <div className="field-note error">Please enter a valid email address.</div>
+            )}
           </div>
 
-          {/* PASSWORD */}
-          <div className="register-field register-field--password">
+          <div className={`register-field register-field--password ${touched.password ? (isPasswordOk ? 'valid' : 'invalid') : ''}`}>
             <label>Password</label>
             <input
               type={showPassword ? 'text' : 'password'}
               name="password"
               placeholder="••••••••"
-              value={userData.password}
+              value={form.password}
               onChange={handleChange}
+              onBlur={handleBlur}
               required
               minLength={8}
             />
@@ -139,16 +165,40 @@ const Register = () => {
             >
               {showPassword ? 'Hide' : 'Show'}
             </button>
+            <div className="password-strength-bar" aria-hidden="true">
+              <div className="password-strength-fill" style={{ width: `${passwordStrength.percent}%` }} />
+            </div>
+            <div className="field-note password-strength-label">Strength: {passwordStrength.label}</div>
+            <ul className="validation-list">
+              {passwordRules.map((rule) => (
+                <li key={rule.key} className={rule.test(form.password) ? 'valid' : 'invalid'}>
+                  {rule.test(form.password) ? '✓' : '•'} {rule.label}
+                </li>
+              ))}
+            </ul>
           </div>
 
-          {/* BUTTON */}
-          <Button type="submit" disabled={submitting} className="full-width register-btn" variant="sky-blue">
+          <div className={`register-field ${touched.confirmPassword ? (isConfirmMatching ? 'valid' : 'invalid') : ''}`}>
+            <label>Confirm Password</label>
+            <input
+              type={showPassword ? 'text' : 'password'}
+              name="confirmPassword"
+              placeholder="••••••••"
+              value={form.confirmPassword}
+              onChange={handleChange}
+              onBlur={handleBlur}
+              required
+            />
+            {touched.confirmPassword && !isConfirmMatching && (
+              <div className="field-note error">Passwords must match.</div>
+            )}
+          </div>
+
+          <Button type="submit" disabled={!canSubmit} className="full-width register-btn" variant="sky-blue">
             {submitting ? 'Creating Account...' : 'Create Account'}
           </Button>
-
         </form>
 
-        {/* FOOTER */}
         <div className="register-footer">
           <span>Already have an account? </span>
           <Link to="/login">Sign in</Link>

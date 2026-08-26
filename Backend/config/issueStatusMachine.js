@@ -90,6 +90,8 @@ function roleMayTransition(fromStatus, toStatus, userRole, context = {}) {
       return [ROLES.WORKER, ROLES.OFFICER].includes(role) && (role !== ROLES.OFFICER || officerOk);
     case `${ISSUE_STATUS.WORK_IN_PROGRESS}=>${ISSUE_STATUS.UNDER_REVIEW}`:
       return [ROLES.WORKER, ROLES.OFFICER].includes(role) && (role !== ROLES.OFFICER || officerOk);
+    case `${ISSUE_STATUS.AWAITING_OFFICER_VERIFICATION}=>${ISSUE_STATUS.RESOLVED}`:
+      return role === ROLES.OFFICER && officerOk;
 
     case `${ISSUE_STATUS.REPORTED}=>${ISSUE_STATUS.VOLUNTEER_CLAIMED}`:
     case `${ISSUE_STATUS.UNDER_REVIEW}=>${ISSUE_STATUS.VOLUNTEER_CLAIMED}`:

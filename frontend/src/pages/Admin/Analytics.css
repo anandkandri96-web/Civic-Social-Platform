@@ -218,6 +218,12 @@
     transparent
   );
   padding: 10px;
+  overflow-x: auto;
+  overflow-y: hidden;
+}
+
+.analytics-bar-chart__canvas {
+  height: 100%;
 }
 
 /* =========================

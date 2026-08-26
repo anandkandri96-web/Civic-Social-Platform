@@ -38,6 +38,7 @@ const BACKEND_STATUS_MAP = {
   assigned_to_department: STATUS.ASSIGNED,
   volunteer_claimed: STATUS.ASSIGNED,
   work_in_progress: STATUS.IN_PROGRESS,
+  awaiting_officer_verification: STATUS.IN_PROGRESS,
   community_fix_in_progress: STATUS.IN_PROGRESS,
   resolved_by_community: STATUS.RESOLVED,
   citizen_verified: STATUS.RESOLVED,

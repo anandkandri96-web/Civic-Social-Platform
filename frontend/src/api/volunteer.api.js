@@ -11,14 +11,29 @@ export const claimVolunteerIssue = async (issueId) => {
   return getResponseData(res);
 };
 
-export const updateVolunteerProgress = async (issueId) => {
-  const res = await api.patch(`/volunteer/issues/${issueId}/progress`);
+export const updateVolunteerProgress = async (issueId, payload = {}) => {
+  const body = {};
+  if (typeof payload?.notes === 'string') {
+    body.notes = payload.notes;
+  }
+  if (Array.isArray(payload?.progressImages) && payload.progressImages.length > 0) {
+    body.progressImages = payload.progressImages;
+  }
+  if (!body.notes && !body.progressImages) {
+    body.notes = 'Started community fix';
+  }
+  const res = await api.patch(`/volunteer/issues/${issueId}/progress`, body);
   return getResponseData(res);
 };
 
 export const resolveVolunteerIssue = async (issueId, payload = []) => {
   if (Array.isArray(payload)) {
-    const res = await api.patch(`/volunteer/issues/${issueId}/resolve`, { proof: payload });
+    const fallbackReport = 'Resolution completed by volunteer team.';
+    const res = await api.patch(`/volunteer/issues/${issueId}/resolve`, {
+      proof: payload,
+      report: fallbackReport,
+      reportText: fallbackReport,
+    });
     return getResponseData(res);
   }
 
@@ -30,6 +45,7 @@ export const resolveVolunteerIssue = async (issueId, payload = []) => {
     const formData = new FormData();
     proofFiles.forEach((file) => formData.append("proofImages", file));
     if (reportText.trim()) {
+      formData.append("report", reportText.trim());
       formData.append("reportText", reportText.trim());
     }
     if (proof.length > 0) {
@@ -41,6 +57,7 @@ export const resolveVolunteerIssue = async (issueId, payload = []) => {
     return getResponseData(res);
   }
 
-  const res = await api.patch(`/volunteer/issues/${issueId}/resolve`, { proof, reportText: reportText.trim() });
+  const report = reportText.trim();
+  const res = await api.patch(`/volunteer/issues/${issueId}/resolve`, { proof, report, reportText: report });
   return getResponseData(res);
 };

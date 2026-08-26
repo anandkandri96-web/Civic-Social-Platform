@@ -4,10 +4,15 @@ const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const { ROLES, ROLE_ALIASES } = require("../config/roles");
 const { apiResponse } = require("../utils/apiResponse");
+const {
+  EMAIL_RE,
+  validatePassword,
+  passwordValidationMessage,
+  isCommonPassword,
+} = require("../utils/authValidation");
 
 const ALLOWED_REGISTER_FIELDS = ["name", "email", "password", "role"];
 const PUBLIC_ROLES = new Set([ROLES.CITIZEN, ROLES.VOLUNTEER]);
-const EMAIL_RE = /^\S+@\S+\.\S+$/;
 const NAME_RE = /^[A-Za-z][A-Za-z\s.'-]{1,59}$/;
 
 const normalizeRole = (role) => {
@@ -44,6 +49,7 @@ exports.register = async (req, res) => {
     const name = String(body.name).trim();
     const email = String(body.email).trim().toLowerCase();
     const password = String(body.password);
+    const confirmPassword = String(req.body.confirmPassword || "");
     const rawRole = normalizeRole(body.role || ROLES.CITIZEN);
     const requestedRole = PUBLIC_ROLES.has(rawRole) ? rawRole : ROLES.CITIZEN;
 
@@ -55,11 +61,16 @@ exports.register = async (req, res) => {
       return apiResponse(res, 400, "Invalid email format");
     }
 
-    if (password.length < 8 || password.length > 128) {
-      return apiResponse(res, 400, "Password must be 8-128 characters");
+    if (password !== confirmPassword) {
+      return apiResponse(res, 400, "Confirm password must match password");
     }
-    if (!/^(?=.*[0-9])(?=.*[^A-Za-z0-9]).{8,128}$/.test(password)) {
-      return apiResponse(res, 400, "Password must include at least one number and one special character");
+
+    if (!validatePassword(password)) {
+      return apiResponse(res, 400, passwordValidationMessage);
+    }
+
+    if (isCommonPassword(password)) {
+      return apiResponse(res, 400, "Please choose a stronger password.");
     }
 
     const existing = await User.findOne({ email });
@@ -103,8 +114,8 @@ exports.login = async (req, res) => {
       return apiResponse(res, 400, "Invalid email format");
     }
 
-    if (passwordStr.length < 6 || passwordStr.length > 128) {
-      return apiResponse(res, 400, "Password must be 6-128 characters");
+    if (passwordStr.length < 1 || passwordStr.length > 128) {
+      return apiResponse(res, 400, "Password must be 1-128 characters");
     }
 
     const user = await User.findOne({ email: emailNorm }).select("+password");
@@ -186,8 +197,15 @@ exports.updateMe = async (req, res) => {
 
     if (password !== undefined) {
       const safePassword = String(password);
-      if (safePassword.length < 6 || safePassword.length > 128) {
-        return apiResponse(res, 400, "Password must be 6-128 characters");
+      const confirmPassword = String(req.body.confirmPassword || "");
+      if (!validatePassword(safePassword)) {
+        return apiResponse(res, 400, passwordValidationMessage);
+      }
+      if (safePassword !== confirmPassword) {
+        return apiResponse(res, 400, "Confirm password must match password");
+      }
+      if (isCommonPassword(safePassword)) {
+        return apiResponse(res, 400, "Please choose a stronger password.");
       }
       updates.password = safePassword;
     }

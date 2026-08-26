@@ -143,6 +143,66 @@
   animation: inputGlow 0.3s ease;
 }
 
+.register-field.valid input {
+  border-color: var(--color-success);
+}
+
+.register-field.invalid input {
+  border-color: var(--color-danger);
+}
+
+.field-note {
+  font-size: 0.78rem;
+  color: var(--text-secondary);
+}
+
+.field-note.error {
+  color: var(--color-danger);
+}
+
+.field-note.password-strength-label {
+  margin-top: 6px;
+  font-size: 0.8rem;
+}
+
+.validation-list {
+  display: grid;
+  gap: 6px;
+  margin: 10px 0 0;
+  padding-left: 16px;
+  color: var(--text-secondary);
+  font-size: 0.82rem;
+}
+
+.validation-list li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.validation-list li.valid {
+  color: var(--color-success);
+}
+
+.validation-list li.invalid {
+  color: var(--text-secondary);
+}
+
+.password-strength-bar {
+  position: relative;
+  height: 6px;
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 999px;
+  overflow: hidden;
+  margin-top: 10px;
+}
+
+.password-strength-fill {
+  height: 100%;
+  background: linear-gradient(135deg, #10b981, #3b82f6);
+  transition: width 0.25s ease;
+}
+
 /* glow animation */
 @keyframes inputGlow {
   from {

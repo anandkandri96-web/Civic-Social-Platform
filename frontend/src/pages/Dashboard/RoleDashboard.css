@@ -223,24 +223,33 @@
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 12px;
-  align-items: end;
+  align-items: stretch;
   min-height: 160px;
 }
 
 .role-dashboard__bar {
   display: grid;
+  grid-template-rows: auto 1fr;
   gap: 6px;
+  align-items: end;
   justify-items: center;
   font-family: var(--font-mono);
   color: var(--text-secondary);
   font-size: 0.72rem;
+  min-height: 160px;
 }
 
 .role-dashboard__bar-fill {
-  width: 100%;
+  width: clamp(44px, 42%, 86px);
   min-height: 16px;
   border-radius: 999px;
   background: rgba(var(--color-brand-rgb), 0.2);
+  align-self: end;
+  transition: height 0.25s ease, filter 0.2s ease;
+}
+
+.role-dashboard__bar-fill:hover {
+  filter: brightness(1.12);
 }
 
 .role-dashboard__bar-fill.pending {

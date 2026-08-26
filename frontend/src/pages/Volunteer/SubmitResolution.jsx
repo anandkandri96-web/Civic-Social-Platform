@@ -10,7 +10,7 @@ import SafeImage from '../../components/common/SafeImage/SafeImage';
 import './SubmitResolution.css';
 
 const MAX_AFTER_IMAGES = 5;
-const MIN_REPORT_LENGTH = 10;
+const MIN_REPORT_LENGTH = 20;
 
 const SubmitResolution = () => {
   const { id } = useParams();
@@ -232,7 +232,7 @@ const SubmitResolution = () => {
             disabled={!canSubmit || submitting}
             rows={6}
           />
-          <div className="char-count">{reportText.length} / 500</div>
+          <div className="char-count">{reportText.length} / 3000</div>
         </div>
 
         {/* ACTION */}

@@ -92,6 +92,21 @@ function getLocation(issue) {
   return "Location not specified";
 }
 
+function normalizeImageEntry(entry) {
+  if (!entry) return "";
+  if (typeof entry === "string") return String(entry).trim();
+  if (typeof entry === "object") {
+    if (entry._id) return `/api/images/${entry._id}`;
+    if (entry.url) return String(entry.url).trim();
+  }
+  return "";
+}
+
+function normalizeImageList(images) {
+  if (!Array.isArray(images)) return [];
+  return images.map(normalizeImageEntry).filter(Boolean);
+}
+
 function normalizeIssue(issue) {
   const rawCategory = String(issue.category || "other").toLowerCase();
   const categoryLabel = ISSUE_CATEGORY_LABELS[rawCategory] || rawCategory || "Other";
@@ -510,15 +525,9 @@ function PriorityIssuesSection({
             )
             : filteredIssues.map((issue) => {
               const catColor = CATEGORY_COLORS[issue.category] || "#2F8398";
-              const submittedImages = Array.isArray(issue?.raw?.images)
-                ? issue.raw.images.map((img) => String(img || "").trim()).filter(Boolean)
-                : [];
-              const volunteerAfterImages = Array.isArray(issue?.raw?.communityProof)
-                ? issue.raw.communityProof.map((img) => String(img || "").trim()).filter(Boolean)
-                : [];
-              const workerAfterImages = Array.isArray(issue?.raw?.workerProgressImages)
-                ? issue.raw.workerProgressImages.map((img) => String(img || "").trim()).filter(Boolean)
-                : [];
+              const submittedImages = normalizeImageList(issue?.raw?.images);
+              const volunteerAfterImages = normalizeImageList(issue?.raw?.communityProof);
+              const workerAfterImages = normalizeImageList(issue?.raw?.workerProgressImages);
               const afterImages = Array.from(new Set([...volunteerAfterImages, ...workerAfterImages]));
               const rawStatus = String(issue?.raw?.status || "").toLowerCase();
               const isResolvedFlow = ["resolved", "resolved_by_community", "citizen_verified", "closed"].includes(rawStatus);
@@ -872,9 +881,10 @@ const Home = () => {
   useEffect(() => {
     if (!isLive) return;
     const interval = setInterval(() => {
+      if (typeof document !== 'undefined' && document.visibilityState !== 'visible') return;
       fetchHeatmap("auto");
       fetchMapDots("auto");
-    }, 5000);
+    }, 15000);
     return () => clearInterval(interval);
   }, [fetchHeatmap, fetchMapDots, isLive]);
 

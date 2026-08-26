@@ -7,6 +7,7 @@ import { canTransition } from '../../utils/statusFlow';
 import { useAuth } from '../../hooks/useAuth';
 import { getDepartmentName, getOfficerDisplayId, getUserId, getWorkerDisplayId } from '../../utils/userDisplay';
 import { useToast } from '../../contexts/ToastContext';
+import { ISSUE_STATUSES, ISSUE_STATUS_LABELS } from '../../constants/issueStatus';
 
 const getIssueId = (issue) => {
   const id = issue?._id ?? issue?.id;
@@ -103,33 +104,44 @@ const OfficerDashboard = () => {
   };
 
   const grouped = {
-    underReview: issues.filter((issue) => issue.status === 'under_review').length,
-    assigned: issues.filter((issue) => issue.status === 'assigned_to_department').length,
-    progress: issues.filter((issue) => issue.status === 'work_in_progress').length,
-    awaitingOfficer: issues.filter((issue) => issue.status === 'awaiting_officer_verification').length,
-    resolved: issues.filter((issue) => issue.status === 'resolved').length,
+    reported: issues.filter((issue) => issue.status === ISSUE_STATUSES.REPORTED).length,
+    underReview: issues.filter((issue) => issue.status === ISSUE_STATUSES.UNDER_REVIEW).length,
+    assigned: issues.filter((issue) => issue.status === ISSUE_STATUSES.ASSIGNED_TO_DEPARTMENT).length,
+    progress: issues.filter((issue) => issue.status === ISSUE_STATUSES.WORK_IN_PROGRESS).length,
+    awaitingOfficer: issues.filter((issue) => issue.status === ISSUE_STATUSES.AWAITING_OFFICER_VERIFICATION).length,
+    resolved: issues.filter((issue) => issue.status === ISSUE_STATUSES.RESOLVED).length,
   };
 
   const chartStats = {
-    pending: grouped.underReview,
+    pending: grouped.reported + grouped.underReview,
     assigned: grouped.assigned + grouped.progress + grouped.awaitingOfficer,
     resolved: grouped.resolved,
   };
 
   const getBarHeight = (value) => {
+    if (!value) return '0%';
     const max = Math.max(chartStats.pending, chartStats.assigned, chartStats.resolved, 1);
     const ratio = value / max;
     return `${Math.max(16, Math.round(ratio * 100))}%`;
   };
 
   const officerStatuses = useMemo(
-    () => ['under_review', 'assigned_to_department', 'work_in_progress', 'awaiting_officer_verification', 'resolved', 'rejected', 'closed'],
+    () => [
+      ISSUE_STATUSES.REPORTED,
+      ISSUE_STATUSES.UNDER_REVIEW,
+      ISSUE_STATUSES.ASSIGNED_TO_DEPARTMENT,
+      ISSUE_STATUSES.WORK_IN_PROGRESS,
+      ISSUE_STATUSES.AWAITING_OFFICER_VERIFICATION,
+      ISSUE_STATUSES.RESOLVED,
+      ISSUE_STATUSES.REJECTED,
+      ISSUE_STATUSES.CLOSED,
+    ],
     []
   );
 
   const activeLoadByWorkerId = useMemo(() => {
     const counts = new Map();
-    const activeStatuses = new Set(['assigned_to_department', 'work_in_progress']);
+    const activeStatuses = new Set([ISSUE_STATUSES.ASSIGNED_TO_DEPARTMENT, ISSUE_STATUSES.WORK_IN_PROGRESS]);
     for (const issue of issues) {
       if (!activeStatuses.has(String(issue?.status || '').toLowerCase())) continue;
       const workerId = getUserId(issue?.assignedWorker);
@@ -182,6 +194,10 @@ const OfficerDashboard = () => {
 
         <div className="role-dashboard__grid">
           <article className="card role-dashboard__stat">
+            <div className="role-dashboard__stat-label">Reported</div>
+            <div className="role-dashboard__stat-value">{grouped.reported}</div>
+          </article>
+          <article className="card role-dashboard__stat">
             <div className="role-dashboard__stat-label">Under Review</div>
             <div className="role-dashboard__stat-value">{grouped.underReview}</div>
           </article>
@@ -192,6 +208,10 @@ const OfficerDashboard = () => {
           <article className="card role-dashboard__stat">
             <div className="role-dashboard__stat-label">Work In Progress</div>
             <div className="role-dashboard__stat-value">{grouped.progress}</div>
+          </article>
+          <article className="card role-dashboard__stat">
+            <div className="role-dashboard__stat-label">Awaiting Verification</div>
+            <div className="role-dashboard__stat-value">{grouped.awaitingOfficer}</div>
           </article>
           <article className="card role-dashboard__stat">
             <div className="role-dashboard__stat-label">Resolved</div>
@@ -256,7 +276,7 @@ const OfficerDashboard = () => {
                     return (
                     <tr key={issueId || issue.title}>
                       <td>{issue.title}</td>
-                      <td>{issue.status}</td>
+                      <td>{ISSUE_STATUS_LABELS[issueStatus] || issue.status}</td>
                       <td>{issue.category}</td>
                       <td>{issue.reportedBy?.name || '-'}</td>
                       <td>{getWorkerDisplayId(issue.assignedWorker)}</td>
@@ -333,12 +353,12 @@ const OfficerDashboard = () => {
                               setStatusInputs((prev) => ({ ...prev, [issueId]: e.target.value }))
                             }
                           >
-                            <option value={issueStatus}>{issueStatus}</option>
+                            <option value={issueStatus}>{ISSUE_STATUS_LABELS[issueStatus] || issueStatus}</option>
                             {officerStatuses
                               .filter((status) => status !== issueStatus && canTransition(issueStatus, status))
                               .map((status) => (
                                 <option key={status} value={status}>
-                                  {status}
+                                  {ISSUE_STATUS_LABELS[status] || status}
                                 </option>
                               ))}
                           </select>

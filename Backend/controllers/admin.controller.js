@@ -8,6 +8,7 @@ const Notification = require("../models/notification");
 const RoleUpgradeRequest = require("../models/roleUpgradeRequest");
 const { apiResponse } = require("../utils/apiResponse");
 const { ROLES, DEPARTMENT_NAMES } = require("../utils/constants");
+const { EMAIL_RE, validatePassword, passwordValidationMessage, isCommonPassword } = require("../utils/authValidation");
 const { generateNextOfficerId, generateNextWorkerId } = require("../services/serialId.service");
 const { getOrCreateDeletedUserPlaceholder } = require("../services/systemUser.service");
 const { logAudit } = require("../services/audit.service");
@@ -16,7 +17,6 @@ const { deleteCloudinaryAssets } = require("../services/imageAsset.service");
 const { createNotificationsBulk } = require("../services/notification.service");
 
 const escapeRegex = (value) => String(value).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-const EMAIL_RE = /^\S+@\S+\.\S+$/;
 const NAME_RE = /^[A-Za-z][A-Za-z\s.'-]{1,59}$/;
 
 const buildIssueSearchFilter = (raw) => {
@@ -194,8 +194,12 @@ exports.createUser = async (req, res) => {
       return apiResponse(res, 400, "Invalid email format");
     }
 
-    if (String(password).length < 6 || String(password).length > 128) {
-      return apiResponse(res, 400, "Password must be 6-128 characters");
+    if (!validatePassword(String(password))) {
+      return apiResponse(res, 400, passwordValidationMessage);
+    }
+
+    if (isCommonPassword(String(password))) {
+      return apiResponse(res, 400, "Please choose a stronger password.");
     }
 
     if (!allowedRoles.includes(nextRole)) {

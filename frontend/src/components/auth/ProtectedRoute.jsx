@@ -27,7 +27,7 @@ const ProtectedRoute = ({
   children,
 }) => {
   const { user, loading, isAuthenticated } = useAuth();
-  const { canPerformAny } = usePermission();
+  const { canPerformAny, canPerformAll } = usePermission();
   const location = useLocation();
 
   // Show loader while auth state is being determined
@@ -67,9 +67,7 @@ const ProtectedRoute = ({
 
   if (requiredPermissions) {
     const permissions = Array.isArray(requiredPermissions) ? requiredPermissions : [requiredPermissions];
-
-    // If any item in requiredPermissions is string array, treat as OR group
-    if (!canPerformAny(permissions)) {
+    if (!canPerformAll(permissions)) {
       return <Navigate to={fallbackRoute} replace />;
     }
   }

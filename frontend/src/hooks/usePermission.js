@@ -83,6 +83,17 @@ export const usePermission = () => {
     return canPerformResourceAction(user, resourceType, action, resource);
   }, [loading, user]);
 
+  const dashboardPath = useMemo(() => {
+    if (!normalizedRole) return '/dashboard';
+    if (hasPermission(normalizedRole, 'admin:view_analytics')) return '/admin';
+    if (hasPermission(normalizedRole, 'officer:review_issues') || hasPermission(normalizedRole, 'officer:view_queue')) {
+      return '/dashboard/officer';
+    }
+    if (hasPermission(normalizedRole, 'worker:view_tasks')) return '/dashboard/worker';
+    if (hasPermission(normalizedRole, 'volunteer:claim_issue')) return '/dashboard/volunteer';
+    return '/dashboard';
+  }, [normalizedRole]);
+
   return {
     can,
     canPerform,
@@ -95,6 +106,7 @@ export const usePermission = () => {
 
     // Current user role
     role: normalizedRole || user?.role,
+    dashboardPath,
 
     // Loading state
     loading,

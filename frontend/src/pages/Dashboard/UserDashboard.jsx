@@ -45,7 +45,7 @@ const UserDashboard = () => {
     const total = issues.length;
     const resolved = issues.filter((i) => ['resolved', 'resolved_by_community', 'closed'].includes(i.status)).length;
     const active = total - resolved;
-    const inProgress = issues.filter((i) => ['under_review', 'assigned_to_department', 'work_in_progress'].includes(i.status)).length;
+    const inProgress = issues.filter((i) => ['under_review', 'assigned_to_department', 'work_in_progress', 'awaiting_officer_verification'].includes(i.status)).length;
     return { total, active, inProgress, resolved };
   }, [issues]);
 

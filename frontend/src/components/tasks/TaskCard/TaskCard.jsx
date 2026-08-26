@@ -86,10 +86,10 @@ const TaskCard = ({ task, onUpdate, children, workerId }) => {
       )}
 
       {/* 4. Other Details (Progress Images & Children) */}
-      <div className="task-other-details" style={{ marginTop: '16px', paddingTop: '16px', borderTop: '1px solid rgba(0,0,0,0.06)' }}>
+      <div className="task-other-details" style={{ marginTop: '16px', paddingTop: '16px', borderTop: '1px solid var(--border-color)' }}>
         {progressImages.length > 0 ? (
           <div style={{ marginBottom: '16px' }}>
-            <h4 style={{ marginBottom: '12px', fontSize: '0.95rem', color: '#555' }}>Your Progress Photos</h4>
+            <h4 style={{ marginBottom: '12px', fontSize: '0.95rem', color: 'var(--text-secondary)' }}>Your Progress Photos</h4>
             <div className="task-progress-gallery" aria-label="Uploaded task progress images" style={{ marginTop: 0 }}>
               {progressImages.slice(0, 6).map((src, idx) => (
                 <a key={`${src}-${idx}`} href={String(src)} target="_blank" rel="noreferrer" className="task-progress-thumb" onClick={(e) => e.stopPropagation()}>

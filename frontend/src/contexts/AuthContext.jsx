@@ -65,6 +65,14 @@ export const AuthProvider = ({ children }) => {
     [fetchMe]
   );
 
+  const refreshUser = useCallback(async () => {
+    try {
+      await fetchMe();
+    } catch {
+      // ignore refresh failures; auth state remains unchanged
+    }
+  }, [fetchMe]);
+
   // Logout
   const logout = useCallback(() => {
     localStorage.removeItem("token");
@@ -82,6 +90,7 @@ export const AuthProvider = ({ children }) => {
         user,
         login,
         logout,
+        refreshUser,
         loading,
         isAuthenticated: !!user,
       }}

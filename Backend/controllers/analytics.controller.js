@@ -1,4 +1,5 @@
 const Issue = require("../models/issue");
+const Department = require("../models/department");
 const { apiResponse } = require("../utils/apiResponse");
 
 exports.getTrends = async (req, res) => {
@@ -11,7 +12,14 @@ exports.getTrends = async (req, res) => {
       if (to) matchStage.createdAt.$lte = new Date(to);
     }
 
-    const [issuesOverTime, issuesByCategory, statusBreakdown, avgResolutionTime, resolvedByDepartment] = await Promise.all([
+    const [
+      issuesOverTime,
+      issuesByCategory,
+      statusBreakdown,
+      avgResolutionTime,
+      resolvedDepartmentCounts,
+      departments,
+    ] = await Promise.all([
       Issue.aggregate([
         { $match: matchStage },
         {
@@ -61,9 +69,25 @@ exports.getTrends = async (req, res) => {
             count: 1,
           },
         },
-        { $sort: { count: -1 } },
       ]),
+      Department.find({ isActive: true }).select("_id name").sort({ name: 1 }).lean(),
     ]);
+
+    const countByDepartmentId = new Map(
+      resolvedDepartmentCounts.map((item) => [String(item.departmentId), Number(item.count || 0)])
+    );
+    const knownDepartmentIds = new Set(departments.map((department) => String(department._id)));
+    const resolvedByDepartment = departments.map((department) => ({
+      departmentId: department._id,
+      department: department.name,
+      count: countByDepartmentId.get(String(department._id)) || 0,
+    }));
+
+    for (const item of resolvedDepartmentCounts) {
+      const id = String(item.departmentId || "");
+      if (!id || knownDepartmentIds.has(id)) continue;
+      resolvedByDepartment.push(item);
+    }
 
     return apiResponse(res, 200, "Analytics data retrieved", {
       issuesOverTime,

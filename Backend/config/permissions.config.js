@@ -73,7 +73,7 @@ const PERMISSIONS = Object.freeze({
   WORKER_COMPLETE_TASK: 'worker:complete_task',
   WORKER_VIEW_TASKS: 'worker:view_tasks',
   TASK_VIEW_OWN: 'worker:view_tasks', // Backward compatibility
-  TASK_CREATE: 'worker:accept_task', // Backward compatibility for task creation (officer assigns)
+  TASK_CREATE: 'officer:assign_worker', // Backward compatibility for task creation (officer assigns)
   TASK_UPDATE_STATUS: 'worker:update_progress', // Backward compatibility
   TASK_ADD_PROGRESS: 'worker:update_progress', // Backward compatibility
 
@@ -185,6 +185,8 @@ const ROLE_PERMISSIONS = Object.freeze({
   ]),
 });
 
+const getEntityId = (value) => String(value?._id || value?.id || value || '');
+
 /**
  * RESOURCE_PERMISSIONS: Fine-grained permissions for specific resources
  * Used for resource-level authorization (e.g., "Can this officer delete this issue?")
@@ -210,8 +212,8 @@ const RESOURCE_PERMISSIONS = Object.freeze({
 
       // Officers can update in their department only
       if (user.role === ROLES.OFFICER) {
-        const userDeptId = String(user.department || '');
-        const issueDeptId = String(issue.assignedDepartment || issue.assignedDepartment?._id || '');
+        const userDeptId = getEntityId(user.department);
+        const issueDeptId = getEntityId(issue.assignedDepartment);
         return userDeptId === issueDeptId;
       }
 
@@ -245,8 +247,8 @@ const RESOURCE_PERMISSIONS = Object.freeze({
       if (!user || !issue) return false;
 
       if (user.role === ROLES.OFFICER) {
-        const userDeptId = String(user.department?._id || user.department || '');
-        const issueDeptId = String(issue.assignedDepartment?._id || issue.assignedDepartment || '');
+        const userDeptId = getEntityId(user.department);
+        const issueDeptId = getEntityId(issue.assignedDepartment);
         // If issue has no department assigned yet, officer can still act on it
         if (!issueDeptId || issueDeptId === 'null' || issueDeptId === 'undefined') return true;
         return userDeptId === issueDeptId;
@@ -265,8 +267,8 @@ const RESOURCE_PERMISSIONS = Object.freeze({
       if (!user || !issue) return false;
       if (user.role === ROLES.ADMIN) return true;
       if (user.role === ROLES.OFFICER) {
-        const userDeptId = String(user.department?._id || user.department || '');
-        const issueDeptId = String(issue.assignedDepartment?._id || issue.assignedDepartment || '');
+        const userDeptId = getEntityId(user.department);
+        const issueDeptId = getEntityId(issue.assignedDepartment);
         if (!issueDeptId || issueDeptId === 'null' || issueDeptId === 'undefined') return true;
         return userDeptId === issueDeptId;
       }
@@ -277,8 +279,8 @@ const RESOURCE_PERMISSIONS = Object.freeze({
       if (!user || !issue) return false;
       if (user.role === ROLES.ADMIN) return true;
       if (user.role === ROLES.OFFICER) {
-        const userDeptId = String(user.department?._id || user.department || '');
-        const issueDeptId = String(issue.assignedDepartment?._id || issue.assignedDepartment || '');
+        const userDeptId = getEntityId(user.department);
+        const issueDeptId = getEntityId(issue.assignedDepartment);
         if (!issueDeptId || issueDeptId === 'null' || issueDeptId === 'undefined') return true;
         return userDeptId === issueDeptId;
       }

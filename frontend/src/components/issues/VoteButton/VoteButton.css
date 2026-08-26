@@ -209,20 +209,6 @@
 .vote-button.vote-success {
   animation: voteSuccess 0.8s ease-out;
 }
-  content: "";
-  width: 12px;
-  height: 12px;
-  border-radius: 999px;
-  border: 2px solid rgba(255, 255, 255, 0.3);
-  border-top-color: #ffffff;
-  margin-left: 6px;
-  animation: vote-spin 0.7s linear infinite;
-  display: inline-block;
-}
-
-@keyframes vote-spin {
-  to { transform: rotate(360deg); }
-}
 
 @media (prefers-reduced-motion: reduce) {
   .vote-button,

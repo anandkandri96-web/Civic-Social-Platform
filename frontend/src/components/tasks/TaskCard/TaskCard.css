@@ -16,6 +16,7 @@
 .task-header h3 {
   font-family: var(--font-heading);
   font-size: 1rem;
+  color: var(--text-primary);
 }
 
 .task-status {

@@ -1,7 +1,7 @@
 /* Dashboard Container */
 .worker-dashboard {
   padding: 2rem;
-  background-color: #f9fafb;
+  background: transparent;
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
   min-height: 100vh;
 }
@@ -16,13 +16,16 @@
 
 /* Individual Task Card */
 .issue-details-card {
-  background: #ffffff;
+  background: var(--bg-surface);
+  color: var(--text-primary);
+  border: 1.5px solid var(--border-color);
   border-radius: 12px;
   padding: 1.5rem;
-  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.08);
+  box-shadow: var(--shadow-card);
   transition: transform 0.2s, box-shadow 0.2s;
   display: flex;
   flex-direction: column;
+  overflow: hidden;
 }
 
 .issue-details-card:hover {
@@ -41,7 +44,7 @@
 /* Task Info */
 .issue-details-card p {
   font-size: 0.95rem;
-  color: #555;
+  color: var(--text-secondary);
   margin: 0.3rem 0;
   word-break: break-word;
 }
@@ -63,7 +66,7 @@
 /* Buttons */
 .issue-details-card button {
   background-color: #2f8398;
-  color: #fff;
+  color: var(--text-on-accent);
   border: none;
   padding: 0.65rem;
   margin: 0.5rem 0;
@@ -78,19 +81,21 @@
 }
 
 .issue-details-card button:disabled {
-  background-color: #c0c0c0;
+  background-color: var(--bg-hover);
+  color: var(--text-muted);
   cursor: not-allowed;
 }
 
 /* File Upload Input */
 .issue-details-card input[type="file"] {
-  border: 2px dashed #c0c0c0;
+  border: 2px dashed var(--border-color);
   border-radius: 6px;
   padding: 0.75rem;
   margin: 0.5rem 0;
   width: 100%;
   cursor: pointer;
-  background-color: transparent;
+  background-color: rgba(var(--color-brand-rgb), 0.06);
+  color: var(--text-secondary);
   transition: border-color 0.2s;
 }
 
@@ -100,8 +105,8 @@
 
 /* Status Badge */
 .issue-details-card .status-badge {
-  background: #e0f7fa;
-  color: #007c91;
+  background: rgba(var(--color-brand-rgb), 0.16);
+  color: var(--color-primary-light);
   font-weight: 600;
   font-size: 0.75rem;
   padding: 0.3rem 0.7rem;
@@ -114,10 +119,12 @@
 
 /* Worker Info Card */
 .worker-info {
-  background: #ffffff;
+  background: var(--bg-surface);
+  color: var(--text-primary);
+  border: 1.5px solid var(--border-color);
   border-radius: 12px;
   padding: 1rem 1.5rem;
-  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.08);
+  box-shadow: var(--shadow-card);
   margin-bottom: 2rem;
   display: inline-block;
 }
@@ -129,13 +136,17 @@
 
 .worker-info span {
   font-weight: 600;
-  color: #2f8398;
+  color: var(--color-primary-light);
 }
 
 /* Responsive */
 @media (max-width: 768px) {
   .issue-cards-container {
     grid-template-columns: 1fr;
+  }
+
+  .worker-dashboard {
+    padding: 1rem;
   }
 }
 

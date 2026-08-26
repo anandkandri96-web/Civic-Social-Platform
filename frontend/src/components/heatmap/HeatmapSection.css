@@ -56,6 +56,8 @@
 .heatmap-refresh.is-live {
   border-color: rgba(var(--color-success-rgb), 0.5);
   box-shadow: 0 0 0 2px rgba(var(--color-success-rgb), 0.08);
+  color: var(--text-primary);
+  background: rgba(var(--color-success-rgb), 0.1);
 }
 
 .heatmap-refresh:hover {
@@ -106,7 +108,7 @@
 }
 
 .heatmap-stat__value.is-live {
-  color: var(--color-success);
+  color: var(--text-primary);
 }
 
 .heatmap-stat__label {

@@ -148,6 +148,25 @@
     0 0 10px rgba(var(--color-primary-rgb), 0.25);
 }
 
+.input-valid {
+  border-color: var(--color-success) !important;
+}
+
+.input-invalid {
+  border-color: var(--color-danger) !important;
+}
+
+.field-note {
+  font-size: 0.78rem;
+  color: var(--text-secondary);
+  margin-top: -8px;
+  margin-bottom: 8px;
+}
+
+.field-note.error {
+  color: var(--color-danger);
+}
+
 /* PASSWORD FIELD */
 .password-field {
   position: relative;

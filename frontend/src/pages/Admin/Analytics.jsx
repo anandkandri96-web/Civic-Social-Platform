@@ -103,8 +103,9 @@ const Analytics = () => {
     const css = getComputedStyle(document.documentElement);
     const read = (name, fallback) => css.getPropertyValue(name).trim() || fallback;
     const successRgb = read('--color-success-rgb', '135, 168, 63');
+    const primaryRgb = read('--color-primary-rgb', '47, 131, 152');
     const textSecondary = read('--text-secondary', '#35585e');
-    const gridColor = 'rgba(16, 24, 40, 0.08)';
+    const gridColor = `rgba(${primaryRgb}, 0.18)`;
     return { successRgb, textSecondary, gridColor };
   }, []);
 
@@ -120,9 +121,12 @@ const Analytics = () => {
 
     const labels = rows.map((r) => r.department);
     const data = rows.map((r) => r.count);
+    const maxCount = Math.max(...data, 0);
+    const minChartWidth = Math.max(520, labels.length * 150);
 
     return {
       hasData: rows.length > 0,
+      minWidth: minChartWidth,
       data: {
         labels,
         datasets: [
@@ -145,12 +149,13 @@ const Analytics = () => {
         },
         scales: {
           x: {
-            ticks: { color: chartTheme.textSecondary, font: { size: 11 } },
+            ticks: { autoSkip: false, color: chartTheme.textSecondary, font: { size: 11 }, maxRotation: 24, minRotation: 12 },
             grid: { display: false },
           },
           y: {
             beginAtZero: true,
-            ticks: { color: chartTheme.textSecondary, font: { size: 11 }, precision: 0 },
+            suggestedMax: Math.max(maxCount + 1, 1),
+            ticks: { color: chartTheme.textSecondary, font: { size: 11 }, precision: 0, stepSize: 1 },
             grid: { color: chartTheme.gridColor },
           },
         },
@@ -238,8 +243,10 @@ const Analytics = () => {
           <div className="panel card">
             <h3>Resolved Issues by Department</h3>
             {deptChart.hasData ? (
-              <div className="analytics-bar-chart">
-                <Bar data={deptChart.data} options={deptChart.options} />
+              <div className="analytics-bar-chart" role="img" aria-label="Resolved issues by department chart">
+                <div className="analytics-bar-chart__canvas" style={{ minWidth: deptChart.minWidth }}>
+                  <Bar data={deptChart.data} options={deptChart.options} />
+                </div>
               </div>
             ) : (
               <p className="analytics-note">No resolved department data available.</p>

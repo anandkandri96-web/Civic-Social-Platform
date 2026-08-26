@@ -979,6 +979,7 @@
   cursor: pointer;
   text-align: left;
   transition: border-color var(--trans-fast), box-shadow var(--trans-fast), transform var(--trans-fast);
+  color: var(--text-primary);
 }
 
 .home-page .map-stat--refresh:hover {
@@ -987,8 +988,14 @@
   transform: translateY(-1px);
 }
 
+.home-page .map-stat--refresh.is-live {
+  background: rgba(var(--color-success-rgb), 0.18);
+  border-color: var(--color-success);
+  color: var(--text-primary);
+}
+
 .home-page .map-stat--refresh.is-live .map-stat__value {
-  color: var(--color-success);
+  color: inherit !important;
 }
 
 .home-page .map-stat__value {
@@ -996,6 +1003,8 @@
   font-size: var(--font-size-h2);
   font-weight: 700;
   line-height: 1;
+  color: inherit !important;
+  display: block;
 }
 
 .home-page .map-stat__meta {

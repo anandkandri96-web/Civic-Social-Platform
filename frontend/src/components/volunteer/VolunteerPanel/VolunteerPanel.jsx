@@ -30,7 +30,7 @@ const VolunteerPanel = ({ issue, onIssueUpdate }) => {
   const handleProgress = async () => {
     setLoading(true);
     try {
-      const updated = await updateVolunteerProgress(issue._id);
+      const updated = await updateVolunteerProgress(issue._id, { notes: 'Started community fix' });
       onIssueUpdate(updated);
     } catch (err) {
       showToast(getErrorMessage(err), { tone: 'error' });

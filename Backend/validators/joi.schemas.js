@@ -6,7 +6,7 @@ const { REQUESTABLE_UPGRADE_ROLES } = require("../constants/roleUpgrade");
 const { ALL_STATUSES } = require("../config/issueStatusMachine");
 const { TASK_STATUSES } = require("../constants/taskStatus");
 
-const passwordPattern = /^(?=.*[0-9])(?=.*[^A-Za-z0-9]).{8,128}$/;
+const passwordPattern = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z\d\s])[^\s]{8,128}$/;
 const uriOpts = { allowRelative: false };
 
 const issueCreate = Joi.object({
@@ -42,11 +42,17 @@ const authRegister = Joi.object({
   name: Joi.string().trim().min(2).max(60).required(),
   email: Joi.string().email({ tlds: { allow: false } }).required(),
   password: Joi.string()
-    .min(8)
-    .max(128)
     .pattern(passwordPattern)
+    .required()
     .messages({
-      "string.pattern.base": "Password must be at least 8 characters and include a number and a special character",
+      "string.pattern.base": "Password must contain at least 8 characters, one uppercase letter, one lowercase letter, one number, and one special character. No spaces allowed.",
+    }),
+  confirmPassword: Joi.any()
+    .valid(Joi.ref('password'))
+    .required()
+    .messages({
+      'any.only': 'Confirm password must match password',
+      'any.required': 'Confirm password is required',
     }),
   role: Joi.string()
     .valid(ROLES.CITIZEN, ROLES.VOLUNTEER)
@@ -62,7 +68,17 @@ const updateMeNamePattern = /^[A-Za-z][A-Za-z\s.'-]{1,59}$/;
 const authUpdateMe = Joi.object({
   name: Joi.string().trim().pattern(updateMeNamePattern).optional(),
   email: Joi.string().email({ tlds: { allow: false } }).optional(),
-  password: Joi.string().min(6).max(128).optional(),
+  password: Joi.string().pattern(passwordPattern).optional().messages({
+    "string.pattern.base": "Password must contain at least 8 characters, one uppercase letter, one lowercase letter, one number, and one special character. No spaces allowed.",
+  }),
+  confirmPassword: Joi.any().when('password', {
+      is: Joi.exist(),
+      then: Joi.valid(Joi.ref('password')).required().messages({
+        'any.only': 'Confirm password must match password',
+        'any.required': 'Confirm password is required when updating password',
+      }),
+      otherwise: Joi.forbidden(),
+    }),
 })
   .min(1)
   .messages({
@@ -240,16 +256,15 @@ const adminCreateUser = Joi.object({
   name: Joi.string().trim().min(2).max(60).required(),
   email: Joi.string().email({ tlds: { allow: false } }).required(),
   password: Joi.string()
-    .min(8)
-    .max(128)
     .pattern(passwordPattern)
+    .required()
     .messages({
-      "string.pattern.base": "Password must be at least 8 characters and include a number and a special character",
+      "string.pattern.base": "Password must contain at least 8 characters, one uppercase letter, one lowercase letter, one number, and one special character. No spaces allowed.",
     }),
   role: Joi.string()
     .valid(...Object.values(ROLES))
     .required(),
-  department: Joi.string().hex().length(24).optional(),
+  departmentId: Joi.string().hex().length(24).optional(),
   isApproved: Joi.boolean().default(true),
   isActive: Joi.boolean().default(true),
 });

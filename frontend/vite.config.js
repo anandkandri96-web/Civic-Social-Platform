@@ -18,6 +18,20 @@ export default defineConfig({
       { find: '@api', replacement: path.resolve(dirname, 'src/api') },
     ],
   },
+  build: {
+    chunkSizeWarningLimit: 800,
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          reactVendor: ['react', 'react-dom', 'react-router-dom'],
+          mapVendor: ['leaflet', 'react-leaflet'],
+          chartVendor: ['chart.js', 'react-chartjs-2'],
+          formVendor: ['react-hook-form', '@hookform/resolvers', 'yup'],
+          dataVendor: ['axios', 'jwt-decode'],
+        },
+      },
+    },
+  },
   test: {
     projects: [{
       extends: true,

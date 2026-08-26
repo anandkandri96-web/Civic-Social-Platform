@@ -50,6 +50,7 @@ const Header = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const isIssuePage = location.pathname.startsWith('/issues') || location.pathname.startsWith('/admin/manage-issues');
+  const isWorkflowPage = location.pathname === '/workflow';
 
   const brandTarget = isAuthenticated ? dashboardPath : '/';
   const avatarLetter = (user?.name || user?.email || 'U').charAt(0).toUpperCase();
@@ -216,22 +217,24 @@ const Header = () => {
           Menu
         </button>
 
-        <div className="notification">
-          <button
-            type="button"
-            className="icon-button"
-            onClick={() => {
-              setNotificationsOpen((prev) => !prev);
-              setUnreadCount(0);
-            }}
-            aria-label="Notifications"
-            aria-expanded={notificationsOpen}
-          >
-            {ICONS.bell}
-            {unreadCount > 0 && <span className="notification-badge">{unreadCount}</span>}
-          </button>
-          <NotificationPanel isOpen={notificationsOpen} onClose={() => setNotificationsOpen(false)} />
-        </div>
+        {!isWorkflowPage && (
+          <div className="notification">
+            <button
+              type="button"
+              className="icon-button"
+              onClick={() => {
+                setNotificationsOpen((prev) => !prev);
+                setUnreadCount(0);
+              }}
+              aria-label="Notifications"
+              aria-expanded={notificationsOpen}
+            >
+              {ICONS.bell}
+              {unreadCount > 0 && <span className="notification-badge">{unreadCount}</span>}
+            </button>
+            <NotificationPanel isOpen={notificationsOpen} onClose={() => setNotificationsOpen(false)} />
+          </div>
+        )}
 
         <ThemeToggle className="theme-toggle--header" />
 

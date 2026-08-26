@@ -26,7 +26,7 @@ router.get(
 // ✅ Officer/Admin: Create and assign tasks to workers
 router.post(
   "/",
-  canPerform(PERMISSIONS.TASK_CREATE),
+  canPerform(PERMISSIONS.OFFICER_ASSIGN_WORKER),
   validateRequest(schemas.taskCreate),
   createTask
 );
